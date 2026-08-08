@@ -1891,6 +1891,26 @@
 
     // ---------- 初始化 ----------
     function init() {
+        // 读取版本号
+        fetch('version.txt')
+            .then(res => {
+                if (!res.ok) throw new Error('版本文件不存在');
+                return res.text();
+            })
+            .then(ver => {
+                const v = ver.trim();
+                const versionEl = document.querySelector('.header-top h1 small');
+                if (versionEl) {
+                    versionEl.textContent = 'v' + v;
+                }
+                console.log('当前版本:', v);
+                window.APP_VERSION = v;
+            })
+            .catch(() => {
+                console.warn('未找到 version.txt，使用默认版本');
+            });
+
+        // 原有的 bindEvents, loadAllLibraries 等代码...
         bindEvents();
         loadAllLibraries();
         if (Object.keys(allLibraries).length === 0) {
@@ -1900,7 +1920,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.3.5 初始化完成');
+        console.log('✅ 刷题器初始化完成');
     }
 
     init();
