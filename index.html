@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>多题库刷题器 · 自定义版</title>
+    <title>多题库刷题器 · 交互版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
     </script>
     <style>
@@ -36,7 +36,7 @@
             flex-direction: column;
             overflow: hidden;
         }
-        /* ===== 头部 ===== */
+        /* ===== 头部（与之前一致） ===== */
         .app-header {
             padding: 16px 24px 12px 24px;
             border-bottom: 1px solid #f0f2f5;
@@ -188,7 +188,7 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
-        /* ===== 卡片滑动区（flex列） ===== */
+        /* ===== 卡片区域 ===== */
         .card-slide-area {
             flex: 1;
             padding: 16px 20px 12px 20px;
@@ -198,7 +198,6 @@
             overflow: hidden;
             touch-action: pan-y;
         }
-        /* 卡片主体：占据剩余空间 */
         .card-wrapper {
             flex: 1;
             display: flex;
@@ -246,6 +245,187 @@
             margin-bottom: 12px;
             flex-shrink: 0;
         }
+        /* ----- 选项样式 ----- */
+        .options-container {
+            margin: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            background: #fafcff;
+            user-select: none;
+        }
+        .option-item:active {
+            transform: scale(0.98);
+        }
+        .option-item.selected {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+        .option-item.correct-answer {
+            border-color: #16a34a;
+            background: #dcfce7;
+        }
+        .option-item.wrong-answer {
+            border-color: #dc2626;
+            background: #fee2e2;
+        }
+        .option-item .option-label {
+            font-weight: 600;
+            color: #475569;
+            min-width: 24px;
+        }
+        .option-item .option-text {
+            flex: 1;
+            color: #1e293b;
+        }
+        .option-item input[type="radio"],
+        .option-item input[type="checkbox"] {
+            display: none;
+        }
+
+        /* 判断按钮 */
+        .judge-buttons {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0;
+        }
+        .judge-buttons button {
+            flex: 1;
+            padding: 14px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .judge-buttons button:active {
+            transform: scale(0.94);
+        }
+        .judge-buttons button.selected-true {
+            border-color: #16a34a;
+            background: #dcfce7;
+            color: #166534;
+        }
+        .judge-buttons button.selected-false {
+            border-color: #dc2626;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .judge-buttons button.correct {
+            border-color: #16a34a;
+            background: #dcfce7;
+            color: #166534;
+        }
+        .judge-buttons button.wrong {
+            border-color: #dc2626;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .judge-buttons button:disabled {
+            cursor: default;
+            opacity: 0.8;
+        }
+
+        /* 填空 */
+        .fill-group {
+            display: flex;
+            gap: 12px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .fill-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.15s;
+            min-width: 120px;
+        }
+        .fill-group input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .fill-group button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            background: #4f46e5;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .fill-group button:active {
+            transform: scale(0.94);
+            background: #4338ca;
+        }
+
+        /* 多选确认按钮 */
+        .multi-confirm {
+            margin: 8px 0 12px 0;
+            padding: 10px 0;
+            border: none;
+            border-radius: 12px;
+            background: #4f46e5;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.15s;
+            width: 100%;
+        }
+        .multi-confirm:active {
+            transform: scale(0.96);
+            background: #4338ca;
+        }
+        .multi-confirm:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 反馈 */
+        .feedback {
+            margin: 12px 0 8px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: none;
+        }
+        .feedback.show {
+            display: block;
+        }
+        .feedback.correct {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        .feedback.wrong {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .feedback .explanation {
+            margin-top: 6px;
+            font-weight: 400;
+            font-size: 14px;
+            color: #475569;
+        }
+
         .card-mnemonic {
             background: #f8fafc;
             border-radius: 12px;
@@ -309,7 +489,7 @@
             color: #64748b;
         }
 
-        /* ===== 卡片下方操作栏（独立） ===== */
+        /* ===== 卡片下方操作栏 ===== */
         .card-actions {
             flex-shrink: 0;
             display: flex;
@@ -372,7 +552,7 @@
             background: #c7d2fe;
         }
 
-        /* ===== 底部操作栏（掌握/复习/重置/帮助） ===== */
+        /* ===== 底部操作栏 ===== */
         .bottom-actions {
             flex-shrink: 0;
             background: white;
@@ -738,7 +918,6 @@
                 padding: 4px 8px;
             }
         }
-        /* ===== 隐藏滚动条 ===== */
         .card-wrapper::-webkit-scrollbar {
             width: 4px;
         }
@@ -751,7 +930,6 @@
 <body>
 
     <div class="app-container" id="app">
-
         <!-- 上传界面 -->
         <div id="uploadScreen" class="upload-placeholder" style="display:flex;">
             <div class="icon">📤</div>
@@ -762,11 +940,10 @@
 
         <!-- 主界面 -->
         <div id="mainApp" style="display:none; flex-direction:column; height:100%;">
-
             <!-- 头部 -->
             <div class="app-header">
                 <div class="header-top">
-                    <h1>📚 刷题 <small>自定义</small></h1>
+                    <h1>📚 刷题 <small>交互版</small></h1>
                     <div class="library-selector">
                         <span style="font-size:13px;color:#64748b;">📂</span>
                         <select id="librarySelect"></select>
@@ -804,9 +981,8 @@
                 </div>
             </div>
 
-            <!-- 卡片滑动区（卡片 + 下方操作栏） -->
+            <!-- 卡片区域 -->
             <div class="card-slide-area" id="cardSlideArea">
-                <!-- 卡片主体 -->
                 <div class="card-wrapper" id="cardWrapper">
                     <div class="swipe-hint left">‹</div>
                     <div class="swipe-hint right">›</div>
@@ -818,7 +994,7 @@
                         <span class="status-tag none" id="statusTag">⏳ 未开始</span>
                     </div>
                 </div>
-                <!-- 独立操作栏（提示 + 导航） -->
+                <!-- 卡片下方操作栏 -->
                 <div class="card-actions" id="cardActions">
                     <button class="hint-btn" id="hintBtn">💡 提示</button>
                     <div class="nav-group">
@@ -846,7 +1022,7 @@
                     <button id="copyBtn">📋 复制进度</button>
                     <button id="pasteImportBtn">📋 从剪贴板导入</button>
                     <button id="importBtn">📤 导入文件</button>
-                    <input type="file" id="importFileInput" accept=".json">
+                    <input type="file" id="importFileInput" accept=".json,.xlsx,.xls">
                 </div>
                 <div class="right-group">
                     <button id="resetAllBtn" class="danger">🗑️ 重置全部</button>
@@ -859,7 +1035,7 @@
         (function() {
             'use strict';
 
-            // ---------- DOM 引用 ----------
+            // ==================== DOM 引用 ====================
             const uploadScreen = document.getElementById('uploadScreen');
             const mainApp = document.getElementById('mainApp');
             const fileInput = document.getElementById('fileInput');
@@ -896,7 +1072,7 @@
             const questionId = document.getElementById('questionId');
             const statusTag = document.getElementById('statusTag');
 
-            // ---------- 全局状态 ----------
+            // ==================== 全局状态 ====================
             let allLibraries = {};
             let currentLibraryId = null;
             let currentQuestions = [];
@@ -907,11 +1083,11 @@
             let currentCategory = 'all';
             let currentStatusFilter = 'all';
 
-            // ---------- 存储键 ----------
+            // 存储键
             const LIBRARY_LIST_KEY = 'studyLibraries_v4';
             const PROGRESS_KEY = 'studyProgress_v4';
 
-            // ---------- 进度管理 ----------
+            // ==================== 进度管理 ====================
             function loadLibraries() {
                 try {
                     const raw = localStorage.getItem(LIBRARY_LIST_KEY);
@@ -969,7 +1145,7 @@
                 }
             }
 
-            // ---------- 统计 ----------
+            // ==================== 统计 ====================
             function calcStatsForLibrary(libId) {
                 const questions = allLibraries[libId]?.questions || [];
                 const total = questions.length;
@@ -1005,7 +1181,7 @@
                 else progressRing.style.stroke = '#4f46e5';
             }
 
-            // ---------- 渲染卡片 ----------
+            // ==================== 渲染卡片（含交互） ====================
             function renderCard() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     cardContent.innerHTML = `<div class="empty-state">请先上传或选择一个题库</div>`;
@@ -1045,26 +1221,247 @@
                 // 构建题目内容
                 let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
 
-                // 如果是选择题，显示选项
-                if (q.type === 'single' || q.type === 'multi') {
-                    if (q.options && q.options.length) {
-                        html += `<div style="margin:8px 0 12px 0;font-size:15px;color:#1e293b;">`;
-                        q.options.forEach((opt, idx) => {
-                            const label = String.fromCharCode(65 + idx);
-                            html += `<div style="padding:4px 0;">${label}. ${escapeHtml(opt)}</div>`;
-                        });
-                        html += `</div>`;
-                    }
+                // ---- 根据题型渲染交互组件 ----
+                const type = q.type || 'essay';
+
+                if (type === 'single') {
+                    // 单选：点击选项即时判断
+                    const options = q.options || [];
+                    const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
+                    html += `<div class="options-container" id="optionsContainer">`;
+                    options.forEach((opt, idx) => {
+                        const label = String.fromCharCode(65 + idx);
+                        const isCorrect = (label === correctAnswer);
+                        html += `
+                            <div class="option-item" data-label="${label}" data-correct="${isCorrect}">
+                                <span class="option-label">${label}.</span>
+                                <span class="option-text">${escapeHtml(opt)}</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    html += `<div class="feedback" id="feedback"></div>`;
+                } else if (type === 'multi') {
+                    // 多选：点击切换选中状态，点击“确认答案”验证
+                    const options = q.options || [];
+                    const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean) :
+                    [];
+                    html += `<div class="options-container" id="optionsContainer">`;
+                    options.forEach((opt, idx) => {
+                        const label = String.fromCharCode(65 + idx);
+                        html += `
+                            <div class="option-item" data-label="${label}">
+                                <span class="option-label">${label}.</span>
+                                <span class="option-text">${escapeHtml(opt)}</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    html += `<button class="multi-confirm" id="multiConfirm">确认答案</button>`;
+                    html += `<div class="feedback" id="feedback"></div>`;
+                } else if (type === 'judge') {
+                    // 判断：点击“对”或“错”即时判断
+                    const correctAnswer = q.answer ? q.answer.trim() : '';
+                    html += `<div class="judge-buttons" id="judgeButtons">`;
+                    html += `<button data-value="对" class="judge-btn">✅ 对</button>`;
+                    html += `<button data-value="错" class="judge-btn">❌ 错</button>`;
+                    html += `</div>`;
+                    html += `<div class="feedback" id="feedback"></div>`;
+                } else if (type === 'fill') {
+                    // 填空：输入后点击确认
+                    const correctAnswer = q.answer ? q.answer.trim() : '';
+                    html += `<div class="fill-group" id="fillGroup">`;
+                    html += `<input type="text" id="fillInput" placeholder="输入答案...">`;
+                    html += `<button id="fillConfirm">确认答案</button>`;
+                    html += `</div>`;
+                    html += `<div class="feedback" id="feedback"></div>`;
+                } else {
+                    // 简答（essay）或其它：无交互，只显示题目
+                    // 不添加额外组件
                 }
 
+                // 口诀/解析部分
                 const explanation = q.explanation || q.mnemonic || '';
                 html += `
                     <div class="card-mnemonic ${isMnemonicVisible ? 'show' : ''}">
-                        <div class="label">📌 ${q.type === 'essay' ? '口诀' : '解析'}</div>
+                        <div class="label">📌 ${type === 'essay' ? '口诀' : '解析'}</div>
                         <div class="content">${escapeHtml(explanation)}</div>
                     </div>
                 `;
                 cardContent.innerHTML = html;
+
+                // ---- 绑定交互事件 ----
+                if (type === 'single') {
+                    const items = cardContent.querySelectorAll('.option-item');
+                    const feedback = document.getElementById('feedback');
+                    items.forEach(item => {
+                        item.addEventListener('click', function() {
+                            // 清除其他选中状态和反馈
+                            items.forEach(el => {
+                                el.classList.remove('selected', 'correct-answer', 'wrong-answer');
+                            });
+                            // 标记当前选中
+                            this.classList.add('selected');
+                            const isCorrect = this.dataset.correct === 'true';
+                            if (isCorrect) {
+                                this.classList.add('correct-answer');
+                                feedback.className = 'feedback show correct';
+                                feedback.innerHTML = '✅ 回答正确！';
+                            } else {
+                                this.classList.add('wrong-answer');
+                                feedback.className = 'feedback show wrong';
+                                feedback.innerHTML = '❌ 回答错误。正确答案是：' + (q.answer || '');
+                            }
+                            // 显示解析/口诀（如果有）
+                            const expl = explanation.trim();
+                            if (expl && expl !== '（无口诀）') {
+                                const explDiv = document.createElement('div');
+                                explDiv.className = 'explanation';
+                                explDiv.textContent = '📖 解析：' + expl;
+                                feedback.appendChild(explDiv);
+                            }
+                            // 禁用所有选项
+                            items.forEach(el => el.style.pointerEvents = 'none');
+                        });
+                    });
+                } else if (type === 'multi') {
+                    const items = cardContent.querySelectorAll('.option-item');
+                    const confirmBtn = document.getElementById('multiConfirm');
+                    const feedback = document.getElementById('feedback');
+                    let selectedLabels = [];
+
+                    items.forEach(item => {
+                        item.addEventListener('click', function() {
+                            const label = this.dataset.label;
+                            this.classList.toggle('selected');
+                            if (this.classList.contains('selected')) {
+                                if (!selectedLabels.includes(label)) selectedLabels.push(label);
+                            } else {
+                                selectedLabels = selectedLabels.filter(l => l !== label);
+                            }
+                            // 清空之前反馈
+                            feedback.className = 'feedback';
+                            feedback.innerHTML = '';
+                            // 重置选项样式（移除正确/错误标记）
+                            items.forEach(el => {
+                                el.classList.remove('correct-answer', 'wrong-answer');
+                            });
+                            confirmBtn.disabled = false;
+                        });
+                    });
+
+                    confirmBtn.addEventListener('click', function() {
+                        if (selectedLabels.length === 0) {
+                            alert('请至少选择一个选项');
+                            return;
+                        }
+                        const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase())
+                            .filter(Boolean) : [];
+                        // 对每个选项标记正确/错误
+                        let allCorrect = true;
+                        items.forEach(el => {
+                            const label = el.dataset.label;
+                            const isCorrect = correctAnswers.includes(label);
+                            if (isCorrect) {
+                                el.classList.add('correct-answer');
+                            } else {
+                                el.classList.add('wrong-answer');
+                            }
+                            // 判断用户是否选择了该选项
+                            const userSelected = selectedLabels.includes(label);
+                            if (userSelected && !isCorrect) allCorrect = false;
+                            if (!userSelected && isCorrect) allCorrect = false;
+                        });
+                        // 反馈
+                        if (allCorrect && selectedLabels.length === correctAnswers.length) {
+                            feedback.className = 'feedback show correct';
+                            feedback.innerHTML = '✅ 全部正确！';
+                        } else {
+                            feedback.className = 'feedback show wrong';
+                            feedback.innerHTML = '❌ 有误，正确答案：' + correctAnswers.join(', ');
+                        }
+                        // 显示解析
+                        const expl = explanation.trim();
+                        if (expl && expl !== '（无口诀）') {
+                            const explDiv = document.createElement('div');
+                            explDiv.className = 'explanation';
+                            explDiv.textContent = '📖 解析：' + expl;
+                            feedback.appendChild(explDiv);
+                        }
+                        confirmBtn.disabled = true;
+                        // 禁用选项点击
+                        items.forEach(el => el.style.pointerEvents = 'none');
+                    });
+                } else if (type === 'judge') {
+                    const btns = cardContent.querySelectorAll('.judge-btn');
+                    const feedback = document.getElementById('feedback');
+                    const correctAnswer = q.answer ? q.answer.trim() : '';
+                    btns.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const value = this.dataset.value;
+                            const isCorrect = (value === correctAnswer);
+                            // 清除其他样式
+                            btns.forEach(b => {
+                                b.classList.remove('selected-true', 'selected-false', 'correct',
+                                    'wrong');
+                                b.disabled = true;
+                            });
+                            if (isCorrect) {
+                                this.classList.add('correct');
+                                feedback.className = 'feedback show correct';
+                                feedback.innerHTML = '✅ 回答正确！';
+                            } else {
+                                this.classList.add('wrong');
+                                feedback.className = 'feedback show wrong';
+                                feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                            }
+                            const expl = explanation.trim();
+                            if (expl && expl !== '（无口诀）') {
+                                const explDiv = document.createElement('div');
+                                explDiv.className = 'explanation';
+                                explDiv.textContent = '📖 解析：' + expl;
+                                feedback.appendChild(explDiv);
+                            }
+                        });
+                    });
+                } else if (type === 'fill') {
+                    const input = document.getElementById('fillInput');
+                    const confirmBtn = document.getElementById('fillConfirm');
+                    const feedback = document.getElementById('feedback');
+                    const correctAnswer = q.answer ? q.answer.trim() : '';
+
+                    confirmBtn.addEventListener('click', function() {
+                        const userAns = input.value.trim();
+                        if (!userAns) {
+                            alert('请输入答案');
+                            return;
+                        }
+                        // 简单比较（忽略大小写）
+                        const isCorrect = userAns.toLowerCase() === correctAnswer.toLowerCase();
+                        if (isCorrect) {
+                            feedback.className = 'feedback show correct';
+                            feedback.innerHTML = '✅ 回答正确！';
+                        } else {
+                            feedback.className = 'feedback show wrong';
+                            feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                        }
+                        const expl = explanation.trim();
+                        if (expl && expl !== '（无口诀）') {
+                            const explDiv = document.createElement('div');
+                            explDiv.className = 'explanation';
+                            explDiv.textContent = '📖 解析：' + expl;
+                            feedback.appendChild(explDiv);
+                        }
+                        input.disabled = true;
+                        confirmBtn.disabled = true;
+                    });
+                    // 回车触发确认
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            confirmBtn.click();
+                        }
+                    });
+                }
 
                 // 更新提示按钮状态
                 hintBtn.textContent = isMnemonicVisible ? '🙈 隐藏提示' : '💡 提示';
@@ -1078,12 +1475,15 @@
                 return div.innerHTML;
             }
 
-            // ---------- 导航 ----------
+            // 重置当前题目交互状态（在切换题目时调用）
+            function resetQuestionInteraction() {
+                // 无需额外操作，因为重新渲染会重建DOM
+            }
+
+            // ==================== 导航 ====================
             function navigate(delta) {
                 if (!filteredQuestions.length) return;
-                if (isMnemonicVisible) {
-                    isMnemonicVisible = false;
-                }
+                isMnemonicVisible = false; // 切换题目时自动隐藏口诀
                 let newIdx = currentIndex + delta;
                 if (newIdx < 0) newIdx = filteredQuestions.length - 1;
                 if (newIdx >= filteredQuestions.length) newIdx = 0;
@@ -1097,9 +1497,7 @@
 
             function goRandom() {
                 if (!filteredQuestions.length) return;
-                if (isMnemonicVisible) {
-                    isMnemonicVisible = false;
-                }
+                isMnemonicVisible = false;
                 if (currentMode !== 'random') {
                     currentMode = 'random';
                     modeSelect.value = 'random';
@@ -1115,7 +1513,7 @@
                 renderCard();
             }
 
-            // ---------- 筛选 ----------
+            // ==================== 筛选 ====================
             function applyFilters() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     filteredQuestions = [];
@@ -1167,7 +1565,7 @@
                 }
             }
 
-            // ---------- 题库管理 ----------
+            // ==================== 题库管理 ====================
             function loadAllLibraries() {
                 allLibraries = loadLibraries();
                 Object.keys(allLibraries).forEach(id => {
@@ -1261,7 +1659,7 @@
                 mainApp.style.display = 'flex';
             }
 
-            // ---------- 上传新题库（去重） ----------
+            // ==================== 导入题库（支持 Excel 和 JSON） ====================
             function handleFileUpload(file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1274,7 +1672,6 @@
                             return;
                         }
                         parsed.sort((a, b) => a.id - b.id);
-
                         const matchedId = findMatchingLibrary(parsed);
                         if (matchedId) {
                             const libName = allLibraries[matchedId].name;
@@ -1285,7 +1682,6 @@
                                 return;
                             }
                         }
-
                         const defaultName = file.name.replace(/\.[^.]+$/, '');
                         promptForLibraryName(defaultName, (name) => {
                             if (name) {
@@ -1297,6 +1693,48 @@
                     }
                 };
                 reader.readAsArrayBuffer(file);
+            }
+
+            // 新增：导入 JSON 格式题库
+            function importJsonLibrary(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const libData = JSON.parse(e.target.result);
+                        if (!libData.questions || !Array.isArray(libData.questions) || libData.questions.length === 0) {
+                            alert('无效的 JSON 题库文件');
+                            return;
+                        }
+                        // 标准化字段
+                        const questions = libData.questions.map(q => ({
+                            id: q.id || 0,
+                            category: q.category || '未分类',
+                            question: q.question || '',
+                            type: q.type || 'essay',
+                            options: q.options || [],
+                            answer: q.answer || '',
+                            explanation: q.explanation || q.mnemonic || '',
+                            mnemonic: q.mnemonic || q.explanation || ''
+                        }));
+                        // 重新分配id
+                        questions.forEach((q, idx) => q.id = idx + 1);
+                        const name = libData.name || file.name.replace(/\.[^.]+$/, '') || '导入的题库';
+                        // 去重检查（可选）
+                        const matchedId = findMatchingLibrary(questions);
+                        if (matchedId) {
+                            if (confirm(`检测到题库“${allLibraries[matchedId].name}”与当前导入内容相同，是否切换到该题库？`)) {
+                                switchToLibrary(matchedId);
+                                uploadScreen.style.display = 'none';
+                                mainApp.style.display = 'flex';
+                                return;
+                            }
+                        }
+                        addNewLibrary(name, questions);
+                    } catch (err) {
+                        alert('JSON 解析失败：' + err.message);
+                    }
+                };
+                reader.readAsText(file);
             }
 
             function findMatchingLibrary(questions) {
@@ -1354,7 +1792,7 @@
                 });
             }
 
-            // ---------- 解析 Excel（扩展多题型） ----------
+            // ==================== 解析 Excel（支持表头和旧格式） ====================
             function parseExcelData(workbook) {
                 const sheets = workbook.SheetNames;
                 if (!sheets.length) return [];
@@ -1456,7 +1894,7 @@
                 return questions;
             }
 
-            // ---------- 新增题目 ----------
+            // ==================== 添加题目 ====================
             function showAddQuestionModal() {
                 if (!currentLibraryId) {
                     alert('请先选择或创建一个题库');
@@ -1565,7 +2003,7 @@
                 });
             }
 
-            // ---------- 导出题库 ----------
+            // ==================== 导出题库 ====================
             function exportLibrary() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     alert('请先选择一个题库');
@@ -1620,7 +2058,7 @@
                 alert('✅ 题库已导出（JSON + XLSX）');
             }
 
-            // ---------- 导出/导入进度 ----------
+            // ==================== 导出/导入进度 ====================
             function getExportData() {
                 return JSON.stringify(loadProgress(), null, 2);
             }
@@ -1697,7 +2135,7 @@
                 reader.readAsText(file);
             }
 
-            // ---------- 通用模态框 ----------
+            // ==================== 模态框 ====================
             function showModal(title, initialText, actionLabel, onAction) {
                 const old = document.querySelector('.modal-overlay');
                 if (old) old.remove();
@@ -1729,7 +2167,7 @@
                 });
             }
 
-            // ---------- 帮助弹窗 ----------
+            // ==================== 帮助弹窗 ====================
             function showHelp() {
                 const overlay = document.createElement('div');
                 overlay.className = 'modal-overlay';
@@ -1761,7 +2199,7 @@
                 });
             }
 
-            // ---------- 复制工具 ----------
+            // ==================== 复制工具 ====================
             function copyToClipboard(text) {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(text).then(() => {
@@ -1788,12 +2226,12 @@
                 document.body.removeChild(textarea);
             }
 
-            // ---------- 触摸滑动 ----------
+            // ==================== 触摸滑动 ====================
             let touchStartX = 0,
                 touchStartY = 0,
                 isSwiping = false;
 
-            // ---------- 事件绑定 ----------
+            // ==================== 事件绑定 ====================
             function bindEvents() {
                 librarySelect.addEventListener('change', (e) => {
                     const id = e.target.value;
@@ -1859,12 +2297,21 @@
                 copyBtn.addEventListener('click', copyAllProgress);
                 pasteImportBtn.addEventListener('click', importProgressFromPaste);
                 importBtn.addEventListener('click', () => importFileInput.click());
+
                 importFileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length) {
-                        importProgressFromFile(e.target.files[0]);
-                        e.target.value = '';
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (ext === 'json') {
+                        importJsonLibrary(file);
+                    } else if (ext === 'xlsx' || ext === 'xls') {
+                        handleFileUpload(file);
+                    } else {
+                        alert('不支持的文件格式，请选择 .xlsx, .xls 或 .json');
                     }
+                    e.target.value = '';
                 });
+
                 resetAllBtn.addEventListener('click', () => {
                     if (currentLibraryId) resetAllProgressForLibrary(currentLibraryId);
                 });
@@ -1910,10 +2357,7 @@
                     isSwiping = false;
                 }, { passive: true });
 
-                // 文件上传
-                fileInput.addEventListener('change', (e) => {
-                    if (fileInput.files.length) handleFileUpload(fileInput.files[0]);
-                });
+                // 文件上传（拖拽）
                 uploadScreen.addEventListener('click', () => fileInput.click());
                 uploadScreen.addEventListener('dragover', (e) => {
                     e.preventDefault();
@@ -1929,13 +2373,22 @@
                     uploadScreen.style.borderColor = '#cbd5e1';
                     uploadScreen.style.background = '#fafcff';
                     if (e.dataTransfer.files.length) {
-                        handleFileUpload(e.dataTransfer.files[0]);
+                        const file = e.dataTransfer.files[0];
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (ext === 'json') {
+                            importJsonLibrary(file);
+                        } else if (ext === 'xlsx' || ext === 'xls') {
+                            handleFileUpload(file);
+                        } else {
+                            alert('不支持的文件格式，请上传 .xlsx, .xls 或 .json');
+                        }
                         fileInput.files = e.dataTransfer.files;
                     }
                 });
+                // 原 fileInput 的 change 事件已在上方处理
             }
 
-            // ---------- 初始化 ----------
+            // ==================== 初始化 ====================
             function init() {
                 bindEvents();
                 loadAllLibraries();
@@ -1949,9 +2402,8 @@
             }
 
             init();
-            console.log('🚀 刷题器（布局优化版）已加载');
+            console.log('🚀 刷题器（交互版 + JSON导入）已加载');
         })();
     </script>
-
 </body>
 </html>
