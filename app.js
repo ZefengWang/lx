@@ -1,8 +1,22 @@
 (function() {
     'use strict';
 
-    const VERSION = 'v2.3.0';
+    // ========== 版本号 ==========
+    const VERSION = 'v2.3.1';
     console.log('🚀 刷题器版本:', VERSION);
+
+    // ---------- 版本检查 ----------
+    const STORAGE_VERSION_KEY = 'studyAppVersion';
+    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    if (storedVersion && storedVersion !== VERSION) {
+        // 检测到版本变化，提示用户刷新
+        alert(`检测到新版本 (${VERSION})，请点击“确定”刷新页面以应用更新。`);
+        localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
+        // 可选择自动刷新，但用户可能未保存数据，所以仅提示
+        // 用户手动刷新即可
+    } else if (!storedVersion) {
+        localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
+    }
 
     // ---------- DOM 引用 ----------
     const uploadScreen = document.getElementById('uploadScreen');
@@ -114,7 +128,8 @@
         const questions = allLibraries[libId]?.questions || [];
         const total = questions.length;
         const prog = getLibraryProgress(libId);
-        let mastered = 0, review = 0;
+        let mastered = 0,
+            review = 0;
         questions.forEach(q => {
             const s = prog[q.id] || 'none';
             if (s === 'mastered') mastered++;
@@ -306,7 +321,7 @@
         const type = q.type || 'essay';
         let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
 
-        // 选择题渲染（同之前）
+        // 选择题渲染
         if (type === 'single') {
             const options = q.options || [];
             const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
@@ -354,7 +369,7 @@
             html += `</div>`;
             html += `<div class="feedback" id="feedback"></div>`;
         } else {
-            // 简答题：显示答案和备注内容（根据可见性）
+            // 简答题
             const answerText = q.answerText || '';
             const remarks = q.remarks || '';
             if (answerText) {
@@ -384,7 +399,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互（同之前，省略）
+        // 绑定选择题交互（略，与之前相同）
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -546,11 +561,9 @@
         // 重建 card-actions
         let extraButtons = '';
         if (type === 'essay') {
-            // 答案按钮组
             const hasAnswer = q.answerText && q.answerText.trim() !== '';
             const answerBtnLabel = hasAnswer ? '✏️ 修改答案' : '➕ 添加答案';
             const answerToggleLabel = isAnswerVisible ? '🙈 隐藏答案' : '👁️ 显示答案';
-            // 备注按钮组
             const hasRemark = q.remarks && q.remarks.trim() !== '';
             const remarkBtnLabel = hasRemark ? '✏️ 修改备注' : '➕ 添加备注';
             const remarkToggleLabel = isRemarkVisible ? '🙈 隐藏备注' : '👁️ 显示备注';
@@ -578,7 +591,6 @@
             isMnemonicVisible = !isMnemonicVisible;
             renderCard();
         });
-        // 答案编辑
         const editAnswerBtn = document.getElementById('editAnswerBtn');
         if (editAnswerBtn) {
             editAnswerBtn.addEventListener('click', () => {
@@ -587,7 +599,6 @@
                 });
             });
         }
-        // 答案显示切换
         const toggleAnswerBtn = document.getElementById('toggleAnswerBtn');
         if (toggleAnswerBtn) {
             toggleAnswerBtn.addEventListener('click', () => {
@@ -595,7 +606,6 @@
                 renderCard();
             });
         }
-        // 备注编辑
         const editRemarkBtn = document.getElementById('editRemarkBtn');
         if (editRemarkBtn) {
             editRemarkBtn.addEventListener('click', () => {
@@ -604,7 +614,6 @@
                 });
             });
         }
-        // 备注显示切换
         const toggleRemarkBtn = document.getElementById('toggleRemarkBtn');
         if (toggleRemarkBtn) {
             toggleRemarkBtn.addEventListener('click', () => {
@@ -612,7 +621,6 @@
                 renderCard();
             });
         }
-        // 导航
         document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
         document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
         document.getElementById('randomBtn').addEventListener('click', goRandom);
@@ -711,7 +719,7 @@
         }
     }
 
-    // ---------- 题库管理（与之前相同，略） ----------
+    // ---------- 题库管理 ----------
     function loadAllLibraries() {
         allLibraries = loadLibraries();
         Object.keys(allLibraries).forEach(id => {
@@ -802,9 +810,8 @@
         }
     }
 
-    // ---------- 解析 Excel（字段映射不变） ----------
+    // ---------- 解析 Excel（优化分类识别） ----------
     function parseExcelData(workbook) {
-        // 与之前相同，略
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
         if (!sheets.length) return [];
@@ -815,6 +822,7 @@
         let headerRow = null;
         let colMap = {};
 
+        // 寻找表头行（包含“序号”）
         for (let i = 0; i < Math.min(10, json.length); i++) {
             const row = json[i];
             if (!row) continue;
@@ -825,6 +833,7 @@
         }
 
         if (headerRow !== null) {
+            // 有表头模式
             const headers = json[headerRow].map(h => String(h).trim());
             const findCol = (keywords) => {
                 for (let kw of keywords) {
@@ -845,6 +854,7 @@
             if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
             if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
 
+            // 遍历数据行
             for (let i = headerRow + 1; i < json.length; i++) {
                 const row = json[i];
                 if (!row || row.length === 0) continue;
@@ -852,6 +862,16 @@
                 if (isNaN(id) || id === 0) continue;
                 const question = String(row[colMap.question] || '').trim();
                 if (!question) continue;
+
+                // 尝试从“分类”列读取分类，若没有则使用当前累积的分类
+                let category = '';
+                if (colMap.category !== -1) {
+                    category = String(row[colMap.category] || '').trim();
+                }
+                if (!category) {
+                    category = currentCategory; // 使用之前通过标题行设置的分类
+                }
+
                 let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
                 if (type.includes('单选')) type = 'single';
                 else if (type.includes('多选')) type = 'multi';
@@ -868,7 +888,6 @@
                 }
                 const answer = String(row[colMap.answer] || '').trim();
                 const explanation = String(row[colMap.explanation] || '').trim();
-                const category = colMap.category !== -1 ? String(row[colMap.category] || '').trim() : currentCategory;
 
                 questions.push({
                     id: id,
@@ -884,16 +903,21 @@
                 });
             }
         } else {
+            // 无表头模式：按行解析，识别分类标题行
             for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
                 const row = json[rowIdx];
                 if (!row || row.length === 0) continue;
                 const firstCell = String(row[0] || '').trim();
+
+                // 检测分类标题（包含“教育学”、“小三门”、“心理学”）
                 if (firstCell.includes('教育学') || firstCell.includes('小三门') || firstCell.includes('心理学')) {
                     if (firstCell.includes('教育学')) currentCategory = '教育学';
                     else if (firstCell.includes('小三门')) currentCategory = '小三门';
                     else if (firstCell.includes('心理学')) currentCategory = '心理学';
                     continue;
                 }
+
+                // 尝试解析序号行
                 const num = parseInt(firstCell, 10);
                 if (!isNaN(num) && row.length >= 3) {
                     const question = String(row[1] || '').trim();
@@ -915,6 +939,7 @@
                 }
             }
         }
+
         console.log('[parseExcelData] 解析完成，共', questions.length, '题');
         return questions;
     }
@@ -1193,7 +1218,7 @@
         });
     }
 
-    // ---------- 导出题库、PDF、进度等（与之前相同，略） ----------
+    // ---------- 导出题库、PDF、进度（与之前相同，略） ----------
     function exportLibrary() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             alert('请先选择一个题库');
@@ -1202,7 +1227,6 @@
         const lib = allLibraries[currentLibraryId];
         const name = lib.name || '未命名题库';
 
-        // JSON
         const jsonData = JSON.stringify(lib, null, 2);
         const jsonBlob = new Blob([jsonData], { type: 'application/json' });
         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -1214,7 +1238,6 @@
         document.body.removeChild(aJson);
         URL.revokeObjectURL(jsonUrl);
 
-        // Excel
         const questions = lib.questions || [];
         const rows = [
             ['序号', '题型', '分类', '题目', '选项', '正确答案', '解析/口诀', '参考答案', '备注']
@@ -1298,7 +1321,7 @@
         printWindow.print();
     }
 
-    // ---------- 导出/导入进度（与之前相同，略） ----------
+    // ---------- 导出/导入进度 ----------
     function getExportData() {
         return JSON.stringify(loadProgress(), null, 2);
     }
@@ -1467,11 +1490,12 @@
     }
 
     // ---------- 触摸滑动 ----------
-    let touchStartX = 0, touchStartY = 0, isSwiping = false;
+    let touchStartX = 0,
+        touchStartY = 0,
+        isSwiping = false;
 
     // ---------- 事件绑定 ----------
     function bindEvents() {
-        // 与之前完全相同，略
         librarySelect.addEventListener('change', (e) => {
             const id = e.target.value;
             if (id && allLibraries[id]) {
@@ -1648,7 +1672,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.3.0 初始化完成');
+        console.log('✅ 刷题器 v2.3.1 初始化完成');
     }
 
     init();
