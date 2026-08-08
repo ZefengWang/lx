@@ -946,39 +946,56 @@
         return questions;
     }
 
+    function cleanText(text) {
+        // 移除所有不可打印的控制字符（保留换行符和常见标点）
+        return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+                .replace(/\s+/g, ' ')          // 合并多余空格
+                .trim();
+    }
+
     // ---------- 从粘贴文本解析题库 ----------
     function parseTextToQuestions(text) {
-        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        // 先清洗文本
+        const cleaned = cleanText(text);
+        // 按行分割
+        const lines = cleaned.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const questions = [];
         let currentCategory = '';
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            // 检测分类标题
+
+            // 检测分类标题（包含常见关键词）
             if (line.includes('教育学') || line.includes('小三门') || line.includes('心理学')) {
                 let cat = '';
                 if (line.includes('教育学')) cat = '教育学';
                 else if (line.includes('小三门')) cat = '小三门';
                 else if (line.includes('心理学')) cat = '心理学';
+                // 如果不是以数字开头，则视为分类标题
                 if (!/^\d/.test(line)) {
                     currentCategory = cat;
                     continue;
                 }
             }
 
-            const match = line.match(/^(\d+)[.、]\s*(.*)/);
+            // 匹配序号行：支持 "1." "1、" "1 " 等格式
+            const match = line.match(/^(\d+)[.、．\s]*\s*(.*)/);
             if (match) {
                 const id = parseInt(match[1], 10);
                 let rest = match[2];
                 let question = rest;
                 let mnemonic = '';
+
+                // 检查下一行是否为口诀（非数字开头且不包含表头关键词）
                 if (i + 1 < lines.length) {
                     const nextLine = lines[i + 1];
                     if (!/^\d/.test(nextLine) && !nextLine.includes('序号')) {
                         mnemonic = nextLine;
-                        i++;
+                        i++; // 跳过该行
                     }
                 }
+
+                // 如果仍未提取到口诀，尝试从当前行用制表符分离
                 if (!mnemonic) {
                     const parts = rest.split(/\t+/);
                     if (parts.length >= 2) {
@@ -986,6 +1003,7 @@
                         mnemonic = parts.slice(1).join(' ');
                     }
                 }
+
                 questions.push({
                     id: id,
                     category: currentCategory || '未分类',
@@ -1014,9 +1032,8 @@
             const pageText = textContent.items.map(item => item.str).join(' ');
             fullText += pageText + '\n';
         }
-        // 清理文本：合并多余空白，但保留换行以识别结构
-        // 由于 PDF 提取的文本可能包含大量空格，我们保留换行，但压缩连续空格
-        const cleaned = fullText.replace(/[ \t]+/g, ' ').replace(/\n\s*\n/g, '\n');
+        // 使用清洗函数去除不可见字符，并合并空格
+        const cleaned = cleanText(fullText);
         return parseTextToQuestions(cleaned);
     }
 
