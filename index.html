@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>教综刷题器 · 移动升级版</title>
+    <title>多题库刷题器</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
     </script>
     <style>
-        /* ===== 全局重置 & 基础 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -35,13 +34,9 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            position: relative;
-            transition: border-radius 0.2s;
         }
-
-        /* ===== 顶部头部 ===== */
         .app-header {
-            padding: 20px 24px 12px 24px;
+            padding: 16px 24px 12px 24px;
             border-bottom: 1px solid #f0f2f5;
             flex-shrink: 0;
             background: white;
@@ -51,19 +46,50 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         .header-top h1 {
             font-size: 20px;
             font-weight: 700;
             color: #0f172a;
-            letter-spacing: -0.3px;
         }
         .header-top h1 small {
             font-size: 14px;
             font-weight: 400;
             color: #94a3b8;
             margin-left: 6px;
+        }
+        .library-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            padding: 4px 12px 4px 8px;
+            border-radius: 30px;
+            border: 1px solid #eef2f6;
+        }
+        .library-selector select {
+            border: none;
+            background: transparent;
+            padding: 6px 4px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+            outline: none;
+            max-width: 160px;
+        }
+        .library-selector button {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .library-selector button:active {
+            transform: scale(0.9);
         }
         .stats-ring-wrapper {
             display: flex;
@@ -124,7 +150,6 @@
         .stats-text .num.orange {
             color: #ea580c;
         }
-
         .filter-bar {
             display: flex;
             gap: 8px;
@@ -160,8 +185,6 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
-
-        /* ===== 卡片区域 ===== */
         .card-slide-area {
             flex: 1;
             padding: 16px 20px 20px 20px;
@@ -209,7 +232,6 @@
         .card-wrapper .swipe-hint.right {
             right: 8px;
         }
-
         .card-question {
             font-size: 18px;
             line-height: 1.7;
@@ -281,7 +303,6 @@
             background: #f1f5f9;
             color: #64748b;
         }
-
         .nav-buttons {
             display: flex;
             gap: 8px;
@@ -312,8 +333,6 @@
         .nav-buttons .btn-random:active {
             background: #c7d2fe;
         }
-
-        /* ===== 底部操作栏 ===== */
         .bottom-actions {
             flex-shrink: 0;
             background: white;
@@ -371,18 +390,26 @@
         .bottom-actions .btn-toggle:active {
             background: #c7d2fe;
         }
-
-        /* ===== 底部工具条 ===== */
         .bottom-utils {
             flex-shrink: 0;
             padding: 8px 16px 12px 16px;
             background: #fafcff;
             border-top: 1px solid #f0f2f5;
             display: flex;
-            justify-content: space-between;
             flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
             gap: 6px;
             font-size: 12px;
+        }
+        .bottom-utils .left-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .bottom-utils .right-group {
+            display: flex;
+            gap: 4px;
         }
         .bottom-utils button {
             background: none;
@@ -395,6 +422,7 @@
             font-weight: 500;
             transition: 0.15s;
             touch-action: manipulation;
+            white-space: nowrap;
         }
         .bottom-utils button:active {
             background: #e9edf2;
@@ -402,11 +430,12 @@
         .bottom-utils .danger {
             color: #ef4444;
         }
+        .bottom-utils .primary {
+            color: #4f46e5;
+        }
         .bottom-utils input[type="file"] {
             display: none;
         }
-
-        /* ===== 上传界面 ===== */
         .upload-placeholder {
             display: flex;
             flex-direction: column;
@@ -438,45 +467,42 @@
         .upload-placeholder input {
             display: none;
         }
-
         .empty-state {
             text-align: center;
             color: #94a3b8;
             padding: 40px 0;
             font-size: 16px;
         }
-
-        /* ===== 复制弹窗（自定义） ===== */
-        .copy-modal-overlay {
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 999;
             backdrop-filter: blur(4px);
         }
-        .copy-modal {
+        .modal-box {
             background: white;
             max-width: 92%;
             width: 500px;
             border-radius: 24px;
             padding: 24px 20px 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-height: 80vh;
             display: flex;
             flex-direction: column;
         }
-        .copy-modal h3 {
+        .modal-box h3 {
             font-size: 18px;
             margin-bottom: 12px;
             color: #0f172a;
         }
-        .copy-modal textarea {
+        .modal-box textarea {
             width: 100%;
             height: 200px;
             border: 1px solid #e2e8f0;
@@ -490,13 +516,26 @@
             flex: 1;
             min-height: 150px;
         }
-        .copy-modal .modal-actions {
+        .modal-box input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .modal-box input[type="text"]:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+        .modal-box .modal-actions {
             display: flex;
             gap: 12px;
             margin-top: 16px;
             justify-content: flex-end;
         }
-        .copy-modal .modal-actions button {
+        .modal-box .modal-actions button {
             padding: 10px 24px;
             border: none;
             border-radius: 16px;
@@ -505,22 +544,20 @@
             cursor: pointer;
             transition: 0.15s;
         }
-        .copy-modal .modal-actions .btn-primary {
+        .modal-box .modal-actions .btn-primary {
             background: #4f46e5;
             color: white;
         }
-        .copy-modal .modal-actions .btn-primary:active {
+        .modal-box .modal-actions .btn-primary:active {
             background: #4338ca;
         }
-        .copy-modal .modal-actions .btn-secondary {
+        .modal-box .modal-actions .btn-secondary {
             background: #f1f5f9;
             color: #334155;
         }
-        .copy-modal .modal-actions .btn-secondary:active {
+        .modal-box .modal-actions .btn-secondary:active {
             background: #e2e8f0;
         }
-
-        /* ===== PC端适配 ===== */
         @media (min-width: 768px) {
             body {
                 padding: 24px;
@@ -572,11 +609,18 @@
                 background: #e9edf2;
                 color: #0f172a;
             }
+            .bottom-utils button.primary:hover {
+                background: #eef2ff;
+                color: #4f46e5;
+            }
+            .bottom-utils button.danger:hover {
+                background: #fee2e2;
+                color: #dc2626;
+            }
             .upload-placeholder {
                 min-height: 400px;
             }
         }
-
         @media (max-width: 400px) {
             .app-header {
                 padding: 12px 16px 8px 16px;
@@ -622,6 +666,14 @@
                 font-size: 13px;
                 padding: 10px 0;
             }
+            .bottom-utils {
+                padding: 6px 10px 10px 10px;
+                font-size: 11px;
+            }
+            .bottom-utils button {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
         }
     </style>
 </head>
@@ -643,7 +695,13 @@
             <!-- 头部 -->
             <div class="app-header">
                 <div class="header-top">
-                    <h1>📚 刷题 <small>教综</small></h1>
+                    <h1>📚 刷题 <small>多题库</small></h1>
+                    <div class="library-selector">
+                        <span style="font-size:13px;color:#64748b;">📂</span>
+                        <select id="librarySelect"></select>
+                        <button id="deleteLibraryBtn" title="删除当前题库">🗑️</button>
+                        <button id="addLibraryBtn" title="上传新题库">➕</button>
+                    </div>
                     <div class="stats-ring-wrapper">
                         <div class="ring-container">
                             <svg viewBox="0 0 48 48">
@@ -691,7 +749,7 @@
                 </div>
             </div>
 
-            <!-- 底部固定操作栏 -->
+            <!-- 底部操作栏 -->
             <div class="bottom-actions">
                 <button class="btn-master" id="actionMaster">✅ 掌握</button>
                 <button class="btn-review" id="actionReview">🔄 复习</button>
@@ -699,15 +757,18 @@
                 <button class="btn-toggle" id="actionToggle">👀 口诀</button>
             </div>
 
-            <!-- 底部工具条（新增 复制进度） -->
+            <!-- 底部工具条 -->
             <div class="bottom-utils">
-                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <div class="left-group">
                     <button id="exportBtn">📥 导出进度</button>
                     <button id="copyBtn">📋 复制进度</button>
-                    <button id="importBtn">📤 导入进度</button>
+                    <button id="pasteImportBtn">📋 从剪贴板导入</button>
+                    <button id="importBtn">📤 导入文件</button>
                     <input type="file" id="importFileInput" accept=".json">
                 </div>
-                <button class="danger" id="resetAllBtn">🗑️ 重置全部</button>
+                <div class="right-group">
+                    <button id="resetAllBtn" class="danger">🗑️ 重置全部</button>
+                </div>
             </div>
         </div>
     </div>
@@ -716,10 +777,13 @@
         (function() {
             'use strict';
 
-            // ---------- DOM 引用 ----------
+            // ---------- DOM ----------
             const uploadScreen = document.getElementById('uploadScreen');
             const mainApp = document.getElementById('mainApp');
             const fileInput = document.getElementById('fileInput');
+            const librarySelect = document.getElementById('librarySelect');
+            const deleteLibraryBtn = document.getElementById('deleteLibraryBtn');
+            const addLibraryBtn = document.getElementById('addLibraryBtn');
             const categoryFilter = document.getElementById('categoryFilter');
             const statusFilter = document.getElementById('statusFilter');
             const modeSelect = document.getElementById('modeSelect');
@@ -735,6 +799,7 @@
             const actionToggle = document.getElementById('actionToggle');
             const exportBtn = document.getElementById('exportBtn');
             const copyBtn = document.getElementById('copyBtn');
+            const pasteImportBtn = document.getElementById('pasteImportBtn');
             const importBtn = document.getElementById('importBtn');
             const importFileInput = document.getElementById('importFileInput');
             const resetAllBtn = document.getElementById('resetAllBtn');
@@ -743,8 +808,10 @@
             const masteredCount = document.getElementById('masteredCount');
             const reviewCount = document.getElementById('reviewCount');
 
-            // ---------- 状态 ----------
-            let allQuestions = [];
+            // ---------- 全局状态 ----------
+            let allLibraries = {}; // { libraryId: { name, questions: [ {id, category, question, mnemonic} ] } }
+            let currentLibraryId = null;
+            let currentQuestions = [];
             let filteredQuestions = [];
             let currentIndex = 0;
             let isMnemonicVisible = false;
@@ -752,48 +819,77 @@
             let currentCategory = 'all';
             let currentStatusFilter = 'all';
 
-            // ---------- 触摸滑动 ----------
-            let touchStartX = 0,
-                touchStartY = 0,
-                isSwiping = false;
+            // ---------- 存储键 ----------
+            const LIBRARY_LIST_KEY = 'studyLibraries_v4';
+            const PROGRESS_KEY = 'studyProgress_v4';
 
             // ---------- 进度管理 ----------
-            const STORAGE_KEY = 'studyProgress_v3';
+            function loadLibraries() {
+                try {
+                    const raw = localStorage.getItem(LIBRARY_LIST_KEY);
+                    if (raw) return JSON.parse(raw);
+                } catch (e) { /* ignore */ }
+                return {};
+            }
+
+            function saveLibraries(libs) {
+                localStorage.setItem(LIBRARY_LIST_KEY, JSON.stringify(libs));
+            }
 
             function loadProgress() {
                 try {
-                    const raw = localStorage.getItem(STORAGE_KEY);
+                    const raw = localStorage.getItem(PROGRESS_KEY);
                     if (raw) return JSON.parse(raw);
                 } catch (e) { /* ignore */ }
                 return {};
             }
 
             function saveProgress(progress) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+                localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
             }
 
-            function getQuestionStatus(qId) {
-                const progress = loadProgress();
-                return progress[qId] || 'none';
+            function getLibraryProgress(libId) {
+                const all = loadProgress();
+                return all[libId] || {};
             }
 
-            function setQuestionStatus(qId, status) {
-                const progress = loadProgress();
-                if (status === 'none') delete progress[qId];
-                else progress[qId] = status;
-                saveProgress(progress);
+            function setLibraryProgress(libId, progress) {
+                const all = loadProgress();
+                all[libId] = progress;
+                saveProgress(all);
+            }
+
+            function getQuestionStatus(libId, qId) {
+                const prog = getLibraryProgress(libId);
+                return prog[qId] || 'none';
+            }
+
+            function setQuestionStatus(libId, qId, status) {
+                const prog = getLibraryProgress(libId);
+                if (status === 'none') delete prog[qId];
+                else prog[qId] = status;
+                setLibraryProgress(libId, prog);
                 updateStatsAndUI();
                 renderCard();
             }
 
+            function resetAllProgressForLibrary(libId) {
+                if (confirm(`确定要重置题库“${allLibraries[libId].name}”的所有进度吗？`)) {
+                    setLibraryProgress(libId, {});
+                    updateStatsAndUI();
+                    renderCard();
+                }
+            }
+
             // ---------- 统计 ----------
-            function calcStats() {
-                const total = allQuestions.length;
+            function calcStatsForLibrary(libId) {
+                const questions = allLibraries[libId]?.questions || [];
+                const total = questions.length;
+                const prog = getLibraryProgress(libId);
                 let mastered = 0,
                     review = 0;
-                const progress = loadProgress();
-                allQuestions.forEach(q => {
-                    const s = progress[q.id] || 'none';
+                questions.forEach(q => {
+                    const s = prog[q.id] || 'none';
                     if (s === 'mastered') mastered++;
                     else if (s === 'review') review++;
                 });
@@ -802,7 +898,14 @@
             }
 
             function updateStatsAndUI() {
-                const stats = calcStats();
+                if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+                    masteredCount.textContent = '0';
+                    reviewCount.textContent = '0';
+                    ringPercent.textContent = '0%';
+                    progressRing.style.strokeDashoffset = 125.6;
+                    return;
+                }
+                const stats = calcStatsForLibrary(currentLibraryId);
                 masteredCount.textContent = stats.mastered;
                 reviewCount.textContent = stats.review;
                 const circumference = 125.6;
@@ -816,6 +919,19 @@
 
             // ---------- 渲染卡片 ----------
             function renderCard() {
+                if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+                    cardContent.innerHTML = `<div class="empty-state">请先上传或选择一个题库</div>`;
+                    cardWrapper.className = 'card-wrapper';
+                    updateStatsAndUI();
+                    return;
+                }
+                const questions = currentQuestions;
+                if (!questions.length) {
+                    cardContent.innerHTML = `<div class="empty-state">当前题库为空</div>`;
+                    cardWrapper.className = 'card-wrapper';
+                    updateStatsAndUI();
+                    return;
+                }
                 if (!filteredQuestions.length) {
                     cardContent.innerHTML = `<div class="empty-state">当前筛选无题目</div>`;
                     cardWrapper.className = 'card-wrapper';
@@ -828,7 +944,7 @@
                 const q = filteredQuestions[currentIndex];
                 if (!q) { cardContent.innerHTML = `<div class="empty-state">加载失败</div>`; return; }
 
-                const status = getQuestionStatus(q.id);
+                const status = getQuestionStatus(currentLibraryId, q.id);
                 cardWrapper.className = 'card-wrapper';
                 if (status === 'mastered') cardWrapper.classList.add('mastered');
                 else if (status === 'review') cardWrapper.classList.add('review');
@@ -884,18 +1000,24 @@
 
             // ---------- 筛选 ----------
             function applyFilters() {
+                if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+                    filteredQuestions = [];
+                    renderCard();
+                    return;
+                }
+                const questions = allLibraries[currentLibraryId].questions || [];
                 const category = categoryFilter.value;
                 const status = statusFilter.value;
                 currentCategory = category;
                 currentStatusFilter = status;
 
-                let filtered = allQuestions;
+                let filtered = questions;
                 if (category !== 'all') {
-                    filtered = allQuestions.filter(q => q.category === category);
+                    filtered = filtered.filter(q => q.category === category);
                 }
                 if (status !== 'all') {
                     filtered = filtered.filter(q => {
-                        const s = getQuestionStatus(q.id);
+                        const s = getQuestionStatus(currentLibraryId, q.id);
                         return s === status;
                     });
                 }
@@ -925,129 +1047,172 @@
                 }
             }
 
-            // ---------- 导出/复制/导入 ----------
-            function getProgressDataStr() {
-                return JSON.stringify(loadProgress(), null, 2);
-            }
-
-            // 尝试下载，否则弹出复制
-            function exportProgress() {
-                const dataStr = getProgressDataStr();
-                // 尝试下载
-                try {
-                    const blob = new Blob([dataStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `study_progress_${new Date().toISOString().slice(0,10)}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    return; // 下载成功
-                } catch (e) {
-                    // 降级：显示复制对话框
-                    showCopyModal(dataStr);
-                }
-            }
-
-            // 直接复制（不尝试下载）
-            function copyProgress() {
-                const dataStr = getProgressDataStr();
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(dataStr).then(() => {
-                        alert('✅ 进度数据已复制到剪贴板，请粘贴到文本文件保存（扩展名 .json）');
-                    }).catch(() => {
-                        fallbackCopy(dataStr);
-                    });
+            // ---------- 题库管理 ----------
+            function loadAllLibraries() {
+                allLibraries = loadLibraries();
+                // 确保每个库都有 id
+                Object.keys(allLibraries).forEach(id => {
+                    if (!allLibraries[id].id) allLibraries[id].id = id;
+                });
+                // 更新下拉
+                updateLibrarySelector();
+                // 恢复上次选择的库
+                const lastLib = localStorage.getItem('lastLibraryId');
+                if (lastLib && allLibraries[lastLib]) {
+                    switchToLibrary(lastLib);
                 } else {
-                    fallbackCopy(dataStr);
+                    const ids = Object.keys(allLibraries);
+                    if (ids.length) {
+                        switchToLibrary(ids[0]);
+                    } else {
+                        // 无题库，显示上传界面
+                        uploadScreen.style.display = 'flex';
+                        mainApp.style.display = 'none';
+                        currentLibraryId = null;
+                        currentQuestions = [];
+                        filteredQuestions = [];
+                        renderCard();
+                    }
                 }
             }
 
-            function fallbackCopy(text) {
-                // 使用 textarea 复制
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    alert('✅ 进度数据已复制到剪贴板，请粘贴到文本文件保存（扩展名 .json）');
-                } catch (e) {
-                    // 如果复制失败，弹窗显示数据
-                    showCopyModal(text);
+            function updateLibrarySelector() {
+                const current = librarySelect.value;
+                librarySelect.innerHTML = '';
+                Object.keys(allLibraries).forEach(id => {
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = allLibraries[id].name || '未命名题库';
+                    librarySelect.appendChild(opt);
+                });
+                if (current && allLibraries[current]) {
+                    librarySelect.value = current;
+                } else if (Object.keys(allLibraries).length) {
+                    librarySelect.value = Object.keys(allLibraries)[0];
                 }
-                document.body.removeChild(textarea);
             }
 
-            // 自定义模态框显示 JSON
-            function showCopyModal(text) {
-                // 移除旧模态
-                const old = document.querySelector('.copy-modal-overlay');
-                if (old) old.remove();
+            function switchToLibrary(libId) {
+                if (!allLibraries[libId]) return;
+                currentLibraryId = libId;
+                currentQuestions = allLibraries[libId].questions || [];
+                localStorage.setItem('lastLibraryId', libId);
+                librarySelect.value = libId;
+                // 更新分类下拉
+                const cats = new Set();
+                currentQuestions.forEach(q => cats.add(q.category));
+                categoryFilter.innerHTML = '<option value="all">📂 全部</option>';
+                cats.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    categoryFilter.appendChild(opt);
+                });
+                applyFilters();
+            }
 
+            function deleteLibrary(libId) {
+                if (!allLibraries[libId]) return;
+                if (!confirm(`确定要删除题库“${allLibraries[libId].name}”及其所有进度吗？`)) return;
+                delete allLibraries[libId];
+                saveLibraries(allLibraries);
+                // 删除进度
+                const allProgress = loadProgress();
+                delete allProgress[libId];
+                saveProgress(allProgress);
+                const ids = Object.keys(allLibraries);
+                if (ids.length) {
+                    switchToLibrary(ids[0]);
+                } else {
+                    uploadScreen.style.display = 'flex';
+                    mainApp.style.display = 'none';
+                    currentLibraryId = null;
+                    currentQuestions = [];
+                    filteredQuestions = [];
+                    renderCard();
+                }
+                updateLibrarySelector();
+            }
+
+            function addNewLibrary(name, questions) {
+                const id = 'lib_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                allLibraries[id] = { id, name, questions };
+                saveLibraries(allLibraries);
+                // 初始化进度为空
+                setLibraryProgress(id, {});
+                updateLibrarySelector();
+                switchToLibrary(id);
+                // 切换到主界面
+                uploadScreen.style.display = 'none';
+                mainApp.style.display = 'flex';
+            }
+
+            // ---------- 上传新题库 ----------
+            function handleFileUpload(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const parsed = parseExcelData(workbook);
+                        if (!parsed.length) {
+                            alert('未能解析出题目，请检查 Excel 格式。');
+                            return;
+                        }
+                        // 弹出名称输入
+                        const defaultName = file.name.replace(/\.[^.]+$/, '');
+                        promptForLibraryName(defaultName, (name) => {
+                            if (name) {
+                                addNewLibrary(name, parsed);
+                            }
+                        });
+                    } catch (err) {
+                        alert('解析失败：' + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            function promptForLibraryName(defaultName, callback) {
+                // 自定义模态框
                 const overlay = document.createElement('div');
-                overlay.className = 'copy-modal-overlay';
+                overlay.className = 'modal-overlay';
                 overlay.innerHTML = `
-                    <div class="copy-modal">
-                        <h3>📋 请复制以下进度数据</h3>
-                        <textarea readonly id="copyModalTextarea">${escapeHtml(text)}</textarea>
+                    <div class="modal-box">
+                        <h3>📚 新建题库</h3>
+                        <input type="text" id="libNameInput" placeholder="输入题库名称..." value="${escapeHtml(defaultName)}">
                         <div class="modal-actions">
-                            <button class="btn-secondary" id="modalCloseBtn">关闭</button>
-                            <button class="btn-primary" id="modalCopyBtn">📋 复制到剪贴板</button>
+                            <button class="btn-secondary" id="modalCancelBtn">取消</button>
+                            <button class="btn-primary" id="modalConfirmBtn">确定</button>
                         </div>
                     </div>
                 `;
                 document.body.appendChild(overlay);
+                const input = overlay.querySelector('#libNameInput');
+                input.focus();
+                input.select();
 
-                // 关闭
-                overlay.querySelector('#modalCloseBtn').addEventListener('click', () => overlay.remove());
+                const close = () => overlay.remove();
+                overlay.querySelector('#modalCancelBtn').addEventListener('click', () => {
+                    close();
+                    callback(null);
+                });
+                overlay.querySelector('#modalConfirmBtn').addEventListener('click', () => {
+                    const name = input.value.trim() || defaultName;
+                    close();
+                    callback(name);
+                });
                 overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) overlay.remove();
+                    if (e.target === overlay) { close();
+                        callback(null); }
                 });
-
-                // 复制
-                overlay.querySelector('#modalCopyBtn').addEventListener('click', () => {
-                    const ta = overlay.querySelector('#modalCopyTextarea');
-                    ta.select();
-                    try {
-                        document.execCommand('copy');
-                        alert('✅ 已复制到剪贴板！');
-                    } catch (e) {
-                        alert('复制失败，请手动选择文本后复制。');
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const name = input.value.trim() || defaultName;
+                        close();
+                        callback(name);
                     }
                 });
-            }
-
-            function importProgress(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if (typeof data === 'object' && data !== null) {
-                            if (confirm('导入将覆盖当前所有进度记录，确定继续吗？')) {
-                                saveProgress(data);
-                                updateStatsAndUI();
-                                applyFilters();
-                                alert('✅ 导入成功！');
-                            }
-                        } else {
-                            alert('❌ 无效的进度文件');
-                        }
-                    } catch (err) {
-                        alert('❌ 解析失败：' + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            }
-
-            function resetAllProgress() {
-                if (confirm('确定要重置所有题目的进度吗？此操作不可撤销！')) {
-                    localStorage.removeItem(STORAGE_KEY);
-                    updateStatsAndUI();
-                    applyFilters();
-                }
             }
 
             // ---------- 解析 Excel ----------
@@ -1085,20 +1250,167 @@
                 return questions;
             }
 
-            // ---------- 初始化 ----------
-            function initMainApp() {
-                const cats = new Set();
-                allQuestions.forEach(q => cats.add(q.category));
-                categoryFilter.innerHTML = '<option value="all">📂 全部</option>';
-                cats.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = c;
-                    categoryFilter.appendChild(opt);
+            // ---------- 导出/导入进度（支持多题库） ----------
+            function getExportData() {
+                // 导出所有题库进度
+                const allProgress = loadProgress();
+                return JSON.stringify(allProgress, null, 2);
+            }
+
+            function exportAllProgress() {
+                const dataStr = getExportData();
+                try {
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `all_progress_${new Date().toISOString().slice(0,10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    showModal('📋 导出全部进度', dataStr, '复制', (text) => {
+                        copyToClipboard(text);
+                    });
+                }
+            }
+
+            function copyAllProgress() {
+                const dataStr = getExportData();
+                copyToClipboard(dataStr);
+            }
+
+            function importProgressFromPaste() {
+                showModal('📋 从剪贴板导入进度（覆盖所有题库进度）', '', '导入', (text) => {
+                    try {
+                        const data = JSON.parse(text);
+                        if (typeof data === 'object' && data !== null) {
+                            if (confirm('导入将覆盖当前所有题库的进度记录，确定继续吗？')) {
+                                saveProgress(data);
+                                // 刷新当前题库显示
+                                if (currentLibraryId && allLibraries[currentLibraryId]) {
+                                    switchToLibrary(currentLibraryId);
+                                } else {
+                                    applyFilters();
+                                }
+                                alert('✅ 导入成功！');
+                            }
+                        } else {
+                            alert('❌ 无效的进度数据');
+                        }
+                    } catch (err) {
+                        alert('❌ 解析失败：' + err.message);
+                    }
+                });
+            }
+
+            function importProgressFromFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (typeof data === 'object' && data !== null) {
+                            if (confirm('导入将覆盖当前所有题库的进度记录，确定继续吗？')) {
+                                saveProgress(data);
+                                if (currentLibraryId && allLibraries[currentLibraryId]) {
+                                    switchToLibrary(currentLibraryId);
+                                } else {
+                                    applyFilters();
+                                }
+                                alert('✅ 导入成功！');
+                            }
+                        } else {
+                            alert('❌ 无效的进度文件');
+                        }
+                    } catch (err) {
+                        alert('❌ 解析失败：' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ---------- 通用模态框 ----------
+            function showModal(title, initialText, actionLabel, onAction) {
+                const old = document.querySelector('.modal-overlay');
+                if (old) old.remove();
+
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal-box">
+                        <h3>${title}</h3>
+                        <textarea id="modalTextarea">${escapeHtml(initialText)}</textarea>
+                        <div class="modal-actions">
+                            <button class="btn-secondary" id="modalCloseBtn">关闭</button>
+                            <button class="btn-primary" id="modalActionBtn">${actionLabel}</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const closeModal = () => overlay.remove();
+                overlay.querySelector('#modalCloseBtn').addEventListener('click', closeModal);
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) closeModal();
                 });
 
-                uploadScreen.style.display = 'none';
-                mainApp.style.display = 'flex';
+                overlay.querySelector('#modalActionBtn').addEventListener('click', () => {
+                    const text = overlay.querySelector('#modalTextarea').value;
+                    onAction(text);
+                    closeModal();
+                });
+            }
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('✅ 已复制到剪贴板！');
+                    }).catch(() => {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('✅ 已复制到剪贴板！');
+                } catch (e) {
+                    alert('❌ 复制失败，请手动复制。');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // ---------- 触摸滑动 ----------
+            let touchStartX = 0,
+                touchStartY = 0,
+                isSwiping = false;
+
+            // ---------- 事件绑定 ----------
+            function bindEvents() {
+                librarySelect.addEventListener('change', (e) => {
+                    const id = e.target.value;
+                    if (id && allLibraries[id]) {
+                        switchToLibrary(id);
+                    }
+                });
+
+                deleteLibraryBtn.addEventListener('click', () => {
+                    if (currentLibraryId) deleteLibrary(currentLibraryId);
+                });
+
+                addLibraryBtn.addEventListener('click', () => {
+                    // 触发展开上传界面
+                    uploadScreen.style.display = 'flex';
+                    mainApp.style.display = 'none';
+                });
 
                 categoryFilter.addEventListener('change', () => { isMnemonicVisible = false;
                     applyFilters(); });
@@ -1123,36 +1435,40 @@
                 randomBtn.addEventListener('click', goRandom);
 
                 actionMaster.addEventListener('click', () => {
-                    if (!filteredQuestions.length) return;
+                    if (!currentLibraryId || !filteredQuestions.length) return;
                     const q = filteredQuestions[currentIndex];
-                    setQuestionStatus(q.id, 'mastered');
+                    setQuestionStatus(currentLibraryId, q.id, 'mastered');
                 });
                 actionReview.addEventListener('click', () => {
-                    if (!filteredQuestions.length) return;
+                    if (!currentLibraryId || !filteredQuestions.length) return;
                     const q = filteredQuestions[currentIndex];
-                    setQuestionStatus(q.id, 'review');
+                    setQuestionStatus(currentLibraryId, q.id, 'review');
                 });
                 actionReset.addEventListener('click', () => {
-                    if (!filteredQuestions.length) return;
+                    if (!currentLibraryId || !filteredQuestions.length) return;
                     const q = filteredQuestions[currentIndex];
-                    setQuestionStatus(q.id, 'none');
+                    setQuestionStatus(currentLibraryId, q.id, 'none');
                 });
                 actionToggle.addEventListener('click', () => {
                     isMnemonicVisible = !isMnemonicVisible;
                     renderCard();
                 });
 
-                exportBtn.addEventListener('click', exportProgress);
-                copyBtn.addEventListener('click', copyProgress);
+                exportBtn.addEventListener('click', exportAllProgress);
+                copyBtn.addEventListener('click', copyAllProgress);
+                pasteImportBtn.addEventListener('click', importProgressFromPaste);
                 importBtn.addEventListener('click', () => importFileInput.click());
                 importFileInput.addEventListener('change', (e) => {
                     if (e.target.files.length) {
-                        importProgress(e.target.files[0]);
+                        importProgressFromFile(e.target.files[0]);
                         e.target.value = '';
                     }
                 });
-                resetAllBtn.addEventListener('click', resetAllProgress);
+                resetAllBtn.addEventListener('click', () => {
+                    if (currentLibraryId) resetAllProgressForLibrary(currentLibraryId);
+                });
 
+                // 键盘
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowLeft') navigate(-1);
                     else if (e.key === 'ArrowRight') navigate(1);
@@ -1193,55 +1509,47 @@
                     isSwiping = false;
                 }, { passive: true });
 
-                applyFilters();
-            }
-
-            // ---------- 文件上传 ----------
-            function handleFile(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const parsed = parseExcelData(workbook);
-                        if (!parsed.length) {
-                            alert('未能解析出题目，请检查 Excel 格式。');
-                            return;
-                        }
-                        allQuestions = parsed;
-                        allQuestions.sort((a, b) => a.id - b.id);
-                        initMainApp();
-                    } catch (err) {
-                        alert('解析失败：' + err.message);
+                // 文件上传
+                fileInput.addEventListener('change', (e) => {
+                    if (fileInput.files.length) handleFileUpload(fileInput.files[0]);
+                });
+                uploadScreen.addEventListener('click', () => fileInput.click());
+                uploadScreen.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadScreen.style.borderColor = '#4f46e5';
+                    uploadScreen.style.background = '#eef2ff';
+                });
+                uploadScreen.addEventListener('dragleave', () => {
+                    uploadScreen.style.borderColor = '#cbd5e1';
+                    uploadScreen.style.background = '#fafcff';
+                });
+                uploadScreen.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadScreen.style.borderColor = '#cbd5e1';
+                    uploadScreen.style.background = '#fafcff';
+                    if (e.dataTransfer.files.length) {
+                        handleFileUpload(e.dataTransfer.files[0]);
+                        fileInput.files = e.dataTransfer.files;
                     }
-                };
-                reader.readAsArrayBuffer(file);
+                });
             }
 
-            fileInput.addEventListener('change', (e) => {
-                if (fileInput.files.length) handleFile(fileInput.files[0]);
-            });
-            uploadScreen.addEventListener('click', () => fileInput.click());
-            uploadScreen.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadScreen.style.borderColor = '#4f46e5';
-                uploadScreen.style.background = '#eef2ff';
-            });
-            uploadScreen.addEventListener('dragleave', () => {
-                uploadScreen.style.borderColor = '#cbd5e1';
-                uploadScreen.style.background = '#fafcff';
-            });
-            uploadScreen.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadScreen.style.borderColor = '#cbd5e1';
-                uploadScreen.style.background = '#fafcff';
-                if (e.dataTransfer.files.length) {
-                    handleFile(e.dataTransfer.files[0]);
-                    fileInput.files = e.dataTransfer.files;
+            // ---------- 初始化 ----------
+            function init() {
+                bindEvents();
+                loadAllLibraries();
+                // 如果没有任何题库，显示上传界面
+                if (Object.keys(allLibraries).length === 0) {
+                    uploadScreen.style.display = 'flex';
+                    mainApp.style.display = 'none';
+                } else {
+                    uploadScreen.style.display = 'none';
+                    mainApp.style.display = 'flex';
                 }
-            });
+            }
 
-            console.log('🚀 刷题器已加载（支持微信导出/复制）');
+            init();
+            console.log('🚀 多题库刷题器已启动');
         })();
     </script>
 
