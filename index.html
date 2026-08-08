@@ -24,7 +24,6 @@
             align-items: center;
             padding: 12px;
         }
-        /* 主容器：模拟卡片式应用 */
         .app-container {
             max-width: 820px;
             width: 100%;
@@ -66,7 +65,6 @@
             color: #94a3b8;
             margin-left: 6px;
         }
-        /* 环形进度 + 统计 */
         .stats-ring-wrapper {
             display: flex;
             align-items: center;
@@ -127,7 +125,6 @@
             color: #ea580c;
         }
 
-        /* 筛选栏 (滚动) */
         .filter-bar {
             display: flex;
             gap: 8px;
@@ -164,7 +161,7 @@
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
 
-        /* ===== 卡片区域 (可滑动) ===== */
+        /* ===== 卡片区域 ===== */
         .card-slide-area {
             flex: 1;
             padding: 16px 20px 20px 20px;
@@ -174,7 +171,6 @@
             flex-direction: column;
             background: #ffffff;
             touch-action: pan-y;
-            /* 保留垂直滚动，水平滑动由JS接管 */;
         }
         .card-wrapper {
             flex: 1;
@@ -188,7 +184,6 @@
             min-height: 240px;
             position: relative;
             touch-action: none;
-            /* 禁止浏览器默认手势，以便JS控制滑动 */;
         }
         .card-wrapper.mastered {
             border-color: #86efac;
@@ -198,7 +193,6 @@
             border-color: #fdba74;
             background: #fff7ed;
         }
-        /* 滑动指示器 (轻触反馈) */
         .card-wrapper .swipe-hint {
             position: absolute;
             top: 50%;
@@ -288,7 +282,6 @@
             color: #64748b;
         }
 
-        /* ===== 导航按钮 (卡片内嵌) ===== */
         .nav-buttons {
             display: flex;
             gap: 8px;
@@ -320,7 +313,7 @@
             background: #c7d2fe;
         }
 
-        /* ===== 底部操作栏 (固定) ===== */
+        /* ===== 底部操作栏 ===== */
         .bottom-actions {
             flex-shrink: 0;
             background: white;
@@ -379,7 +372,7 @@
             background: #c7d2fe;
         }
 
-        /* 底部辅助栏 (导出/导入/重置全部) */
+        /* ===== 底部工具条 ===== */
         .bottom-utils {
             flex-shrink: 0;
             padding: 8px 16px 12px 16px;
@@ -401,6 +394,7 @@
             font-size: 12px;
             font-weight: 500;
             transition: 0.15s;
+            touch-action: manipulation;
         }
         .bottom-utils button:active {
             background: #e9edf2;
@@ -412,7 +406,7 @@
             display: none;
         }
 
-        /* ===== 上传区域 (占位) ===== */
+        /* ===== 上传界面 ===== */
         .upload-placeholder {
             display: flex;
             flex-direction: column;
@@ -445,7 +439,6 @@
             display: none;
         }
 
-        /* ===== 空状态 ===== */
         .empty-state {
             text-align: center;
             color: #94a3b8;
@@ -453,7 +446,81 @@
             font-size: 16px;
         }
 
-        /* ===== PC端适配 (≥ 768px) ===== */
+        /* ===== 复制弹窗（自定义） ===== */
+        .copy-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .copy-modal {
+            background: white;
+            max-width: 92%;
+            width: 500px;
+            border-radius: 24px;
+            padding: 24px 20px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .copy-modal h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        .copy-modal textarea {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 13px;
+            font-family: monospace;
+            resize: vertical;
+            background: #f8fafc;
+            color: #0f172a;
+            flex: 1;
+            min-height: 150px;
+        }
+        .copy-modal .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+        .copy-modal .modal-actions button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .copy-modal .modal-actions .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .copy-modal .modal-actions .btn-primary:active {
+            background: #4338ca;
+        }
+        .copy-modal .modal-actions .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .copy-modal .modal-actions .btn-secondary:active {
+            background: #e2e8f0;
+        }
+
+        /* ===== PC端适配 ===== */
         @media (min-width: 768px) {
             body {
                 padding: 24px;
@@ -505,13 +572,11 @@
                 background: #e9edf2;
                 color: #0f172a;
             }
-            /* 上传区域 */
             .upload-placeholder {
                 min-height: 400px;
             }
         }
 
-        /* ===== 移动端微调 (< 400px) ===== */
         @media (max-width: 400px) {
             .app-header {
                 padding: 12px 16px 8px 16px;
@@ -564,7 +629,7 @@
 
     <div class="app-container" id="app">
 
-        <!-- ===== 上传界面 (初始) ===== -->
+        <!-- 上传界面 -->
         <div id="uploadScreen" class="upload-placeholder" style="display:flex;">
             <div class="icon">📤</div>
             <div class="text">点击上传 或 拖拽 Excel 文件</div>
@@ -572,7 +637,7 @@
             <input type="file" id="fileInput" accept=".xlsx,.xls">
         </div>
 
-        <!-- ===== 主界面 (上传后显示) ===== -->
+        <!-- 主界面 -->
         <div id="mainApp" style="display:none; flex-direction:column; height:100%;">
 
             <!-- 头部 -->
@@ -613,16 +678,11 @@
             <!-- 卡片滑动区 -->
             <div class="card-slide-area" id="cardSlideArea">
                 <div class="card-wrapper" id="cardWrapper">
-                    <!-- 滑动箭头装饰 -->
                     <div class="swipe-hint left">‹</div>
                     <div class="swipe-hint right">›</div>
-
-                    <!-- 内容由 JS 动态渲染 -->
                     <div id="cardContent">
                         <div class="empty-state">加载中...</div>
                     </div>
-
-                    <!-- 导航按钮 -->
                     <div class="nav-buttons">
                         <button id="prevBtn">◀ 上一题</button>
                         <button id="randomBtn" class="btn-random">🎲 随机</button>
@@ -639,10 +699,11 @@
                 <button class="btn-toggle" id="actionToggle">👀 口诀</button>
             </div>
 
-            <!-- 底部工具条 -->
+            <!-- 底部工具条（新增 复制进度） -->
             <div class="bottom-utils">
-                <div style="display:flex; gap:4px;">
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
                     <button id="exportBtn">📥 导出进度</button>
+                    <button id="copyBtn">📋 复制进度</button>
                     <button id="importBtn">📤 导入进度</button>
                     <input type="file" id="importFileInput" accept=".json">
                 </div>
@@ -673,6 +734,7 @@
             const actionReset = document.getElementById('actionReset');
             const actionToggle = document.getElementById('actionToggle');
             const exportBtn = document.getElementById('exportBtn');
+            const copyBtn = document.getElementById('copyBtn');
             const importBtn = document.getElementById('importBtn');
             const importFileInput = document.getElementById('importFileInput');
             const resetAllBtn = document.getElementById('resetAllBtn');
@@ -690,10 +752,10 @@
             let currentCategory = 'all';
             let currentStatusFilter = 'all';
 
-            // ---------- 滑动触摸状态 ----------
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let isSwiping = false;
+            // ---------- 触摸滑动 ----------
+            let touchStartX = 0,
+                touchStartY = 0,
+                isSwiping = false;
 
             // ---------- 进度管理 ----------
             const STORAGE_KEY = 'studyProgress_v3';
@@ -724,7 +786,7 @@
                 renderCard();
             }
 
-            // ---------- 统计 & UI更新 ----------
+            // ---------- 统计 ----------
             function calcStats() {
                 const total = allQuestions.length;
                 let mastered = 0,
@@ -743,13 +805,10 @@
                 const stats = calcStats();
                 masteredCount.textContent = stats.mastered;
                 reviewCount.textContent = stats.review;
-
-                const circumference = 125.6; // 2 * PI * 20
+                const circumference = 125.6;
                 const offset = circumference - (stats.pct / 100) * circumference;
                 progressRing.style.strokeDashoffset = offset;
                 ringPercent.textContent = stats.pct + '%';
-
-                // 根据掌握程度变色
                 if (stats.pct >= 80) progressRing.style.stroke = '#16a34a';
                 else if (stats.pct >= 40) progressRing.style.stroke = '#eab308';
                 else progressRing.style.stroke = '#4f46e5';
@@ -767,18 +826,13 @@
                 if (currentIndex < 0) currentIndex = 0;
 
                 const q = filteredQuestions[currentIndex];
-                if (!q) {
-                    cardContent.innerHTML = `<div class="empty-state">加载失败</div>`;
-                    return;
-                }
+                if (!q) { cardContent.innerHTML = `<div class="empty-state">加载失败</div>`; return; }
 
                 const status = getQuestionStatus(q.id);
-                // 更新卡片边框颜色
                 cardWrapper.className = 'card-wrapper';
                 if (status === 'mastered') cardWrapper.classList.add('mastered');
                 else if (status === 'review') cardWrapper.classList.add('review');
 
-                // 构建内容
                 let html = `
                     <div class="card-question">${escapeHtml(q.question)}</div>
                     <div class="card-mnemonic ${isMnemonicVisible ? 'show' : ''}">
@@ -794,8 +848,6 @@
                 `;
                 cardContent.innerHTML = html;
                 updateStatsAndUI();
-
-                // 更新按钮文字
                 actionToggle.textContent = isMnemonicVisible ? '🙈 口诀' : '👀 口诀';
             }
 
@@ -830,7 +882,7 @@
                 renderCard();
             }
 
-            // ---------- 筛选 & 排序 ----------
+            // ---------- 筛选 ----------
             function applyFilters() {
                 const category = categoryFilter.value;
                 const status = statusFilter.value;
@@ -873,17 +925,99 @@
                 }
             }
 
-            // ---------- 导出/导入进度 ----------
+            // ---------- 导出/复制/导入 ----------
+            function getProgressDataStr() {
+                return JSON.stringify(loadProgress(), null, 2);
+            }
+
+            // 尝试下载，否则弹出复制
             function exportProgress() {
-                const progress = loadProgress();
-                const dataStr = JSON.stringify(progress, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `study_progress_${new Date().toISOString().slice(0,10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
+                const dataStr = getProgressDataStr();
+                // 尝试下载
+                try {
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `study_progress_${new Date().toISOString().slice(0,10)}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    return; // 下载成功
+                } catch (e) {
+                    // 降级：显示复制对话框
+                    showCopyModal(dataStr);
+                }
+            }
+
+            // 直接复制（不尝试下载）
+            function copyProgress() {
+                const dataStr = getProgressDataStr();
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(dataStr).then(() => {
+                        alert('✅ 进度数据已复制到剪贴板，请粘贴到文本文件保存（扩展名 .json）');
+                    }).catch(() => {
+                        fallbackCopy(dataStr);
+                    });
+                } else {
+                    fallbackCopy(dataStr);
+                }
+            }
+
+            function fallbackCopy(text) {
+                // 使用 textarea 复制
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('✅ 进度数据已复制到剪贴板，请粘贴到文本文件保存（扩展名 .json）');
+                } catch (e) {
+                    // 如果复制失败，弹窗显示数据
+                    showCopyModal(text);
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // 自定义模态框显示 JSON
+            function showCopyModal(text) {
+                // 移除旧模态
+                const old = document.querySelector('.copy-modal-overlay');
+                if (old) old.remove();
+
+                const overlay = document.createElement('div');
+                overlay.className = 'copy-modal-overlay';
+                overlay.innerHTML = `
+                    <div class="copy-modal">
+                        <h3>📋 请复制以下进度数据</h3>
+                        <textarea readonly id="copyModalTextarea">${escapeHtml(text)}</textarea>
+                        <div class="modal-actions">
+                            <button class="btn-secondary" id="modalCloseBtn">关闭</button>
+                            <button class="btn-primary" id="modalCopyBtn">📋 复制到剪贴板</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                // 关闭
+                overlay.querySelector('#modalCloseBtn').addEventListener('click', () => overlay.remove());
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) overlay.remove();
+                });
+
+                // 复制
+                overlay.querySelector('#modalCopyBtn').addEventListener('click', () => {
+                    const ta = overlay.querySelector('#modalCopyTextarea');
+                    ta.select();
+                    try {
+                        document.execCommand('copy');
+                        alert('✅ 已复制到剪贴板！');
+                    } catch (e) {
+                        alert('复制失败，请手动选择文本后复制。');
+                    }
+                });
             }
 
             function importProgress(file) {
@@ -896,13 +1030,13 @@
                                 saveProgress(data);
                                 updateStatsAndUI();
                                 applyFilters();
-                                alert('导入成功！');
+                                alert('✅ 导入成功！');
                             }
                         } else {
-                            alert('无效的进度文件');
+                            alert('❌ 无效的进度文件');
                         }
                     } catch (err) {
-                        alert('解析失败：' + err.message);
+                        alert('❌ 解析失败：' + err.message);
                     }
                 };
                 reader.readAsText(file);
@@ -951,9 +1085,8 @@
                 return questions;
             }
 
-            // ---------- 初始化 UI (上传后) ----------
+            // ---------- 初始化 ----------
             function initMainApp() {
-                // 填充分类下拉
                 const cats = new Set();
                 allQuestions.forEach(q => cats.add(q.category));
                 categoryFilter.innerHTML = '<option value="all">📂 全部</option>';
@@ -964,11 +1097,9 @@
                     categoryFilter.appendChild(opt);
                 });
 
-                // 显示主界面
                 uploadScreen.style.display = 'none';
                 mainApp.style.display = 'flex';
 
-                // 绑定事件
                 categoryFilter.addEventListener('change', () => { isMnemonicVisible = false;
                     applyFilters(); });
                 statusFilter.addEventListener('change', () => { isMnemonicVisible = false;
@@ -1012,6 +1143,7 @@
                 });
 
                 exportBtn.addEventListener('click', exportProgress);
+                copyBtn.addEventListener('click', copyProgress);
                 importBtn.addEventListener('click', () => importFileInput.click());
                 importFileInput.addEventListener('change', (e) => {
                     if (e.target.files.length) {
@@ -1021,16 +1153,13 @@
                 });
                 resetAllBtn.addEventListener('click', resetAllProgress);
 
-                // 键盘支持 (PC)
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowLeft') navigate(-1);
                     else if (e.key === 'ArrowRight') navigate(1);
                 });
 
-                // 触摸滑动 (卡片区域)
-                const slideArea = document.getElementById('cardSlideArea');
+                // 触摸滑动
                 const wrapper = document.getElementById('cardWrapper');
-
                 wrapper.addEventListener('touchstart', (e) => {
                     const touch = e.touches[0];
                     touchStartX = touch.clientX;
@@ -1045,7 +1174,6 @@
                     const deltaY = touch.clientY - touchStartY;
                     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
                         isSwiping = true;
-                        // 阻止垂直滚动
                         e.preventDefault();
                     }
                 }, { passive: false });
@@ -1058,21 +1186,17 @@
                     }
                     const touch = e.changedTouches[0];
                     const deltaX = touch.clientX - touchStartX;
-                    if (deltaX > 50) {
-                        navigate(-1); // 右滑 -> 上一题
-                    } else if (deltaX < -50) {
-                        navigate(1); // 左滑 -> 下一题
-                    }
+                    if (deltaX > 50) navigate(-1);
+                    else if (deltaX < -50) navigate(1);
                     touchStartX = 0;
                     touchStartY = 0;
                     isSwiping = false;
                 }, { passive: true });
 
-                // 初次渲染
                 applyFilters();
             }
 
-            // ---------- 文件上传处理 ----------
+            // ---------- 文件上传 ----------
             function handleFile(file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1094,7 +1218,6 @@
                 reader.readAsArrayBuffer(file);
             }
 
-            // 上传事件
             fileInput.addEventListener('change', (e) => {
                 if (fileInput.files.length) handleFile(fileInput.files[0]);
             });
@@ -1118,7 +1241,7 @@
                 }
             });
 
-            console.log('🚀 移动升级版刷题器已加载');
+            console.log('🚀 刷题器已加载（支持微信导出/复制）');
         })();
     </script>
 
