@@ -1220,6 +1220,12 @@
 
     // ---------- 添加新题库 ----------
     function addNewLibrary(name, questions) {
+        // ---- 新增：重新分配全局唯一 ID ----
+        questions.forEach((q, index) => {
+            q.id = index + 1;  // 从1开始递增
+        });
+        // ---------------------------------
+
         if (!questions || questions.length === 0) {
             alert('题库为空，无法添加');
             return;
@@ -1600,7 +1606,7 @@
         URL.revokeObjectURL(url);
         alert('✅ 题库已导出为 JSON 文件');
     }
-    
+
     // ---------- 导出 PDF ----------
     function exportPdf() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
