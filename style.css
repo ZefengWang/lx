@@ -1054,3 +1054,17 @@ body {
         display: block !important;
     }
 }
+
+/* 按钮禁用状态 */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;  /* 禁止点击 */
+}
+
+/* 但为了更清晰的视觉反馈，还可以加一点灰度 */
+button:disabled {
+    background-color: #e5e7eb !important;
+    color: #9ca3af !important;
+    border-color: #d1d5db !important;
+}
