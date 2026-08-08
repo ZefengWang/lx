@@ -315,7 +315,7 @@
         const type = q.type || 'essay';
         let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
 
-        // 选择题渲染
+        // ======== 选择题渲染（不变） ========
         if (type === 'single') {
             const options = q.options || [];
             const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
@@ -363,7 +363,7 @@
             html += `</div>`;
             html += `<div class="feedback" id="feedback"></div>`;
         } else {
-            // 简答题
+            // 简答题：显示答案和备注内容（根据可见性）
             const answerText = q.answerText || '';
             const remarks = q.remarks || '';
             if (answerText) {
@@ -380,7 +380,7 @@
             }
         }
 
-        // 口诀/解析
+        // 口诀/解析（对所有题型）
         const explanation = q.explanation || q.mnemonic || '';
         if (explanation) {
             html += `
@@ -393,7 +393,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互
+        // ======== 绑定选择题交互（不变） ========
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -552,21 +552,32 @@
             });
         }
 
-        // 重建 card-actions
+        // ======== 重建 card-actions（简答题固定按钮组） ========
         let extraButtons = '';
         if (type === 'essay') {
+            // 答案字段状态
             const hasAnswer = q.answerText && q.answerText.trim() !== '';
-            const answerBtnLabel = hasAnswer ? '✏️ 修改答案' : '➕ 添加答案';
+            const answerAddDisabled = hasAnswer;
+            const answerEditDisabled = !hasAnswer;
+            const answerDeleteDisabled = !hasAnswer;
             const answerToggleLabel = isAnswerVisible ? '🙈 隐藏答案' : '👁️ 显示答案';
+
+            // 备注字段状态
             const hasRemark = q.remarks && q.remarks.trim() !== '';
-            const remarkBtnLabel = hasRemark ? '✏️ 修改备注' : '➕ 添加备注';
+            const remarkAddDisabled = hasRemark;
+            const remarkEditDisabled = !hasRemark;
+            const remarkDeleteDisabled = !hasRemark;
             const remarkToggleLabel = isRemarkVisible ? '🙈 隐藏备注' : '👁️ 显示备注';
 
             extraButtons = `
-                <button class="hint-btn" id="editAnswerBtn">${answerBtnLabel}</button>
-                ${hasAnswer ? `<button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="toggleAnswerBtn">${answerToggleLabel}</button>` : ''}
-                <button class="hint-btn" id="editRemarkBtn">${remarkBtnLabel}</button>
-                ${hasRemark ? `<button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="toggleRemarkBtn">${remarkToggleLabel}</button>` : ''}
+                <button class="hint-btn" id="addAnswerBtn" ${answerAddDisabled ? 'disabled' : ''}>➕ 添加答案</button>
+                <button class="hint-btn" id="editAnswerBtn" ${answerEditDisabled ? 'disabled' : ''}>✏️ 修改答案</button>
+                <button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="toggleAnswerBtn">${answerToggleLabel}</button>
+                <button class="hint-btn" id="deleteAnswerBtn" ${answerDeleteDisabled ? 'disabled' : ''}>🗑️ 删除答案</button>
+                <button class="hint-btn" id="addRemarkBtn" ${remarkAddDisabled ? 'disabled' : ''}>➕ 添加备注</button>
+                <button class="hint-btn" id="editRemarkBtn" ${remarkEditDisabled ? 'disabled' : ''}>✏️ 修改备注</button>
+                <button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="toggleRemarkBtn">${remarkToggleLabel}</button>
+                <button class="hint-btn" id="deleteRemarkBtn" ${remarkDeleteDisabled ? 'disabled' : ''}>🗑️ 删除备注</button>
             `;
         }
         cardActions.innerHTML = `
@@ -580,15 +591,26 @@
             </div>
         `;
 
-        // 绑定事件
+        // ======== 绑定所有按钮事件 ========
+        // 口诀
         document.getElementById('hintBtn').addEventListener('click', () => {
             isMnemonicVisible = !isMnemonicVisible;
             renderCard();
         });
+
+        // 答案相关
+        const addAnswerBtn = document.getElementById('addAnswerBtn');
+        if (addAnswerBtn) {
+            addAnswerBtn.addEventListener('click', () => {
+                showEditModal('添加答案', '', (val) => {
+                    saveQuestionField('answerText', val.trim());
+                });
+            });
+        }
         const editAnswerBtn = document.getElementById('editAnswerBtn');
         if (editAnswerBtn) {
             editAnswerBtn.addEventListener('click', () => {
-                showEditModal('编辑答案', q.answerText || '', (val) => {
+                showEditModal('修改答案', q.answerText || '', (val) => {
                     saveQuestionField('answerText', val.trim());
                 });
             });
@@ -600,10 +622,28 @@
                 renderCard();
             });
         }
+        const deleteAnswerBtn = document.getElementById('deleteAnswerBtn');
+        if (deleteAnswerBtn) {
+            deleteAnswerBtn.addEventListener('click', () => {
+                if (confirm('确定要删除答案吗？')) {
+                    saveQuestionField('answerText', '');
+                }
+            });
+        }
+
+        // 备注相关
+        const addRemarkBtn = document.getElementById('addRemarkBtn');
+        if (addRemarkBtn) {
+            addRemarkBtn.addEventListener('click', () => {
+                showEditModal('添加备注', '', (val) => {
+                    saveQuestionField('remarks', val.trim());
+                });
+            });
+        }
         const editRemarkBtn = document.getElementById('editRemarkBtn');
         if (editRemarkBtn) {
             editRemarkBtn.addEventListener('click', () => {
-                showEditModal('编辑备注', q.remarks || '', (val) => {
+                showEditModal('修改备注', q.remarks || '', (val) => {
                     saveQuestionField('remarks', val.trim());
                 });
             });
@@ -615,6 +655,16 @@
                 renderCard();
             });
         }
+        const deleteRemarkBtn = document.getElementById('deleteRemarkBtn');
+        if (deleteRemarkBtn) {
+            deleteRemarkBtn.addEventListener('click', () => {
+                if (confirm('确定要删除备注吗？')) {
+                    saveQuestionField('remarks', '');
+                }
+            });
+        }
+
+        // 导航按钮
         document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
         document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
         document.getElementById('randomBtn').addEventListener('click', goRandom);
