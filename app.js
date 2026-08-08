@@ -704,6 +704,105 @@
         renderCard();
     }
 
+    function getUniqueCategories() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) return [];
+        const questions = allLibraries[currentLibraryId].questions || [];
+        const cats = new Set();
+        questions.forEach(q => cats.add(q.category || '未分类'));
+        return Array.from(cats).sort();
+    }
+
+    function showManageCategoryModal() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            alert('请先选择一个题库');
+            return;
+        }
+        const lib = allLibraries[currentLibraryId];
+        const questions = lib.questions || [];
+        const catMap = {};
+        questions.forEach(q => {
+            const cat = q.category || '未分类';
+            catMap[cat] = (catMap[cat] || 0) + 1;
+        });
+        const categories = Object.keys(catMap).sort();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box" style="max-width:500px;">
+                <h3>📂 管理分类</h3>
+                <div style="max-height:50vh;overflow-y:auto;">
+                    ${categories.map(cat => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f2f5;">
+                            <span><strong>${escapeHtml(cat)}</strong> (${catMap[cat]}题)</span>
+                            <button class="rename-cat-btn" data-cat="${escapeHtml(cat)}" style="padding:4px 12px;border:none;border-radius:12px;background:#eef2ff;color:#4f46e5;cursor:pointer;">重命名</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="manageCatCloseBtn">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // 关闭
+        overlay.querySelector('#manageCatCloseBtn').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+        // 重命名事件
+        overlay.querySelectorAll('.rename-cat-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const oldName = this.dataset.cat;
+                const newName = prompt(`重命名分类“${oldName}”为：`, oldName);
+                if (newName && newName.trim() !== oldName) {
+                    // 检查新名称是否已存在且与旧名称不同
+                    const newNameTrim = newName.trim();
+                    if (categories.includes(newNameTrim) && newNameTrim !== oldName) {
+                        if (!confirm(`分类“${newNameTrim}”已存在，是否将“${oldName}”的题目合并到“${newNameTrim}”？`)) {
+                            return;
+                        }
+                    }
+                    // 执行重命名
+                    renameCategory(oldName, newNameTrim);
+                    overlay.remove();
+                }
+            });
+        });
+    }
+
+    function renameCategory(oldName, newName) {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) return;
+        const lib = allLibraries[currentLibraryId];
+        let changed = false;
+        lib.questions.forEach(q => {
+            if ((q.category || '未分类') === oldName) {
+                q.category = newName;
+                changed = true;
+            }
+        });
+        if (!changed) {
+            alert('没有题目需要重命名');
+            return;
+        }
+        // 保存
+        saveLibraries(allLibraries);
+        // 刷新下拉菜单
+        switchToLibrary(currentLibraryId); // 会重新填充分类下拉
+        // 如果当前选中的分类是旧名称，自动切换到新名称（如果新名称存在）
+        if (categoryFilter.value === oldName) {
+            // 尝试将下拉值设为新名称
+            if (Array.from(categoryFilter.options).some(opt => opt.value === newName)) {
+                categoryFilter.value = newName;
+            } else {
+                categoryFilter.value = 'all';
+            }
+        }
+        // 重新应用筛选
+        applyFilters();
+        alert(`成功将分类“${oldName}”重命名为“${newName}”`);
+    }
+
     // ---------- 筛选 ----------
     function applyFilters() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
@@ -1774,6 +1873,7 @@
         helpBtn.addEventListener('click', showHelp);
 
         addQuestionBtn.addEventListener('click', showAddQuestionModal);
+        document.getElementById('manageCategoryBtn').addEventListener('click', showManageCategoryModal);
         pasteLibraryBtn.addEventListener('click', showPasteModal);
         exportLibraryBtn.addEventListener('click', exportLibrary);
         exportPdfBtn.addEventListener('click', exportPdf);
