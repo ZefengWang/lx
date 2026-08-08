@@ -962,77 +962,68 @@
         const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
         const questions = [];
         let currentCategory = '';
-        let headerRow = null;
-        let colMap = {};
+        let colMap = null;       // 当前表头映射
+        let headerRowFound = false;
 
-        // ===== 新增：预先扫描表头前的行，提取分类标题 =====
         for (let i = 0; i < json.length; i++) {
             const row = json[i];
             if (!row || row.length === 0) continue;
-            // 检查这一行是否包含“序号”（即表头行），如果是则停止扫描
-            if (row.some(cell => String(cell).trim() === '序号')) {
-                break;
+
+            // 检查是否包含“序号” – 这是表头行
+            const hasSerial = row.some(cell => String(cell).trim() === '序号');
+            if (hasSerial) {
+                // 找到表头行，解析列映射
+                const headers = row.map(h => String(h).trim());
+                const findCol = (keywords) => {
+                    for (let kw of keywords) {
+                        const idx = headers.findIndex(h => h.includes(kw));
+                        if (idx !== -1) return idx;
+                    }
+                    return -1;
+                };
+                colMap = {
+                    id: findCol(['序号', 'ID']),
+                    type: findCol(['题型', '类型']),
+                    question: findCol(['题目', '内容']),
+                    options: findCol(['选项']),
+                    answer: findCol(['正确答案', '答案', '参考答案']),
+                    explanation: findCol(['解析', '口诀']),
+                    category: findCol(['分类', '模块'])
+                };
+                if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
+                if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
+                headerRowFound = true;
+                continue; // 表头行不参与数据解析
             }
-            const firstCell = String(row[0] || '').trim();
-            // 如果第一列不是数字，且行中有非空内容，则视为分类标题
-            if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
-                // 取第一个非空单元格作为分类名称
-                const catName = row.find(cell => String(cell).trim()) || firstCell;
-                if (catName) {
-                    currentCategory = catName.trim();
-                    console.log('[parseExcelData] 识别到分类标题:', currentCategory);
+
+            // 如果还没有找到表头，检测分类标题行（第一列不是数字，且不是空行）
+            if (!headerRowFound) {
+                const firstCell = String(row[0] || '').trim();
+                if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
+                    // 取行中第一个非空单元格作为分类名
+                    const catName = row.find(cell => String(cell).trim()) || firstCell;
+                    if (catName) {
+                        currentCategory = catName.trim();
+                        console.log('[parseExcelData] 检测到分类:', currentCategory);
+                    }
+                    continue;
                 }
             }
-        }
-        // ===== 新增结束 =====
 
-        // 寻找表头行（包含“序号”）
-        for (let i = 0; i < Math.min(10, json.length); i++) {
-            const row = json[i];
-            if (!row) continue;
-            if (row.some(cell => String(cell).trim() === '序号')) {
-                headerRow = i;
-                break;
-            }
-        }
-
-        if (headerRow !== null) {
-            // 有表头模式
-            const headers = json[headerRow].map(h => String(h).trim());
-            const findCol = (keywords) => {
-                for (let kw of keywords) {
-                    const idx = headers.findIndex(h => h.includes(kw));
-                    if (idx !== -1) return idx;
-                }
-                return -1;
-            };
-            colMap = {
-                id: findCol(['序号', 'ID']),
-                type: findCol(['题型', '类型']),
-                question: findCol(['题目', '内容']),
-                options: findCol(['选项']),
-                answer: findCol(['正确答案', '答案', '参考答案']),
-                explanation: findCol(['解析', '口诀']),
-                category: findCol(['分类', '模块'])
-            };
-            if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
-            if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
-
-            // 遍历数据行
-            for (let i = headerRow + 1; i < json.length; i++) {
-                const row = json[i];
-                if (!row || row.length === 0) continue;
+            // 一旦有了表头映射，开始解析数据行
+            if (colMap && headerRowFound) {
                 const id = parseInt(row[colMap.id] || 0);
-                if (isNaN(id) || id === 0) continue;
+                if (isNaN(id) || id === 0) continue; // 跳过无效行
                 const question = String(row[colMap.question] || '').trim();
                 if (!question) continue;
 
+                // 尝试从“分类”列获取分类，若无则使用当前累积的分类
                 let category = '';
                 if (colMap.category !== -1) {
                     category = String(row[colMap.category] || '').trim();
                 }
                 if (!category) {
-                    category = currentCategory; // 使用预先提取的分类
+                    category = currentCategory;
                 }
 
                 let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
@@ -1064,35 +1055,9 @@
                     answerText: type === 'essay' ? answer : '',
                     remarks: ''
                 });
-            }
-        } else {
-            // 无表头模式：按行解析，识别分类标题行
-            for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
-                const row = json[rowIdx];
-                if (!row || row.length === 0) continue;
+            } else {
+                // 如果尚未找到表头，但行以数字开头且长度>=3，可能是无表头模式（旧格式）
                 const firstCell = String(row[0] || '').trim();
-
-                const isNumber = /^\d+$/.test(firstCell);
-                const isHeaderRow = row.some(cell => {
-                    const str = String(cell).trim();
-                    return str.includes('序号') || str.includes('题目') || str.includes('口诀');
-                });
-
-                if (!isNumber && !isHeaderRow) {
-                    let categoryName = '';
-                    for (let cell of row) {
-                        const str = String(cell).trim();
-                        if (str) {
-                            categoryName = str;
-                            break;
-                        }
-                    }
-                    if (categoryName) {
-                        currentCategory = categoryName;
-                        continue;
-                    }
-                }
-
                 const num = parseInt(firstCell, 10);
                 if (!isNaN(num) && row.length >= 3) {
                     const question = String(row[1] || '').trim();
@@ -1113,6 +1078,30 @@
                     }
                 }
             }
+
+            // 如果已找到表头，继续检测后续行中的分类标题（用于下一个模块）
+            if (headerRowFound) {
+                // 检测是否出现新的分类标题行（第一列不是数字，且不包含表头关键词）
+                const firstCell = String(row[0] || '').trim();
+                if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
+                    // 检查是否包含表头关键词，避免误判
+                    const isHeaderLike = row.some(cell => {
+                        const str = String(cell).trim();
+                        return str.includes('序号') || str.includes('题目') || str.includes('口诀');
+                    });
+                    if (!isHeaderLike) {
+                        // 取行中第一个非空单元格作为分类名
+                        const catName = row.find(cell => String(cell).trim()) || firstCell;
+                        if (catName) {
+                            currentCategory = catName.trim();
+                            console.log('[parseExcelData] 切换到分类:', currentCategory);
+                            // 注意：这里不 continue，因为该行本身可能也是数据行，但我们已经判断它不是数字开头，且不含表头，所以它只能是分类标题，不应作为数据解析。
+                            // 所以我们 continue 跳过该行解析
+                            continue;
+                        }
+                    }
+                }
+            }
         }
 
         console.log('[parseExcelData] 解析完成，共', questions.length, '题');
@@ -1128,9 +1117,7 @@
 
     // ---------- 从粘贴文本解析题库 ----------
     function parseTextToQuestions(text) {
-        // 先清洗文本
         const cleaned = cleanText(text);
-        // 按行分割
         const lines = cleaned.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const questions = [];
         let currentCategory = '';
@@ -1138,17 +1125,17 @@
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
 
-            // 【修改】通用分类检测：非数字开头，且不包含表头关键词（序号、题目、口诀）
+            // 检测分类标题：非数字开头，且不包含表头关键词
             if (!/^\d/.test(line) && !line.includes('序号') && !line.includes('题目') && !line.includes('口诀')) {
-                // 提取分类名称（取整行作为分类名，去除多余空格）
                 const catName = line.trim();
                 if (catName) {
                     currentCategory = catName;
+                    console.log('[parseTextToQuestions] 检测到分类:', currentCategory);
                     continue;
                 }
             }
 
-            // 匹配序号行：支持 "1." "1、" "1 " 等格式
+            // 匹配序号行
             const match = line.match(/^(\d+)[.、．\s]*\s*(.*)/);
             if (match) {
                 const id = parseInt(match[1], 10);
@@ -1156,16 +1143,15 @@
                 let question = rest;
                 let mnemonic = '';
 
-                // 检查下一行是否为口诀（非数字开头且不包含表头关键词）
+                // 检查下一行是否为口诀
                 if (i + 1 < lines.length) {
                     const nextLine = lines[i + 1];
                     if (!/^\d/.test(nextLine) && !nextLine.includes('序号')) {
                         mnemonic = nextLine;
-                        i++; // 跳过该行
+                        i++;
                     }
                 }
 
-                // 如果仍未提取到口诀，尝试从当前行用制表符分离
                 if (!mnemonic) {
                     const parts = rest.split(/\t+/);
                     if (parts.length >= 2) {
