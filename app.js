@@ -2,18 +2,18 @@
     'use strict';
 
     // ========== 版本号 ==========
-    const VERSION = 'v2.3.5';
-    console.log('🚀 刷题器版本:', VERSION);
+    // const VERSION = 'v2.3.5';
+    // console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- 版本检查 ----------
-    const STORAGE_VERSION_KEY = 'studyAppVersion';
-    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
-    if (storedVersion && storedVersion !== VERSION) {
-        alert(`检测到新版本 (${VERSION})，请点击“确定”刷新页面以应用更新。`);
-        localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
-    } else if (!storedVersion) {
-        localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
-    }
+    // const STORAGE_VERSION_KEY = 'studyAppVersion';
+    // const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    // if (storedVersion && storedVersion !== VERSION) {
+    //     alert(`检测到新版本 (${VERSION})，请点击“确定”刷新页面以应用更新。`);
+    //     localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
+    // } else if (!storedVersion) {
+    //     localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
+    // }
 
     // ---------- DOM 引用 ----------
     const uploadScreen = document.getElementById('uploadScreen');
@@ -960,19 +960,24 @@
         if (!sheets.length) return [];
         const sheet = workbook.Sheets[sheets[0]];
         const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        console.log('[parseExcelData] 总行数:', json.length);
         const questions = [];
         let currentCategory = '';
-        let colMap = null;       // 当前表头映射
+        let colMap = null;
         let headerRowFound = false;
 
         for (let i = 0; i < json.length; i++) {
             const row = json[i];
             if (!row || row.length === 0) continue;
 
-            // 检查是否包含“序号” – 这是表头行
+            // 打印每行前几列用于调试（可选）
+            // console.log(`[parseExcelData] 行 ${i}:`, row.slice(0, 5).map(String));
+
+            // 检测表头行：行中包含"序号"，且"序号"不在行首（避免误判）
             const hasSerial = row.some(cell => String(cell).trim() === '序号');
             if (hasSerial) {
-                // 找到表头行，解析列映射
+                console.log('[parseExcelData] 找到表头行:', i);
+                // 解析列映射
                 const headers = row.map(h => String(h).trim());
                 const findCol = (keywords) => {
                     for (let kw of keywords) {
@@ -992,32 +997,36 @@
                 };
                 if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
                 if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
+                console.log('[parseExcelData] 列映射:', colMap);
                 headerRowFound = true;
-                continue; // 表头行不参与数据解析
+                continue;
             }
 
-            // 如果还没有找到表头，检测分类标题行（第一列不是数字，且不是空行）
-            if (!headerRowFound) {
-                const firstCell = String(row[0] || '').trim();
-                if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
-                    // 取行中第一个非空单元格作为分类名
-                    const catName = row.find(cell => String(cell).trim()) || firstCell;
-                    if (catName) {
-                        currentCategory = catName.trim();
-                        console.log('[parseExcelData] 检测到分类:', currentCategory);
-                    }
+            // 检测分类标题：行首不是数字，且不包含表头关键词
+            const firstCell = String(row[0] || '').trim();
+            const isNumberRow = /^\d+$/.test(firstCell);
+            const isHeaderLike = row.some(cell => {
+                const str = String(cell).trim();
+                return str.includes('序号') || str.includes('题目') || str.includes('口诀');
+            });
+
+            if (!isNumberRow && !isHeaderLike && firstCell.length > 0) {
+                // 取行中第一个非空单元格作为分类名
+                const catName = row.find(cell => String(cell).trim()) || firstCell;
+                if (catName && catName.trim() !== '序号') {
+                    currentCategory = catName.trim();
+                    console.log('[parseExcelData] 检测到分类:', currentCategory);
                     continue;
                 }
             }
 
-            // 一旦有了表头映射，开始解析数据行
+            // 数据行解析（当表头已找到且有列映射）
             if (colMap && headerRowFound) {
                 const id = parseInt(row[colMap.id] || 0);
-                if (isNaN(id) || id === 0) continue; // 跳过无效行
+                if (isNaN(id) || id === 0) continue;
                 const question = String(row[colMap.question] || '').trim();
                 if (!question) continue;
 
-                // 尝试从“分类”列获取分类，若无则使用当前累积的分类
                 let category = '';
                 if (colMap.category !== -1) {
                     category = String(row[colMap.category] || '').trim();
@@ -1056,8 +1065,7 @@
                     remarks: ''
                 });
             } else {
-                // 如果尚未找到表头，但行以数字开头且长度>=3，可能是无表头模式（旧格式）
-                const firstCell = String(row[0] || '').trim();
+                // 无表头模式兜底（旧格式）
                 const num = parseInt(firstCell, 10);
                 if (!isNaN(num) && row.length >= 3) {
                     const question = String(row[1] || '').trim();
@@ -1075,30 +1083,6 @@
                             answerText: '',
                             remarks: ''
                         });
-                    }
-                }
-            }
-
-            // 如果已找到表头，继续检测后续行中的分类标题（用于下一个模块）
-            if (headerRowFound) {
-                // 检测是否出现新的分类标题行（第一列不是数字，且不包含表头关键词）
-                const firstCell = String(row[0] || '').trim();
-                if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
-                    // 检查是否包含表头关键词，避免误判
-                    const isHeaderLike = row.some(cell => {
-                        const str = String(cell).trim();
-                        return str.includes('序号') || str.includes('题目') || str.includes('口诀');
-                    });
-                    if (!isHeaderLike) {
-                        // 取行中第一个非空单元格作为分类名
-                        const catName = row.find(cell => String(cell).trim()) || firstCell;
-                        if (catName) {
-                            currentCategory = catName.trim();
-                            console.log('[parseExcelData] 切换到分类:', currentCategory);
-                            // 注意：这里不 continue，因为该行本身可能也是数据行，但我们已经判断它不是数字开头，且不含表头，所以它只能是分类标题，不应作为数据解析。
-                            // 所以我们 continue 跳过该行解析
-                            continue;
-                        }
                     }
                 }
             }
