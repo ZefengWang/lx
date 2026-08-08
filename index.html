@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>多题库刷题器 · 交互版</title>
+    <title>刷题器 v2.0.2</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
     </script>
     <style>
-        /* ===== 与上一版完全相同的样式，此处省略以节省篇幅（实际回答会包含完整样式） ===== */
-        /* 为了完整性，这里提供完整样式，与上一版一致，未做修改 */
         * {
             margin: 0;
             padding: 0;
@@ -776,6 +774,21 @@
         .modal-box .modal-actions .btn-secondary:active {
             background: #e2e8f0;
         }
+        .modal-box .help-content {
+            overflow-y: auto;
+            padding: 4px 0;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #334155;
+        }
+        .modal-box .help-content li {
+            list-style: none;
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .modal-box .help-content li:last-child {
+            border-bottom: none;
+        }
         @media (min-width: 768px) {
             body {
                 padding: 24px;
@@ -921,10 +934,9 @@
 
         <!-- 主界面 -->
         <div id="mainApp" style="display:none; flex-direction:column; height:100%;">
-            <!-- 头部 -->
             <div class="app-header">
                 <div class="header-top">
-                    <h1>📚 刷题 <small>交互版</small></h1>
+                    <h1>📚 刷题 <small>v2.0.2</small></h1>
                     <div class="library-selector">
                         <span style="font-size:13px;color:#64748b;">📂</span>
                         <select id="librarySelect"></select>
@@ -962,7 +974,6 @@
                 </div>
             </div>
 
-            <!-- 卡片区域 -->
             <div class="card-slide-area" id="cardSlideArea">
                 <div class="card-wrapper" id="cardWrapper">
                     <div class="swipe-hint left">‹</div>
@@ -975,7 +986,6 @@
                         <span class="status-tag none" id="statusTag">⏳ 未开始</span>
                     </div>
                 </div>
-                <!-- 卡片下方操作栏 -->
                 <div class="card-actions" id="cardActions">
                     <button class="hint-btn" id="hintBtn">💡 提示</button>
                     <div class="nav-group">
@@ -986,7 +996,6 @@
                 </div>
             </div>
 
-            <!-- 底部操作栏 -->
             <div class="bottom-actions">
                 <button class="btn-master" id="actionMaster">✅ 掌握</button>
                 <button class="btn-review" id="actionReview">🔄 复习</button>
@@ -994,7 +1003,6 @@
                 <button class="btn-help" id="helpBtn">❓ 帮助</button>
             </div>
 
-            <!-- 底部工具条 -->
             <div class="bottom-utils">
                 <div class="left-group">
                     <button id="addQuestionBtn" class="primary">➕ 添加题目</button>
@@ -1016,7 +1024,10 @@
         (function() {
             'use strict';
 
-            // ==================== DOM 引用 ====================
+            const VERSION = 'v2.0.2';
+            console.log('🚀 刷题器版本:', VERSION);
+
+            // ========== DOM 引用 ==========
             const uploadScreen = document.getElementById('uploadScreen');
             const mainApp = document.getElementById('mainApp');
             const fileInput = document.getElementById('fileInput');
@@ -1053,7 +1064,7 @@
             const questionId = document.getElementById('questionId');
             const statusTag = document.getElementById('statusTag');
 
-            // ==================== 全局状态 ====================
+            // ========== 状态 ==========
             let allLibraries = {};
             let currentLibraryId = null;
             let currentQuestions = [];
@@ -1064,11 +1075,10 @@
             let currentCategory = 'all';
             let currentStatusFilter = 'all';
 
-            // 存储键
             const LIBRARY_LIST_KEY = 'studyLibraries_v4';
             const PROGRESS_KEY = 'studyProgress_v4';
 
-            // ==================== 进度管理 ====================
+            // ========== 存储操作 ==========
             function loadLibraries() {
                 try {
                     const raw = localStorage.getItem(LIBRARY_LIST_KEY);
@@ -1126,7 +1136,7 @@
                 }
             }
 
-            // ==================== 统计 ====================
+            // ========== 统计 ==========
             function calcStatsForLibrary(libId) {
                 const questions = allLibraries[libId]?.questions || [];
                 const total = questions.length;
@@ -1162,7 +1172,7 @@
                 else progressRing.style.stroke = '#4f46e5';
             }
 
-            // ==================== 渲染卡片（含交互） ====================
+            // ========== 渲染卡片（含交互） ==========
             function renderCard() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     cardContent.innerHTML = `<div class="empty-state">请先上传或选择一个题库</div>`;
@@ -1260,7 +1270,7 @@
                 `;
                 cardContent.innerHTML = html;
 
-                // ---- 绑定交互事件 ----
+                // ---- 绑定交互 ----
                 if (type === 'single') {
                     const items = cardContent.querySelectorAll('.option-item');
                     const feedback = document.getElementById('feedback');
@@ -1430,7 +1440,7 @@
                 return div.innerHTML;
             }
 
-            // ==================== 导航 ====================
+            // ========== 导航 ==========
             function navigate(delta) {
                 if (!filteredQuestions.length) return;
                 isMnemonicVisible = false;
@@ -1463,7 +1473,7 @@
                 renderCard();
             }
 
-            // ==================== 筛选 ====================
+            // ========== 筛选 ==========
             function applyFilters() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     filteredQuestions = [];
@@ -1515,7 +1525,7 @@
                 }
             }
 
-            // ==================== 题库管理（修复版） ====================
+            // ========== 题库管理 ==========
             function loadAllLibraries() {
                 allLibraries = loadLibraries();
                 Object.keys(allLibraries).forEach(id => {
@@ -1530,7 +1540,6 @@
                     if (ids.length) {
                         switchToLibrary(ids[0]);
                     } else {
-                        // 无题库，显示上传界面
                         uploadScreen.style.display = 'flex';
                         mainApp.style.display = 'none';
                         currentLibraryId = null;
@@ -1577,7 +1586,6 @@
                 applyFilters();
             }
 
-            // ***** 修复 deleteLibrary：彻底重置状态 *****
             function deleteLibrary(libId) {
                 if (!allLibraries[libId]) return;
                 if (!confirm(`确定要删除题库“${allLibraries[libId].name}”及其所有进度吗？`)) return;
@@ -1591,7 +1599,6 @@
                     switchToLibrary(ids[0]);
                     updateLibrarySelector();
                 } else {
-                    // 没有题库了，显示上传界面，并重置所有状态
                     uploadScreen.style.display = 'flex';
                     mainApp.style.display = 'none';
                     currentLibraryId = null;
@@ -1600,28 +1607,142 @@
                     currentIndex = 0;
                     isMnemonicVisible = false;
                     renderCard();
-                    updateLibrarySelector(); // 清空下拉
-                    // 清除 lastLibraryId
+                    updateLibrarySelector();
                     localStorage.removeItem('lastLibraryId');
                 }
             }
 
-            // ***** 修复 addNewLibrary：确保界面正确切换 *****
+            // ========== 解析 Excel（增强日志） ==========
+            function parseExcelData(workbook) {
+                console.log('[parseExcelData] 开始解析');
+                const sheets = workbook.SheetNames;
+                if (!sheets.length) {
+                    console.warn('[parseExcelData] 没有 sheet');
+                    return [];
+                }
+                const sheet = workbook.Sheets[sheets[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                console.log('[parseExcelData] 总行数:', json.length);
+                const questions = [];
+                let currentCategory = '';
+                let headerRow = null;
+                let colMap = {};
+
+                // 寻找表头行
+                for (let i = 0; i < Math.min(10, json.length); i++) {
+                    const row = json[i];
+                    if (!row) continue;
+                    if (row.some(cell => String(cell).trim() === '序号')) {
+                        headerRow = i;
+                        break;
+                    }
+                }
+
+                if (headerRow !== null) {
+                    console.log('[parseExcelData] 找到表头行:', headerRow);
+                    const headers = json[headerRow].map(h => String(h).trim());
+                    colMap = {
+                        id: headers.indexOf('序号'),
+                        type: headers.indexOf('题型'),
+                        question: headers.indexOf('题目'),
+                        options: headers.indexOf('选项'),
+                        answer: headers.indexOf('正确答案'),
+                        explanation: headers.indexOf('解析') !== -1 ? headers.indexOf('解析') : headers.indexOf('口诀'),
+                        category: headers.indexOf('分类') !== -1 ? headers.indexOf('分类') : -1
+                    };
+                    console.log('[parseExcelData] 列映射:', colMap);
+                    if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
+                    if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
+                    for (let i = headerRow + 1; i < json.length; i++) {
+                        const row = json[i];
+                        if (!row || row.length === 0) continue;
+                        const id = parseInt(row[colMap.id] || 0);
+                        if (isNaN(id) || id === 0) continue;
+                        const question = String(row[colMap.question] || '').trim();
+                        if (!question) continue;
+                        let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
+                        if (type.includes('单选')) type = 'single';
+                        else if (type.includes('多选')) type = 'multi';
+                        else if (type.includes('填空')) type = 'fill';
+                        else if (type.includes('判断')) type = 'judge';
+                        else type = 'essay';
+
+                        let options = [];
+                        if (colMap.options !== -1) {
+                            const optStr = String(row[colMap.options] || '').trim();
+                            if (optStr) {
+                                options = optStr.split(/\n|;|，/).filter(s => s.trim());
+                            }
+                        }
+                        const answer = String(row[colMap.answer] || '').trim();
+                        const explanation = String(row[colMap.explanation] || '').trim();
+                        const category = colMap.category !== -1 ? String(row[colMap.category] || '').trim() : currentCategory;
+
+                        questions.push({
+                            id: id,
+                            category: category || '未分类',
+                            question: question,
+                            type: type,
+                            options: options,
+                            answer: answer,
+                            explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
+                            mnemonic: explanation || (type === 'essay' ? '（无口诀）' : '')
+                        });
+                    }
+                } else {
+                    console.log('[parseExcelData] 未找到表头，使用旧格式解析');
+                    for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
+                        const row = json[rowIdx];
+                        if (!row || row.length === 0) continue;
+                        const firstCell = String(row[0] || '').trim();
+                        if (firstCell.includes('教育学') || firstCell.includes('小三门') || firstCell.includes('心理学')) {
+                            if (firstCell.includes('教育学')) currentCategory = '教育学';
+                            else if (firstCell.includes('小三门')) currentCategory = '小三门';
+                            else if (firstCell.includes('心理学')) currentCategory = '心理学';
+                            continue;
+                        }
+                        const num = parseInt(firstCell, 10);
+                        if (!isNaN(num) && row.length >= 3) {
+                            const question = String(row[1] || '').trim();
+                            const mnemonic = String(row[2] || '').trim();
+                            if (question) {
+                                questions.push({
+                                    id: num,
+                                    category: currentCategory || '未分类',
+                                    question: question,
+                                    type: 'essay',
+                                    options: [],
+                                    answer: '',
+                                    explanation: mnemonic || '（无口诀）',
+                                    mnemonic: mnemonic || '（无口诀）'
+                                });
+                            }
+                        }
+                    }
+                }
+                console.log('[parseExcelData] 解析完成，共', questions.length, '题');
+                return questions;
+            }
+
+            // ========== 添加新题库 ==========
             function addNewLibrary(name, questions) {
+                console.log('[addNewLibrary] 添加题库:', name, '题目数:', questions.length);
+                if (!questions || questions.length === 0) {
+                    alert('题库为空，无法添加');
+                    return;
+                }
                 const id = 'lib_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
                 allLibraries[id] = { id, name, questions };
                 saveLibraries(allLibraries);
                 setLibraryProgress(id, {});
-                // 先更新下拉
                 updateLibrarySelector();
-                // 再切换库
                 switchToLibrary(id);
-                // 最后显示主界面
                 uploadScreen.style.display = 'none';
                 mainApp.style.display = 'flex';
+                console.log('[addNewLibrary] 添加成功');
             }
 
-            // ==================== 导入题库（支持 Excel 和 JSON） ====================
+            // ========== 导入处理（Excel / JSON） ==========
             function handleFileUpload(file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1750,107 +1871,7 @@
                 });
             }
 
-            // ==================== 解析 Excel ====================
-            function parseExcelData(workbook) {
-                const sheets = workbook.SheetNames;
-                if (!sheets.length) return [];
-                const sheet = workbook.Sheets[sheets[0]];
-                const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                const questions = [];
-                let currentCategory = '';
-                let headerRow = null;
-                let colMap = {};
-                for (let i = 0; i < Math.min(5, json.length); i++) {
-                    const row = json[i];
-                    if (!row) continue;
-                    if (row.some(cell => String(cell).trim() === '序号')) {
-                        headerRow = i;
-                        break;
-                    }
-                }
-                if (headerRow !== null) {
-                    const headers = json[headerRow].map(h => String(h).trim());
-                    colMap = {
-                        id: headers.indexOf('序号'),
-                        type: headers.indexOf('题型'),
-                        question: headers.indexOf('题目'),
-                        options: headers.indexOf('选项'),
-                        answer: headers.indexOf('正确答案'),
-                        explanation: headers.indexOf('解析') !== -1 ? headers.indexOf('解析') : headers.indexOf('口诀'),
-                        category: headers.indexOf('分类') !== -1 ? headers.indexOf('分类') : -1
-                    };
-                    if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
-                    if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
-                    for (let i = headerRow + 1; i < json.length; i++) {
-                        const row = json[i];
-                        if (!row || row.length === 0) continue;
-                        const id = parseInt(row[colMap.id] || 0);
-                        if (isNaN(id) || id === 0) continue;
-                        const question = String(row[colMap.question] || '').trim();
-                        if (!question) continue;
-                        let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
-                        if (type.includes('单选')) type = 'single';
-                        else if (type.includes('多选')) type = 'multi';
-                        else if (type.includes('填空')) type = 'fill';
-                        else if (type.includes('判断')) type = 'judge';
-                        else type = 'essay';
-
-                        let options = [];
-                        if (colMap.options !== -1) {
-                            const optStr = String(row[colMap.options] || '').trim();
-                            if (optStr) {
-                                options = optStr.split(/\n|;|，/).filter(s => s.trim());
-                            }
-                        }
-                        const answer = String(row[colMap.answer] || '').trim();
-                        const explanation = String(row[colMap.explanation] || '').trim();
-                        const category = colMap.category !== -1 ? String(row[colMap.category] || '').trim() : currentCategory;
-
-                        questions.push({
-                            id: id,
-                            category: category || '未分类',
-                            question: question,
-                            type: type,
-                            options: options,
-                            answer: answer,
-                            explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
-                            mnemonic: explanation || (type === 'essay' ? '（无口诀）' : '')
-                        });
-                    }
-                } else {
-                    for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
-                        const row = json[rowIdx];
-                        if (!row || row.length === 0) continue;
-                        const firstCell = String(row[0] || '').trim();
-                        if (firstCell.includes('教育学') || firstCell.includes('小三门') || firstCell.includes('心理学')) {
-                            if (firstCell.includes('教育学')) currentCategory = '教育学';
-                            else if (firstCell.includes('小三门')) currentCategory = '小三门';
-                            else if (firstCell.includes('心理学')) currentCategory = '心理学';
-                            continue;
-                        }
-                        const num = parseInt(firstCell, 10);
-                        if (!isNaN(num) && row.length >= 3) {
-                            const question = String(row[1] || '').trim();
-                            const mnemonic = String(row[2] || '').trim();
-                            if (question) {
-                                questions.push({
-                                    id: num,
-                                    category: currentCategory || '未分类',
-                                    question: question,
-                                    type: 'essay',
-                                    options: [],
-                                    answer: '',
-                                    explanation: mnemonic || '（无口诀）',
-                                    mnemonic: mnemonic || '（无口诀）'
-                                });
-                            }
-                        }
-                    }
-                }
-                return questions;
-            }
-
-            // ==================== 添加题目 ====================
+            // ========== 添加题目 ==========
             function showAddQuestionModal() {
                 if (!currentLibraryId) {
                     alert('请先选择或创建一个题库');
@@ -1959,7 +1980,7 @@
                 });
             }
 
-            // ==================== 导出题库 ====================
+            // ========== 导出题库 ==========
             function exportLibrary() {
                 if (!currentLibraryId || !allLibraries[currentLibraryId]) {
                     alert('请先选择一个题库');
@@ -2012,7 +2033,7 @@
                 alert('✅ 题库已导出（JSON + XLSX）');
             }
 
-            // ==================== 导出/导入进度 ====================
+            // ========== 导出/导入进度 ==========
             function getExportData() {
                 return JSON.stringify(loadProgress(), null, 2);
             }
@@ -2089,7 +2110,7 @@
                 reader.readAsText(file);
             }
 
-            // ==================== 模态框 ====================
+            // ========== 通用模态框 ==========
             function showModal(title, initialText, actionLabel, onAction) {
                 const old = document.querySelector('.modal-overlay');
                 if (old) old.remove();
@@ -2121,24 +2142,24 @@
                 });
             }
 
-            // ==================== 帮助弹窗 ====================
+            // ========== 帮助弹窗 ==========
             function showHelp() {
                 const overlay = document.createElement('div');
                 overlay.className = 'modal-overlay';
                 overlay.innerHTML = `
                     <div class="modal-box">
                         <h3>❓ 使用帮助</h3>
-                        <div class="help-content" style="overflow-y:auto;padding:4px 0;font-size:15px;line-height:1.8;color:#334155;">
-                            <ul style="list-style:none;">
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">👆</span> <strong>左右滑动</strong>卡片快速切换题目</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">💡</span> 点击 <strong>“提示”</strong> 查看口诀/解析（切换题目后自动隐藏）</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">⬅️➡️</span> 使用 <strong>“上一题/下一题”</strong> 按钮或键盘方向键</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">🎲</span> 点击 <strong>“随机”</strong> 跳转至随机题目</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">✅🔄</span> 底部 <strong>“掌握/复习”</strong> 标记题目状态，<strong>“重置”</strong> 取消标记</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">📂</span> 顶部下拉框 <strong>切换不同题库</strong>，➕ 上传新题库，🗑️ 删除题库</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">➕</span> 点击 <strong>“添加题目”</strong> 可自定义任意题型</li>
-                                <li style="padding:6px 0;border-bottom:1px solid #f0f2f5;"><span style="margin-right:8px;">📤</span> 点击 <strong>“导出题库”</strong> 可下载 JSON 和 Excel 文件</li>
-                                <li style="padding:6px 0;"><span style="margin-right:8px;">💾</span> 底部 <strong>“导出/导入”</strong> 可备份所有题库进度，跨设备迁移</li>
+                        <div class="help-content">
+                            <ul>
+                                <li>👆 左右滑动卡片切换题目</li>
+                                <li>💡 点击“提示”查看口诀/解析（切换题目后自动隐藏）</li>
+                                <li>⬅️➡️ 使用“上一题/下一题”按钮或键盘方向键</li>
+                                <li>🎲 点击“随机”跳转至随机题目</li>
+                                <li>✅🔄 底部“掌握/复习”标记题目状态，“重置”取消标记</li>
+                                <li>📂 顶部下拉框切换不同题库，➕ 上传新题库，🗑️ 删除题库</li>
+                                <li>➕ 点击“添加题目”可自定义任意题型</li>
+                                <li>📤 点击“导出题库”可下载 JSON 和 Excel 文件</li>
+                                <li>💾 底部“导出/导入”可备份所有题库进度，跨设备迁移</li>
                             </ul>
                         </div>
                         <div class="modal-actions">
@@ -2153,7 +2174,7 @@
                 });
             }
 
-            // ==================== 复制工具 ====================
+            // ========== 复制工具 ==========
             function copyToClipboard(text) {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(text).then(() => {
@@ -2180,12 +2201,12 @@
                 document.body.removeChild(textarea);
             }
 
-            // ==================== 触摸滑动 ====================
+            // ========== 触摸滑动 ==========
             let touchStartX = 0,
                 touchStartY = 0,
                 isSwiping = false;
 
-            // ==================== 事件绑定 ====================
+            // ========== 事件绑定 ==========
             function bindEvents() {
                 librarySelect.addEventListener('change', (e) => {
                     const id = e.target.value;
@@ -2309,7 +2330,6 @@
                     isSwiping = false;
                 }, { passive: true });
 
-                // 文件上传（拖拽）
                 uploadScreen.addEventListener('click', () => fileInput.click());
                 uploadScreen.addEventListener('dragover', (e) => {
                     e.preventDefault();
@@ -2337,9 +2357,21 @@
                         fileInput.files = e.dataTransfer.files;
                     }
                 });
+
+                // 原始 fileInput change 用于上传新题库（旧方式）
+                fileInput.addEventListener('change', function(e) {
+                    if (this.files.length) {
+                        handleFileUpload(this.files[0]);
+                    }
+                });
             }
 
-            // ==================== 初始化 ====================
+            // ========== 暴露关键函数到全局（方便调试） ==========
+            window.parseExcelData = parseExcelData;
+            window.addNewLibrary = addNewLibrary;
+            window.allLibraries = allLibraries;
+
+            // ========== 初始化 ==========
             function init() {
                 bindEvents();
                 loadAllLibraries();
@@ -2350,10 +2382,10 @@
                     uploadScreen.style.display = 'none';
                     mainApp.style.display = 'flex';
                 }
+                console.log('✅ 刷题器初始化完成, 版本:', VERSION);
             }
 
             init();
-            console.log('🚀 刷题器（修复版）已加载');
         })();
     </script>
 </body>
