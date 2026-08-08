@@ -1,0 +1,1496 @@
+(function() {
+    'use strict';
+
+    const VERSION = 'v2.1.0';
+    console.log('🚀 刷题器版本:', VERSION);
+
+    // ---------- DOM 引用 ----------
+    const uploadScreen = document.getElementById('uploadScreen');
+    const mainApp = document.getElementById('mainApp');
+    const fileInput = document.getElementById('fileInput');
+    const librarySelect = document.getElementById('librarySelect');
+    const deleteLibraryBtn = document.getElementById('deleteLibraryBtn');
+    const addLibraryBtn = document.getElementById('addLibraryBtn');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const modeSelect = document.getElementById('modeSelect');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const cardContent = document.getElementById('cardContent');
+    const cardWrapper = document.getElementById('cardWrapper');
+    const cardActions = document.getElementById('cardActions');
+    const actionMaster = document.getElementById('actionMaster');
+    const actionReview = document.getElementById('actionReview');
+    const actionReset = document.getElementById('actionReset');
+    const helpBtn = document.getElementById('helpBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const pasteImportBtn = document.getElementById('pasteImportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+    const addQuestionBtn = document.getElementById('addQuestionBtn');
+    const exportLibraryBtn = document.getElementById('exportLibraryBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const progressRing = document.getElementById('progressRing');
+    const ringPercent = document.getElementById('ringPercent');
+    const masteredCount = document.getElementById('masteredCount');
+    const reviewCount = document.getElementById('reviewCount');
+    const categoryBadge = document.getElementById('categoryBadge');
+    const questionId = document.getElementById('questionId');
+    const statusTag = document.getElementById('statusTag');
+
+    // ---------- 状态 ----------
+    let allLibraries = {};
+    let currentLibraryId = null;
+    let currentQuestions = [];
+    let filteredQuestions = [];
+    let currentIndex = 0;
+    let isMnemonicVisible = false;
+    let isAnswerVisible = false;
+    let isRemarkVisible = false;
+    let currentMode = 'sequential';
+    let currentCategory = 'all';
+    let currentStatusFilter = 'all';
+
+    const LIBRARY_LIST_KEY = 'studyLibraries_v4';
+    const PROGRESS_KEY = 'studyProgress_v4';
+
+    // ---------- 存储操作 ----------
+    function loadLibraries() {
+        try {
+            const raw = localStorage.getItem(LIBRARY_LIST_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return {};
+    }
+    function saveLibraries(libs) {
+        localStorage.setItem(LIBRARY_LIST_KEY, JSON.stringify(libs));
+    }
+    function loadProgress() {
+        try {
+            const raw = localStorage.getItem(PROGRESS_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* ignore */ }
+        return {};
+    }
+    function saveProgress(progress) {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    }
+    function getLibraryProgress(libId) {
+        const all = loadProgress();
+        return all[libId] || {};
+    }
+    function setLibraryProgress(libId, progress) {
+        const all = loadProgress();
+        all[libId] = progress;
+        saveProgress(all);
+    }
+    function getQuestionStatus(libId, qId) {
+        const prog = getLibraryProgress(libId);
+        return prog[qId] || 'none';
+    }
+    function setQuestionStatus(libId, qId, status) {
+        const prog = getLibraryProgress(libId);
+        if (status === 'none') delete prog[qId];
+        else prog[qId] = status;
+        setLibraryProgress(libId, prog);
+        updateStatsAndUI();
+        renderCard();
+    }
+    function resetAllProgressForLibrary(libId) {
+        if (confirm(`确定要重置题库“${allLibraries[libId].name}”的所有进度吗？`)) {
+            setLibraryProgress(libId, {});
+            updateStatsAndUI();
+            renderCard();
+        }
+    }
+
+    // ---------- 统计 ----------
+    function calcStatsForLibrary(libId) {
+        const questions = allLibraries[libId]?.questions || [];
+        const total = questions.length;
+        const prog = getLibraryProgress(libId);
+        let mastered = 0,
+            review = 0;
+        questions.forEach(q => {
+            const s = prog[q.id] || 'none';
+            if (s === 'mastered') mastered++;
+            else if (s === 'review') review++;
+        });
+        const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+        return { total, mastered, review, pct };
+    }
+    function updateStatsAndUI() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            masteredCount.textContent = '0';
+            reviewCount.textContent = '0';
+            ringPercent.textContent = '0%';
+            progressRing.style.strokeDashoffset = 125.6;
+            return;
+        }
+        const stats = calcStatsForLibrary(currentLibraryId);
+        masteredCount.textContent = stats.mastered;
+        reviewCount.textContent = stats.review;
+        const circumference = 125.6;
+        const offset = circumference - (stats.pct / 100) * circumference;
+        progressRing.style.strokeDashoffset = offset;
+        ringPercent.textContent = stats.pct + '%';
+        if (stats.pct >= 80) progressRing.style.stroke = '#16a34a';
+        else if (stats.pct >= 40) progressRing.style.stroke = '#eab308';
+        else progressRing.style.stroke = '#4f46e5';
+    }
+
+    // ---------- 辅助函数 ----------
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ---------- 渲染卡片（核心） ----------
+    function renderCard() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            cardContent.innerHTML = `<div class="empty-state">请先上传或选择一个题库</div>`;
+            cardWrapper.className = 'card-wrapper';
+            cardActions.innerHTML = '';
+            updateStatsAndUI();
+            return;
+        }
+        const questions = currentQuestions;
+        if (!questions.length) {
+            cardContent.innerHTML = `<div class="empty-state">当前题库为空</div>`;
+            cardWrapper.className = 'card-wrapper';
+            cardActions.innerHTML = '';
+            updateStatsAndUI();
+            return;
+        }
+        if (!filteredQuestions.length) {
+            cardContent.innerHTML = `<div class="empty-state">当前筛选无题目</div>`;
+            cardWrapper.className = 'card-wrapper';
+            cardActions.innerHTML = '';
+            updateStatsAndUI();
+            return;
+        }
+        if (currentIndex >= filteredQuestions.length) currentIndex = filteredQuestions.length - 1;
+        if (currentIndex < 0) currentIndex = 0;
+
+        const q = filteredQuestions[currentIndex];
+        if (!q) { cardContent.innerHTML = `<div class="empty-state">加载失败</div>`; return; }
+
+        const status = getQuestionStatus(currentLibraryId, q.id);
+        cardWrapper.className = 'card-wrapper';
+        if (status === 'mastered') cardWrapper.classList.add('mastered');
+        else if (status === 'review') cardWrapper.classList.add('review');
+
+        categoryBadge.textContent = q.category || '未分类';
+        questionId.textContent = q.id;
+        statusTag.className = 'status-tag ' + status;
+        statusTag.textContent = status === 'mastered' ? '✅ 已掌握' : status === 'review' ? '🔄 待复习' : '⏳ 未开始';
+
+        const type = q.type || 'essay';
+        let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
+
+        // 选择题交互
+        if (type === 'single') {
+            const options = q.options || [];
+            const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
+            html += `<div class="options-container" id="optionsContainer">`;
+            options.forEach((opt, idx) => {
+                const label = String.fromCharCode(65 + idx);
+                const isCorrect = (label === correctAnswer);
+                html += `
+                    <div class="option-item" data-label="${label}" data-correct="${isCorrect}">
+                        <span class="option-label">${label}.</span>
+                        <span class="option-text">${escapeHtml(opt)}</span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            html += `<div class="feedback" id="feedback"></div>`;
+        } else if (type === 'multi') {
+            const options = q.options || [];
+            const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean) : [];
+            html += `<div class="options-container" id="optionsContainer">`;
+            options.forEach((opt, idx) => {
+                const label = String.fromCharCode(65 + idx);
+                html += `
+                    <div class="option-item" data-label="${label}">
+                        <span class="option-label">${label}.</span>
+                        <span class="option-text">${escapeHtml(opt)}</span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            html += `<button class="multi-confirm" id="multiConfirm">确认答案</button>`;
+            html += `<div class="feedback" id="feedback"></div>`;
+        } else if (type === 'judge') {
+            const correctAnswer = q.answer ? q.answer.trim() : '';
+            html += `<div class="judge-buttons" id="judgeButtons">`;
+            html += `<button data-value="对" class="judge-btn">✅ 对</button>`;
+            html += `<button data-value="错" class="judge-btn">❌ 错</button>`;
+            html += `</div>`;
+            html += `<div class="feedback" id="feedback"></div>`;
+        } else if (type === 'fill') {
+            const correctAnswer = q.answer ? q.answer.trim() : '';
+            html += `<div class="fill-group" id="fillGroup">`;
+            html += `<input type="text" id="fillInput" placeholder="输入答案...">`;
+            html += `<button id="fillConfirm">确认答案</button>`;
+            html += `</div>`;
+            html += `<div class="feedback" id="feedback"></div>`;
+        } else {
+            // 简答题
+            const answerText = q.answerText || q.answer || '';
+            const remarks = q.remarks || '';
+            if (answerText) {
+                html += `<div class="card-answer ${isAnswerVisible ? 'show' : ''}">
+                            <div class="label">📝 答案</div>
+                            <div class="content">${escapeHtml(answerText)}</div>
+                        </div>`;
+            }
+            if (remarks) {
+                html += `<div class="card-remark ${isRemarkVisible ? 'show' : ''}">
+                            <div class="label">📌 备注</div>
+                            <div class="content">${escapeHtml(remarks)}</div>
+                        </div>`;
+            }
+        }
+
+        // 口诀/解析
+        const explanation = q.explanation || q.mnemonic || '';
+        if (explanation) {
+            html += `
+                <div class="card-mnemonic ${isMnemonicVisible ? 'show' : ''}">
+                    <div class="label">📌 ${type === 'essay' ? '口诀' : '解析'}</div>
+                    <div class="content">${escapeHtml(explanation)}</div>
+                </div>
+            `;
+        }
+
+        cardContent.innerHTML = html;
+
+        // 绑定选择题交互
+        if (type === 'single') {
+            const items = cardContent.querySelectorAll('.option-item');
+            const feedback = document.getElementById('feedback');
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    items.forEach(el => {
+                        el.classList.remove('selected', 'correct-answer', 'wrong-answer');
+                    });
+                    this.classList.add('selected');
+                    const isCorrect = this.dataset.correct === 'true';
+                    if (isCorrect) {
+                        this.classList.add('correct-answer');
+                        feedback.className = 'feedback show correct';
+                        feedback.innerHTML = '✅ 回答正确！';
+                    } else {
+                        this.classList.add('wrong-answer');
+                        feedback.className = 'feedback show wrong';
+                        feedback.innerHTML = '❌ 回答错误。正确答案是：' + (q.answer || '');
+                    }
+                    const expl = explanation.trim();
+                    if (expl && expl !== '（无口诀）') {
+                        const explDiv = document.createElement('div');
+                        explDiv.className = 'explanation';
+                        explDiv.textContent = '📖 解析：' + expl;
+                        feedback.appendChild(explDiv);
+                    }
+                    items.forEach(el => el.style.pointerEvents = 'none');
+                });
+            });
+        } else if (type === 'multi') {
+            const items = cardContent.querySelectorAll('.option-item');
+            const confirmBtn = document.getElementById('multiConfirm');
+            const feedback = document.getElementById('feedback');
+            let selectedLabels = [];
+
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    const label = this.dataset.label;
+                    this.classList.toggle('selected');
+                    if (this.classList.contains('selected')) {
+                        if (!selectedLabels.includes(label)) selectedLabels.push(label);
+                    } else {
+                        selectedLabels = selectedLabels.filter(l => l !== label);
+                    }
+                    feedback.className = 'feedback';
+                    feedback.innerHTML = '';
+                    items.forEach(el => {
+                        el.classList.remove('correct-answer', 'wrong-answer');
+                    });
+                    confirmBtn.disabled = false;
+                });
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                if (selectedLabels.length === 0) {
+                    alert('请至少选择一个选项');
+                    return;
+                }
+                const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase())
+                    .filter(Boolean) : [];
+                let allCorrect = true;
+                items.forEach(el => {
+                    const label = el.dataset.label;
+                    const isCorrect = correctAnswers.includes(label);
+                    if (isCorrect) {
+                        el.classList.add('correct-answer');
+                    } else {
+                        el.classList.add('wrong-answer');
+                    }
+                    const userSelected = selectedLabels.includes(label);
+                    if (userSelected && !isCorrect) allCorrect = false;
+                    if (!userSelected && isCorrect) allCorrect = false;
+                });
+                if (allCorrect && selectedLabels.length === correctAnswers.length) {
+                    feedback.className = 'feedback show correct';
+                    feedback.innerHTML = '✅ 全部正确！';
+                } else {
+                    feedback.className = 'feedback show wrong';
+                    feedback.innerHTML = '❌ 有误，正确答案：' + correctAnswers.join(', ');
+                }
+                const expl = explanation.trim();
+                if (expl && expl !== '（无口诀）') {
+                    const explDiv = document.createElement('div');
+                    explDiv.className = 'explanation';
+                    explDiv.textContent = '📖 解析：' + expl;
+                    feedback.appendChild(explDiv);
+                }
+                confirmBtn.disabled = true;
+                items.forEach(el => el.style.pointerEvents = 'none');
+            });
+        } else if (type === 'judge') {
+            const btns = cardContent.querySelectorAll('.judge-btn');
+            const feedback = document.getElementById('feedback');
+            const correctAnswer = q.answer ? q.answer.trim() : '';
+            btns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const value = this.dataset.value;
+                    const isCorrect = (value === correctAnswer);
+                    btns.forEach(b => {
+                        b.classList.remove('selected-true', 'selected-false', 'correct',
+                            'wrong');
+                        b.disabled = true;
+                    });
+                    if (isCorrect) {
+                        this.classList.add('correct');
+                        feedback.className = 'feedback show correct';
+                        feedback.innerHTML = '✅ 回答正确！';
+                    } else {
+                        this.classList.add('wrong');
+                        feedback.className = 'feedback show wrong';
+                        feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                    }
+                    const expl = explanation.trim();
+                    if (expl && expl !== '（无口诀）') {
+                        const explDiv = document.createElement('div');
+                        explDiv.className = 'explanation';
+                        explDiv.textContent = '📖 解析：' + expl;
+                        feedback.appendChild(explDiv);
+                    }
+                });
+            });
+        } else if (type === 'fill') {
+            const input = document.getElementById('fillInput');
+            const confirmBtn = document.getElementById('fillConfirm');
+            const feedback = document.getElementById('feedback');
+            const correctAnswer = q.answer ? q.answer.trim() : '';
+
+            confirmBtn.addEventListener('click', function() {
+                const userAns = input.value.trim();
+                if (!userAns) {
+                    alert('请输入答案');
+                    return;
+                }
+                const isCorrect = userAns.toLowerCase() === correctAnswer.toLowerCase();
+                if (isCorrect) {
+                    feedback.className = 'feedback show correct';
+                    feedback.innerHTML = '✅ 回答正确！';
+                } else {
+                    feedback.className = 'feedback show wrong';
+                    feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                }
+                const expl = explanation.trim();
+                if (expl && expl !== '（无口诀）') {
+                    const explDiv = document.createElement('div');
+                    explDiv.className = 'explanation';
+                    explDiv.textContent = '📖 解析：' + expl;
+                    feedback.appendChild(explDiv);
+                }
+                input.disabled = true;
+                confirmBtn.disabled = true;
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    confirmBtn.click();
+                }
+            });
+        }
+
+        // 重建 card-actions
+        cardActions.innerHTML = `
+            <button class="hint-btn ${isMnemonicVisible ? 'showing' : ''}" id="hintBtn">${isMnemonicVisible ? '🙈 隐藏口诀' : '💡 提示'}</button>
+            ${type === 'essay' ? `
+                <button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="answerBtn">${isAnswerVisible ? '🙈 隐藏答案' : '📝 答案'}</button>
+                <button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="remarkBtn">${isRemarkVisible ? '🙈 隐藏备注' : '📌 备注'}</button>
+            ` : ''}
+            <div class="nav-group">
+                <button id="prevBtn">◀ 上一题</button>
+                <button id="randomBtn" class="random-btn">🎲 随机</button>
+                <button id="nextBtn">下一题 ▶</button>
+            </div>
+        `;
+
+        // 绑定事件
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            isMnemonicVisible = !isMnemonicVisible;
+            renderCard();
+        });
+        const answerBtn = document.getElementById('answerBtn');
+        if (answerBtn) {
+            answerBtn.addEventListener('click', () => {
+                isAnswerVisible = !isAnswerVisible;
+                renderCard();
+            });
+        }
+        const remarkBtn = document.getElementById('remarkBtn');
+        if (remarkBtn) {
+            remarkBtn.addEventListener('click', () => {
+                isRemarkVisible = !isRemarkVisible;
+                renderCard();
+            });
+        }
+        document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
+        document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
+        document.getElementById('randomBtn').addEventListener('click', goRandom);
+
+        updateStatsAndUI();
+    }
+
+    // ---------- 导航 ----------
+    function navigate(delta) {
+        if (!filteredQuestions.length) return;
+        isMnemonicVisible = false;
+        isAnswerVisible = false;
+        isRemarkVisible = false;
+        let newIdx = currentIndex + delta;
+        if (newIdx < 0) newIdx = filteredQuestions.length - 1;
+        if (newIdx >= filteredQuestions.length) newIdx = 0;
+        currentIndex = newIdx;
+        if (currentMode === 'random') {
+            currentMode = 'sequential';
+            modeSelect.value = 'sequential';
+        }
+        renderCard();
+    }
+
+    function goRandom() {
+        if (!filteredQuestions.length) return;
+        isMnemonicVisible = false;
+        isAnswerVisible = false;
+        isRemarkVisible = false;
+        if (currentMode !== 'random') {
+            currentMode = 'random';
+            modeSelect.value = 'random';
+        }
+        const randomIdx = Math.floor(Math.random() * filteredQuestions.length);
+        currentIndex = randomIdx;
+        renderCard();
+    }
+
+    // ---------- 筛选 ----------
+    function applyFilters() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            filteredQuestions = [];
+            renderCard();
+            return;
+        }
+        const questions = allLibraries[currentLibraryId].questions || [];
+        const category = categoryFilter.value;
+        const status = statusFilter.value;
+        currentCategory = category;
+        currentStatusFilter = status;
+
+        let filtered = questions;
+        if (category !== 'all') {
+            filtered = filtered.filter(q => q.category === category);
+        }
+        if (status !== 'all') {
+            filtered = filtered.filter(q => {
+                const s = getQuestionStatus(currentLibraryId, q.id);
+                return s === status;
+            });
+        }
+
+        filteredQuestions = filtered;
+        if (filteredQuestions.length) currentIndex = 0;
+        else currentIndex = 0;
+
+        isMnemonicVisible = false;
+        isAnswerVisible = false;
+        isRemarkVisible = false;
+
+        if (currentMode === 'random') shuffleArray(filteredQuestions);
+        renderCard();
+    }
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    function reshuffle() {
+        if (currentMode === 'random') {
+            shuffleArray(filteredQuestions);
+            currentIndex = 0;
+            isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
+            renderCard();
+        } else {
+            alert('当前为顺序模式，请切换到随机模式再洗牌');
+        }
+    }
+
+    // ---------- 题库管理 ----------
+    function loadAllLibraries() {
+        allLibraries = loadLibraries();
+        Object.keys(allLibraries).forEach(id => {
+            if (!allLibraries[id].id) allLibraries[id].id = id;
+        });
+        updateLibrarySelector();
+        const lastLib = localStorage.getItem('lastLibraryId');
+        if (lastLib && allLibraries[lastLib]) {
+            switchToLibrary(lastLib);
+        } else {
+            const ids = Object.keys(allLibraries);
+            if (ids.length) {
+                switchToLibrary(ids[0]);
+            } else {
+                uploadScreen.style.display = 'flex';
+                mainApp.style.display = 'none';
+                currentLibraryId = null;
+                currentQuestions = [];
+                filteredQuestions = [];
+                renderCard();
+            }
+        }
+    }
+
+    function updateLibrarySelector() {
+        const current = librarySelect.value;
+        librarySelect.innerHTML = '';
+        Object.keys(allLibraries).forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = allLibraries[id].name || '未命名题库';
+            librarySelect.appendChild(opt);
+        });
+        if (current && allLibraries[current]) {
+            librarySelect.value = current;
+        } else if (Object.keys(allLibraries).length) {
+            librarySelect.value = Object.keys(allLibraries)[0];
+        }
+    }
+
+    function switchToLibrary(libId) {
+        if (!allLibraries[libId]) return;
+        currentLibraryId = libId;
+        currentQuestions = allLibraries[libId].questions || [];
+        localStorage.setItem('lastLibraryId', libId);
+        librarySelect.value = libId;
+        const cats = new Set();
+        currentQuestions.forEach(q => cats.add(q.category));
+        categoryFilter.innerHTML = '<option value="all">📂 全部</option>';
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            categoryFilter.appendChild(opt);
+        });
+        isMnemonicVisible = false;
+        isAnswerVisible = false;
+        isRemarkVisible = false;
+        applyFilters();
+    }
+
+    function deleteLibrary(libId) {
+        if (!allLibraries[libId]) return;
+        if (!confirm(`确定要删除题库“${allLibraries[libId].name}”及其所有进度吗？`)) return;
+        delete allLibraries[libId];
+        saveLibraries(allLibraries);
+        const allProgress = loadProgress();
+        delete allProgress[libId];
+        saveProgress(allProgress);
+        const ids = Object.keys(allLibraries);
+        if (ids.length) {
+            switchToLibrary(ids[0]);
+            updateLibrarySelector();
+        } else {
+            uploadScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
+            currentLibraryId = null;
+            currentQuestions = [];
+            filteredQuestions = [];
+            currentIndex = 0;
+            isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
+            renderCard();
+            updateLibrarySelector();
+            localStorage.removeItem('lastLibraryId');
+        }
+    }
+
+    // ---------- 解析 Excel ----------
+    function parseExcelData(workbook) {
+        console.log('[parseExcelData] 开始解析');
+        const sheets = workbook.SheetNames;
+        if (!sheets.length) return [];
+        const sheet = workbook.Sheets[sheets[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        const questions = [];
+        let currentCategory = '';
+        let headerRow = null;
+        let colMap = {};
+
+        for (let i = 0; i < Math.min(10, json.length); i++) {
+            const row = json[i];
+            if (!row) continue;
+            if (row.some(cell => String(cell).trim() === '序号')) {
+                headerRow = i;
+                break;
+            }
+        }
+
+        if (headerRow !== null) {
+            const headers = json[headerRow].map(h => String(h).trim());
+            const findCol = (keywords) => {
+                for (let kw of keywords) {
+                    const idx = headers.findIndex(h => h.includes(kw));
+                    if (idx !== -1) return idx;
+                }
+                return -1;
+            };
+            colMap = {
+                id: findCol(['序号', 'ID']),
+                type: findCol(['题型', '类型']),
+                question: findCol(['题目', '内容']),
+                options: findCol(['选项']),
+                answer: findCol(['正确答案', '答案', '参考答案']),
+                explanation: findCol(['解析', '口诀', '备注']),
+                category: findCol(['分类', '模块'])
+            };
+            if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
+            if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
+
+            for (let i = headerRow + 1; i < json.length; i++) {
+                const row = json[i];
+                if (!row || row.length === 0) continue;
+                const id = parseInt(row[colMap.id] || 0);
+                if (isNaN(id) || id === 0) continue;
+                const question = String(row[colMap.question] || '').trim();
+                if (!question) continue;
+                let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
+                if (type.includes('单选')) type = 'single';
+                else if (type.includes('多选')) type = 'multi';
+                else if (type.includes('填空')) type = 'fill';
+                else if (type.includes('判断')) type = 'judge';
+                else type = 'essay';
+
+                let options = [];
+                if (colMap.options !== -1) {
+                    const optStr = String(row[colMap.options] || '').trim();
+                    if (optStr) {
+                        options = optStr.split(/\n|;|，/).filter(s => s.trim());
+                    }
+                }
+                const answer = String(row[colMap.answer] || '').trim();
+                const explanation = String(row[colMap.explanation] || '').trim();
+                const category = colMap.category !== -1 ? String(row[colMap.category] || '').trim() : currentCategory;
+
+                questions.push({
+                    id: id,
+                    category: category || '未分类',
+                    question: question,
+                    type: type,
+                    options: options,
+                    answer: answer,
+                    explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
+                    mnemonic: explanation || (type === 'essay' ? '（无口诀）' : ''),
+                    answerText: type === 'essay' ? answer : '',
+                    remarks: ''
+                });
+            }
+        } else {
+            for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
+                const row = json[rowIdx];
+                if (!row || row.length === 0) continue;
+                const firstCell = String(row[0] || '').trim();
+                if (firstCell.includes('教育学') || firstCell.includes('小三门') || firstCell.includes('心理学')) {
+                    if (firstCell.includes('教育学')) currentCategory = '教育学';
+                    else if (firstCell.includes('小三门')) currentCategory = '小三门';
+                    else if (firstCell.includes('心理学')) currentCategory = '心理学';
+                    continue;
+                }
+                const num = parseInt(firstCell, 10);
+                if (!isNaN(num) && row.length >= 3) {
+                    const question = String(row[1] || '').trim();
+                    const mnemonic = String(row[2] || '').trim();
+                    if (question) {
+                        questions.push({
+                            id: num,
+                            category: currentCategory || '未分类',
+                            question: question,
+                            type: 'essay',
+                            options: [],
+                            answer: '',
+                            explanation: mnemonic || '（无口诀）',
+                            mnemonic: mnemonic || '（无口诀）',
+                            answerText: '',
+                            remarks: ''
+                        });
+                    }
+                }
+            }
+        }
+        console.log('[parseExcelData] 解析完成，共', questions.length, '题');
+        return questions;
+    }
+
+    // ---------- 添加新题库 ----------
+    function addNewLibrary(name, questions) {
+        if (!questions || questions.length === 0) {
+            alert('题库为空，无法添加');
+            return;
+        }
+        const id = 'lib_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        allLibraries[id] = { id, name, questions };
+        saveLibraries(allLibraries);
+        setLibraryProgress(id, {});
+        updateLibrarySelector();
+        switchToLibrary(id);
+        uploadScreen.style.display = 'none';
+        mainApp.style.display = 'flex';
+    }
+
+    // ---------- 导入处理 ----------
+    function handleFileUpload(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const parsed = parseExcelData(workbook);
+                if (!parsed.length) {
+                    alert('未能解析出题目，请检查 Excel 格式。');
+                    return;
+                }
+                parsed.sort((a, b) => a.id - b.id);
+                const matchedId = findMatchingLibrary(parsed);
+                if (matchedId) {
+                    const libName = allLibraries[matchedId].name;
+                    if (confirm(`检测到题库“${libName}”与当前上传内容相同，是否切换到该题库？\n（点击“确定”切换，点击“取消”仍新建）`)) {
+                        switchToLibrary(matchedId);
+                        uploadScreen.style.display = 'none';
+                        mainApp.style.display = 'flex';
+                        return;
+                    }
+                }
+                const defaultName = file.name.replace(/\.[^.]+$/, '');
+                promptForLibraryName(defaultName, (name) => {
+                    if (name) {
+                        addNewLibrary(name, parsed);
+                    }
+                });
+            } catch (err) {
+                alert('解析失败：' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function importJsonLibrary(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const libData = JSON.parse(e.target.result);
+                if (!libData.questions || !Array.isArray(libData.questions) || libData.questions.length === 0) {
+                    alert('无效的 JSON 题库文件');
+                    return;
+                }
+                const questions = libData.questions.map(q => ({
+                    id: q.id || 0,
+                    category: q.category || '未分类',
+                    question: q.question || '',
+                    type: q.type || 'essay',
+                    options: q.options || [],
+                    answer: q.answer || '',
+                    explanation: q.explanation || q.mnemonic || '',
+                    mnemonic: q.mnemonic || q.explanation || '',
+                    answerText: q.answerText || '',
+                    remarks: q.remarks || ''
+                }));
+                questions.forEach((q, idx) => q.id = idx + 1);
+                const name = libData.name || file.name.replace(/\.[^.]+$/, '') || '导入的题库';
+                const matchedId = findMatchingLibrary(questions);
+                if (matchedId) {
+                    if (confirm(`检测到题库“${allLibraries[matchedId].name}”与当前导入内容相同，是否切换到该题库？`)) {
+                        switchToLibrary(matchedId);
+                        uploadScreen.style.display = 'none';
+                        mainApp.style.display = 'flex';
+                        return;
+                    }
+                }
+                addNewLibrary(name, questions);
+            } catch (err) {
+                alert('JSON 解析失败：' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function findMatchingLibrary(questions) {
+        const sortedNew = [...questions].sort((a, b) => a.id - b.id);
+        const ids = Object.keys(allLibraries);
+        for (let id of ids) {
+            const existing = allLibraries[id].questions;
+            if (existing.length !== sortedNew.length) continue;
+            const sortedExisting = [...existing].sort((a, b) => a.id - b.id);
+            if (JSON.stringify(sortedExisting) === JSON.stringify(sortedNew)) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    function promptForLibraryName(defaultName, callback) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>📚 新建题库</h3>
+                <input type="text" id="libNameInput" placeholder="输入题库名称..." value="${escapeHtml(defaultName)}">
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="modalCancelBtn">取消</button>
+                    <button class="btn-primary" id="modalConfirmBtn">确定</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#libNameInput');
+        input.focus();
+        input.select();
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#modalCancelBtn').addEventListener('click', () => {
+            close();
+            callback(null);
+        });
+        overlay.querySelector('#modalConfirmBtn').addEventListener('click', () => {
+            const name = input.value.trim() || defaultName;
+            close();
+            callback(name);
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) { close();
+                callback(null); }
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const name = input.value.trim() || defaultName;
+                close();
+                callback(name);
+            }
+        });
+    }
+
+    // ---------- 添加题目（含答案和备注） ----------
+    function showAddQuestionModal() {
+        if (!currentLibraryId) {
+            alert('请先选择或创建一个题库');
+            return;
+        }
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>➕ 添加题目</h3>
+                <div class="form-group">
+                    <label>题型</label>
+                    <select id="qType">
+                        <option value="essay">简答</option>
+                        <option value="single">单选</option>
+                        <option value="multi">多选</option>
+                        <option value="fill">填空</option>
+                        <option value="judge">判断</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>题目内容 *</label>
+                    <textarea id="qQuestion" placeholder="请输入题目..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>分类（可选）</label>
+                    <input type="text" id="qCategory" placeholder="例如：教育学、心理学...">
+                </div>
+                <div class="form-group" id="optionsGroup" style="display:none;">
+                    <label>选项（每行一个）</label>
+                    <textarea id="qOptions" placeholder="选项A&#10;选项B&#10;选项C&#10;选项D"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>正确答案（单选/多选填选项字母，如 A；填空填答案文本；判断填“对”或“错”）</label>
+                    <input type="text" id="qAnswer" placeholder="例如：A">
+                </div>
+                <div class="form-group" id="essayExtra" style="display:block;">
+                    <label>参考答案（简答题专用）</label>
+                    <textarea id="qAnswerText" placeholder="简答题的参考答案..."></textarea>
+                </div>
+                <div class="form-group" id="remarkGroup" style="display:block;">
+                    <label>备注（可选）</label>
+                    <textarea id="qRemarks" placeholder="补充说明、拓展知识..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>解析 / 口诀（可选）</label>
+                    <textarea id="qExplanation" placeholder="解析或口诀"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="modalCancelBtn">取消</button>
+                    <button class="btn-primary" id="modalConfirmBtn">确定添加</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const typeSelect = overlay.querySelector('#qType');
+        const optionsGroup = overlay.querySelector('#optionsGroup');
+        const essayExtra = overlay.querySelector('#essayExtra');
+        typeSelect.addEventListener('change', function() {
+            const val = this.value;
+            optionsGroup.style.display = (val === 'single' || val === 'multi') ? 'block' : 'none';
+            essayExtra.style.display = (val === 'essay') ? 'block' : 'none';
+        });
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#modalCancelBtn').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        overlay.querySelector('#modalConfirmBtn').addEventListener('click', () => {
+            const type = typeSelect.value;
+            const question = overlay.querySelector('#qQuestion').value.trim();
+            if (!question) {
+                alert('请输入题目内容');
+                return;
+            }
+            const category = overlay.querySelector('#qCategory').value.trim() || '自定义';
+            let options = [];
+            if (type === 'single' || type === 'multi') {
+                const optText = overlay.querySelector('#qOptions').value;
+                options = optText.split('\n').filter(s => s.trim());
+                if (options.length < 2) {
+                    alert('选择题至少需要2个选项');
+                    return;
+                }
+            }
+            const answer = overlay.querySelector('#qAnswer').value.trim();
+            const explanation = overlay.querySelector('#qExplanation').value.trim();
+            const answerText = overlay.querySelector('#qAnswerText').value.trim();
+            const remarks = overlay.querySelector('#qRemarks').value.trim();
+
+            const questions = allLibraries[currentLibraryId].questions;
+            const maxId = questions.reduce((max, q) => Math.max(max, q.id), 0);
+            const newId = maxId + 1;
+
+            const newQuestion = {
+                id: newId,
+                category: category,
+                question: question,
+                type: type,
+                options: options,
+                answer: answer,
+                explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
+                mnemonic: explanation || (type === 'essay' ? '（无口诀）' : ''),
+                answerText: answerText,
+                remarks: remarks
+            };
+
+            questions.push(newQuestion);
+            saveLibraries(allLibraries);
+            switchToLibrary(currentLibraryId);
+            if (filteredQuestions.length) {
+                currentIndex = filteredQuestions.length - 1;
+                renderCard();
+            }
+            close();
+            alert('✅ 题目添加成功！');
+        });
+    }
+
+    // ---------- 导出题库 ----------
+    function exportLibrary() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            alert('请先选择一个题库');
+            return;
+        }
+        const lib = allLibraries[currentLibraryId];
+        const name = lib.name || '未命名题库';
+
+        // JSON
+        const jsonData = JSON.stringify(lib, null, 2);
+        const jsonBlob = new Blob([jsonData], { type: 'application/json' });
+        const jsonUrl = URL.createObjectURL(jsonBlob);
+        const aJson = document.createElement('a');
+        aJson.href = jsonUrl;
+        aJson.download = `${name}.json`;
+        document.body.appendChild(aJson);
+        aJson.click();
+        document.body.removeChild(aJson);
+        URL.revokeObjectURL(jsonUrl);
+
+        // Excel
+        const questions = lib.questions || [];
+        const rows = [
+            ['序号', '题型', '分类', '题目', '选项', '正确答案', '解析/口诀', '参考答案', '备注']
+        ];
+        questions.forEach(q => {
+            const optStr = (q.options || []).join('; ');
+            rows.push([
+                q.id,
+                q.type || 'essay',
+                q.category || '',
+                q.question,
+                optStr,
+                q.answer || '',
+                q.explanation || q.mnemonic || '',
+                q.answerText || '',
+                q.remarks || ''
+            ]);
+        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, '题目');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const xlsxBlob = new Blob([wbout], { type: 'application/octet-stream' });
+        const xlsxUrl = URL.createObjectURL(xlsxBlob);
+        const aXlsx = document.createElement('a');
+        aXlsx.href = xlsxUrl;
+        aXlsx.download = `${name}.xlsx`;
+        document.body.appendChild(aXlsx);
+        aXlsx.click();
+        document.body.removeChild(aXlsx);
+        URL.revokeObjectURL(xlsxUrl);
+
+        alert('✅ 题库已导出（JSON + XLSX）');
+    }
+
+    // ---------- 导出 PDF ----------
+    function exportPdf() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            alert('请先选择一个题库');
+            return;
+        }
+        const lib = allLibraries[currentLibraryId];
+        const questions = lib.questions || [];
+        let printContent = `
+            <html>
+            <head><title>${escapeHtml(lib.name)} - 题库</title>
+            <style>
+                body { font-family: system-ui, sans-serif; padding: 20px; }
+                h1 { font-size: 24px; }
+                .q-item { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
+                .q-title { font-weight: bold; }
+                .q-answer { margin-top: 8px; color: #2d7d2d; }
+                .q-remark { margin-top: 4px; color: #555; font-style: italic; }
+                .q-mnemonic { margin-top: 4px; color: #8a6d3b; }
+                .q-options { margin-top: 4px; color: #1e293b; }
+                @media print { .q-item { page-break-inside: avoid; } }
+            </style>
+            </head>
+            <body>
+            <h1>${escapeHtml(lib.name)} - 全部题目</h1>
+        `;
+        questions.forEach(q => {
+            const typeLabel = { essay: '简答', single: '单选', multi: '多选', fill: '填空', judge: '判断' } [q
+                .type] || q.type;
+            printContent += `
+                <div class="q-item">
+                    <div class="q-title">#${q.id} [${typeLabel}] ${escapeHtml(q.question)}</div>
+                    ${q.options && q.options.length ? `<div class="q-options">选项：${q.options.map((o,i)=>String.fromCharCode(65+i)+'. '+o).join('；')}</div>` : ''}
+                    ${q.answer ? `<div class="q-answer">✅ 答案：${escapeHtml(q.answer)}</div>` : ''}
+                    ${q.answerText ? `<div class="q-answer">📝 参考答案：${escapeHtml(q.answerText)}</div>` : ''}
+                    ${q.remarks ? `<div class="q-remark">📌 备注：${escapeHtml(q.remarks)}</div>` : ''}
+                    ${q.explanation && q.explanation !== '（无口诀）' ? `<div class="q-mnemonic">💡 解析/口诀：${escapeHtml(q.explanation)}</div>` : ''}
+                </div>
+            `;
+        });
+        printContent += `</body></html>`;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
+    // ---------- 导出/导入进度 ----------
+    function getExportData() {
+        return JSON.stringify(loadProgress(), null, 2);
+    }
+
+    function exportAllProgress() {
+        const dataStr = getExportData();
+        try {
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `all_progress_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            showModal('📋 导出全部进度', dataStr, '复制', (text) => {
+                copyToClipboard(text);
+            });
+        }
+    }
+
+    function copyAllProgress() {
+        const dataStr = getExportData();
+        copyToClipboard(dataStr);
+    }
+
+    function importProgressFromPaste() {
+        showModal('📋 从剪贴板导入进度（覆盖所有题库进度）', '', '导入', (text) => {
+            try {
+                const data = JSON.parse(text);
+                if (typeof data === 'object' && data !== null) {
+                    if (confirm('导入将覆盖当前所有题库的进度记录，确定继续吗？')) {
+                        saveProgress(data);
+                        if (currentLibraryId && allLibraries[currentLibraryId]) {
+                            switchToLibrary(currentLibraryId);
+                        } else {
+                            applyFilters();
+                        }
+                        alert('✅ 导入成功！');
+                    }
+                } else {
+                    alert('❌ 无效的进度数据');
+                }
+            } catch (err) {
+                alert('❌ 解析失败：' + err.message);
+            }
+        });
+    }
+
+    function importProgressFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (typeof data === 'object' && data !== null) {
+                    if (confirm('导入将覆盖当前所有题库的进度记录，确定继续吗？')) {
+                        saveProgress(data);
+                        if (currentLibraryId && allLibraries[currentLibraryId]) {
+                            switchToLibrary(currentLibraryId);
+                        } else {
+                            applyFilters();
+                        }
+                        alert('✅ 导入成功！');
+                    }
+                } else {
+                    alert('❌ 无效的进度文件');
+                }
+            } catch (err) {
+                alert('❌ 解析失败：' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ---------- 通用模态框 ----------
+    function showModal(title, initialText, actionLabel, onAction) {
+        const old = document.querySelector('.modal-overlay');
+        if (old) old.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>${title}</h3>
+                <textarea id="modalTextarea">${escapeHtml(initialText)}</textarea>
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="modalCloseBtn">关闭</button>
+                    <button class="btn-primary" id="modalActionBtn">${actionLabel}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const closeModal = () => overlay.remove();
+        overlay.querySelector('#modalCloseBtn').addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        overlay.querySelector('#modalActionBtn').addEventListener('click', () => {
+            const text = overlay.querySelector('#modalTextarea').value;
+            onAction(text);
+            closeModal();
+        });
+    }
+
+    // ---------- 帮助 ----------
+    function showHelp() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>❓ 使用帮助</h3>
+                <div class="help-content">
+                    <ul>
+                        <li>👆 左右滑动卡片切换题目</li>
+                        <li>💡 点击“提示”查看口诀/解析（切换题目后自动隐藏）</li>
+                        <li>📝 点击“答案”查看参考答案（仅简答题）</li>
+                        <li>📌 点击“备注”查看补充说明（仅简答题）</li>
+                        <li>⬅️➡️ 使用“上一题/下一题”按钮或键盘方向键</li>
+                        <li>🎲 点击“随机”跳转至随机题目</li>
+                        <li>✅🔄 底部“掌握/复习”标记题目状态，“重置”取消标记</li>
+                        <li>📂 顶部下拉框切换不同题库，➕ 上传新题库，🗑️ 删除题库</li>
+                        <li>➕ 点击“添加题目”可自定义任意题型（含答案和备注）</li>
+                        <li>📤 点击“导出题库”可下载 JSON 和 Excel 文件</li>
+                        <li>📄 点击“导出PDF”可生成当前题库的打印版（含所有答案和备注）</li>
+                        <li>💾 底部“导出/导入”可备份所有题库进度，跨设备迁移</li>
+                    </ul>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="helpCloseBtn">知道了</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#helpCloseBtn').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+    }
+
+    // ---------- 复制 ----------
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 已复制到剪贴板！');
+            }).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ 已复制到剪贴板！');
+        } catch (e) {
+            alert('❌ 复制失败，请手动复制。');
+        }
+        document.body.removeChild(textarea);
+    }
+
+    // ---------- 触摸滑动 ----------
+    let touchStartX = 0,
+        touchStartY = 0,
+        isSwiping = false;
+
+    // ---------- 事件绑定 ----------
+    function bindEvents() {
+        librarySelect.addEventListener('change', (e) => {
+            const id = e.target.value;
+            if (id && allLibraries[id]) {
+                switchToLibrary(id);
+            }
+        });
+
+        deleteLibraryBtn.addEventListener('click', () => {
+            if (currentLibraryId) deleteLibrary(currentLibraryId);
+        });
+
+        addLibraryBtn.addEventListener('click', () => {
+            uploadScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
+        });
+
+        categoryFilter.addEventListener('change', () => { isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
+            applyFilters(); });
+        statusFilter.addEventListener('change', () => { isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
+            applyFilters(); });
+        modeSelect.addEventListener('change', (e) => {
+            const newMode = e.target.value;
+            if (newMode === 'random' && currentMode !== 'random') {
+                shuffleArray(filteredQuestions);
+                currentIndex = 0;
+            } else if (newMode === 'sequential' && currentMode === 'random') {
+                filteredQuestions.sort((a, b) => a.id - b.id);
+                currentIndex = 0;
+            }
+            currentMode = newMode;
+            isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
+            renderCard();
+        });
+        shuffleBtn.addEventListener('click', reshuffle);
+
+        actionMaster.addEventListener('click', () => {
+            if (!currentLibraryId || !filteredQuestions.length) return;
+            const q = filteredQuestions[currentIndex];
+            setQuestionStatus(currentLibraryId, q.id, 'mastered');
+        });
+        actionReview.addEventListener('click', () => {
+            if (!currentLibraryId || !filteredQuestions.length) return;
+            const q = filteredQuestions[currentIndex];
+            setQuestionStatus(currentLibraryId, q.id, 'review');
+        });
+        actionReset.addEventListener('click', () => {
+            if (!currentLibraryId || !filteredQuestions.length) return;
+            const q = filteredQuestions[currentIndex];
+            setQuestionStatus(currentLibraryId, q.id, 'none');
+        });
+        helpBtn.addEventListener('click', showHelp);
+
+        addQuestionBtn.addEventListener('click', showAddQuestionModal);
+        exportLibraryBtn.addEventListener('click', exportLibrary);
+        exportPdfBtn.addEventListener('click', exportPdf);
+
+        exportBtn.addEventListener('click', exportAllProgress);
+        copyBtn.addEventListener('click', copyAllProgress);
+        pasteImportBtn.addEventListener('click', importProgressFromPaste);
+        importBtn.addEventListener('click', () => importFileInput.click());
+
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'json') {
+                importJsonLibrary(file);
+            } else if (ext === 'xlsx' || ext === 'xls') {
+                handleFileUpload(file);
+            } else {
+                alert('不支持的文件格式，请选择 .xlsx, .xls 或 .json');
+            }
+            e.target.value = '';
+        });
+
+        resetAllBtn.addEventListener('click', () => {
+            if (currentLibraryId) resetAllProgressForLibrary(currentLibraryId);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') navigate(-1);
+            else if (e.key === 'ArrowRight') navigate(1);
+        });
+
+        const wrapper = document.getElementById('cardWrapper');
+        wrapper.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            isSwiping = false;
+        }, { passive: true });
+
+        wrapper.addEventListener('touchmove', (e) => {
+            if (!touchStartX) return;
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+                isSwiping = true;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        wrapper.addEventListener('touchend', (e) => {
+            if (!touchStartX || !isSwiping) {
+                touchStartX = 0;
+                touchStartY = 0;
+                return;
+            }
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            if (deltaX > 50) navigate(-1);
+            else if (deltaX < -50) navigate(1);
+            touchStartX = 0;
+            touchStartY = 0;
+            isSwiping = false;
+        }, { passive: true });
+
+        uploadScreen.addEventListener('click', () => fileInput.click());
+        uploadScreen.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadScreen.style.borderColor = '#4f46e5';
+            uploadScreen.style.background = '#eef2ff';
+        });
+        uploadScreen.addEventListener('dragleave', () => {
+            uploadScreen.style.borderColor = '#cbd5e1';
+            uploadScreen.style.background = '#fafcff';
+        });
+        uploadScreen.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadScreen.style.borderColor = '#cbd5e1';
+            uploadScreen.style.background = '#fafcff';
+            if (e.dataTransfer.files.length) {
+                const file = e.dataTransfer.files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'json') {
+                    importJsonLibrary(file);
+                } else if (ext === 'xlsx' || ext === 'xls') {
+                    handleFileUpload(file);
+                } else {
+                    alert('不支持的文件格式，请上传 .xlsx, .xls 或 .json');
+                }
+                fileInput.files = e.dataTransfer.files;
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length) {
+                handleFileUpload(this.files[0]);
+            }
+        });
+    }
+
+    // ---------- 暴露全局 ----------
+    window.parseExcelData = parseExcelData;
+    window.addNewLibrary = addNewLibrary;
+    window.exportPdf = exportPdf;
+
+    // ---------- 初始化 ----------
+    function init() {
+        bindEvents();
+        loadAllLibraries();
+        if (Object.keys(allLibraries).length === 0) {
+            uploadScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
+        } else {
+            uploadScreen.style.display = 'none';
+            mainApp.style.display = 'flex';
+        }
+        console.log('✅ 刷题器 v2.1.0 初始化完成');
+    }
+
+    init();
+})();
