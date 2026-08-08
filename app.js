@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    const VERSION = 'v2.1.0';
+    const VERSION = 'v2.1.1';
     console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- DOM 引用 ----------
@@ -31,6 +31,8 @@
     const addQuestionBtn = document.getElementById('addQuestionBtn');
     const exportLibraryBtn = document.getElementById('exportLibraryBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const jumpInput = document.getElementById('jumpInput');
+    const jumpBtn = document.getElementById('jumpBtn');
     const progressRing = document.getElementById('progressRing');
     const ringPercent = document.getElementById('ringPercent');
     const masteredCount = document.getElementById('masteredCount');
@@ -97,9 +99,17 @@
         updateStatsAndUI();
         renderCard();
     }
+
+    // ---------- 重置全部进度（修复：重置索引到0） ----------
     function resetAllProgressForLibrary(libId) {
         if (confirm(`确定要重置题库“${allLibraries[libId].name}”的所有进度吗？`)) {
             setLibraryProgress(libId, {});
+            // 重置索引到第一题
+            currentIndex = 0;
+            // 隐藏所有辅助显示
+            isMnemonicVisible = false;
+            isAnswerVisible = false;
+            isRemarkVisible = false;
             updateStatsAndUI();
             renderCard();
         }
@@ -147,7 +157,33 @@
         return div.innerHTML;
     }
 
-    // ---------- 渲染卡片（核心） ----------
+    // ---------- 跳转功能 ----------
+    function jumpToQuestion() {
+        if (!filteredQuestions.length) {
+            alert('当前没有题目可跳转');
+            return;
+        }
+        const val = parseInt(jumpInput.value);
+        if (isNaN(val) || val < 1 || val > filteredQuestions.length) {
+            alert(`请输入 1 到 ${filteredQuestions.length} 之间的数字`);
+            jumpInput.value = '';
+            return;
+        }
+        currentIndex = val - 1;
+        // 跳转时隐藏辅助显示
+        isMnemonicVisible = false;
+        isAnswerVisible = false;
+        isRemarkVisible = false;
+        // 如果是随机模式，切回顺序模式（让用户看到当前是第几题）
+        if (currentMode === 'random') {
+            currentMode = 'sequential';
+            modeSelect.value = 'sequential';
+        }
+        renderCard();
+        jumpInput.value = '';
+    }
+
+    // ---------- 渲染卡片 ----------
     function renderCard() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             cardContent.innerHTML = `<div class="empty-state">请先上传或选择一个题库</div>`;
@@ -268,7 +304,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互
+        // 绑定选择题交互（保持不变）
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -523,8 +559,12 @@
         }
 
         filteredQuestions = filtered;
-        if (filteredQuestions.length) currentIndex = 0;
-        else currentIndex = 0;
+        if (filteredQuestions.length) {
+            // 筛选后重置到第一题
+            currentIndex = 0;
+        } else {
+            currentIndex = 0;
+        }
 
         isMnemonicVisible = false;
         isAnswerVisible = false;
@@ -613,6 +653,8 @@
         isMnemonicVisible = false;
         isAnswerVisible = false;
         isRemarkVisible = false;
+        // 切换到新题库时重置索引到0
+        currentIndex = 0;
         applyFilters();
     }
 
@@ -644,7 +686,7 @@
         }
     }
 
-    // ---------- 解析 Excel ----------
+    // ---------- 解析 Excel（保持不变） ----------
     function parseExcelData(workbook) {
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
@@ -907,7 +949,7 @@
         });
     }
 
-    // ---------- 添加题目（含答案和备注） ----------
+    // ---------- 添加题目 ----------
     function showAddQuestionModal() {
         if (!currentLibraryId) {
             alert('请先选择或创建一个题库');
@@ -1039,7 +1081,6 @@
         const lib = allLibraries[currentLibraryId];
         const name = lib.name || '未命名题库';
 
-        // JSON
         const jsonData = JSON.stringify(lib, null, 2);
         const jsonBlob = new Blob([jsonData], { type: 'application/json' });
         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -1051,7 +1092,6 @@
         document.body.removeChild(aJson);
         URL.revokeObjectURL(jsonUrl);
 
-        // Excel
         const questions = lib.questions || [];
         const rows = [
             ['序号', '题型', '分类', '题目', '选项', '正确答案', '解析/口诀', '参考答案', '备注']
@@ -1213,7 +1253,7 @@
         reader.readAsText(file);
     }
 
-    // ---------- 通用模态框 ----------
+    // ---------- 模态框 ----------
     function showModal(title, initialText, actionLabel, onAction) {
         const old = document.querySelector('.modal-overlay');
         if (old) old.remove();
@@ -1266,6 +1306,7 @@
                         <li>📤 点击“导出题库”可下载 JSON 和 Excel 文件</li>
                         <li>📄 点击“导出PDF”可生成当前题库的打印版（含所有答案和备注）</li>
                         <li>💾 底部“导出/导入”可备份所有题库进度，跨设备迁移</li>
+                        <li>🔢 在底部输入题号后点击“跳转”可快速定位到任意题目</li>
                     </ul>
                 </div>
                 <div class="modal-actions">
@@ -1376,6 +1417,14 @@
         exportLibraryBtn.addEventListener('click', exportLibrary);
         exportPdfBtn.addEventListener('click', exportPdf);
 
+        // 跳转事件
+        jumpBtn.addEventListener('click', jumpToQuestion);
+        jumpInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                jumpToQuestion();
+            }
+        });
+
         exportBtn.addEventListener('click', exportAllProgress);
         copyBtn.addEventListener('click', copyAllProgress);
         pasteImportBtn.addEventListener('click', importProgressFromPaste);
@@ -1477,6 +1526,7 @@
     window.parseExcelData = parseExcelData;
     window.addNewLibrary = addNewLibrary;
     window.exportPdf = exportPdf;
+    window.jumpToQuestion = jumpToQuestion;
 
     // ---------- 初始化 ----------
     function init() {
@@ -1489,7 +1539,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.1.0 初始化完成');
+        console.log('✅ 刷题器 v2.1.1 初始化完成');
     }
 
     init();

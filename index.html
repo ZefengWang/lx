@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>刷题器 v2.1.0</title>
+    <title>刷题器 v2.1.1</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -22,7 +22,7 @@
             <!-- 头部 -->
             <div class="app-header">
                 <div class="header-top">
-                    <h1>📚 刷题 <small>v2.1.0</small></h1>
+                    <h1>📚 刷题 <small>v2.1.1</small></h1>
                     <div class="library-selector">
                         <span style="font-size:13px;color:#64748b;">📂</span>
                         <select id="librarySelect"></select>
@@ -97,6 +97,8 @@
                     <button id="pasteImportBtn">📋 从剪贴板导入</button>
                     <button id="importBtn">📤 导入文件</button>
                     <input type="file" id="importFileInput" accept=".json,.xlsx,.xls">
+                    <input type="number" id="jumpInput" placeholder="题号" min="1" style="width:65px;padding:4px 8px;border:1px solid #d1d9e6;border-radius:8px;font-size:12px;">
+                    <button id="jumpBtn" style="background:none;border:none;color:#4f46e5;padding:4px 8px;cursor:pointer;font-weight:500;">跳转</button>
                 </div>
                 <div class="right-group">
                     <button id="resetAllBtn" class="danger">🗑️ 重置全部</button>
