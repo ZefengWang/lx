@@ -2,18 +2,15 @@
     'use strict';
 
     // ========== 版本号 ==========
-    const VERSION = 'v2.3.1';
+    const VERSION = 'v2.3.3';
     console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- 版本检查 ----------
     const STORAGE_VERSION_KEY = 'studyAppVersion';
     const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
     if (storedVersion && storedVersion !== VERSION) {
-        // 检测到版本变化，提示用户刷新
         alert(`检测到新版本 (${VERSION})，请点击“确定”刷新页面以应用更新。`);
         localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
-        // 可选择自动刷新，但用户可能未保存数据，所以仅提示
-        // 用户手动刷新即可
     } else if (!storedVersion) {
         localStorage.setItem(STORAGE_VERSION_KEY, VERSION);
     }
@@ -267,14 +264,11 @@
         if (!currentLibraryId || !filteredQuestions.length) return;
         const q = filteredQuestions[currentIndex];
         if (!q) return;
-        // 更新题库数据
         const lib = allLibraries[currentLibraryId];
         const question = lib.questions.find(item => item.id === q.id);
         if (!question) return;
         question[field] = value;
-        // 保存到 localStorage
         saveLibraries(allLibraries);
-        // 重新渲染
         renderCard();
     }
 
@@ -810,7 +804,7 @@
         }
     }
 
-    // ---------- 解析 Excel（优化分类识别） ----------
+    // ---------- 解析 Excel（通用分类识别） ----------
     function parseExcelData(workbook) {
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
@@ -869,7 +863,7 @@
                     category = String(row[colMap.category] || '').trim();
                 }
                 if (!category) {
-                    category = currentCategory; // 使用之前通过标题行设置的分类
+                    category = currentCategory;
                 }
 
                 let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
@@ -903,18 +897,34 @@
                 });
             }
         } else {
-            // 无表头模式：按行解析，识别分类标题行
+            // 无表头模式：按行解析，识别分类标题行（非数字开头的行，且不含表头关键词）
             for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
                 const row = json[rowIdx];
                 if (!row || row.length === 0) continue;
                 const firstCell = String(row[0] || '').trim();
 
-                // 检测分类标题（包含“教育学”、“小三门”、“心理学”）
-                if (firstCell.includes('教育学') || firstCell.includes('小三门') || firstCell.includes('心理学')) {
-                    if (firstCell.includes('教育学')) currentCategory = '教育学';
-                    else if (firstCell.includes('小三门')) currentCategory = '小三门';
-                    else if (firstCell.includes('心理学')) currentCategory = '心理学';
-                    continue;
+                // 检查是否为分类标题行：第一列不是数字，且行中不包含“序号”、“题目”等表头关键词
+                const isNumber = /^\d+$/.test(firstCell);
+                // 检查是否包含表头关键词（防止误判）
+                const isHeaderRow = row.some(cell => {
+                    const str = String(cell).trim();
+                    return str.includes('序号') || str.includes('题目') || str.includes('口诀');
+                });
+
+                if (!isNumber && !isHeaderRow) {
+                    // 提取分类名称：取行中第一个非空单元格
+                    let categoryName = '';
+                    for (let cell of row) {
+                        const str = String(cell).trim();
+                        if (str) {
+                            categoryName = str;
+                            break;
+                        }
+                    }
+                    if (categoryName) {
+                        currentCategory = categoryName;
+                        continue;
+                    }
                 }
 
                 // 尝试解析序号行
@@ -1218,7 +1228,7 @@
         });
     }
 
-    // ---------- 导出题库、PDF、进度（与之前相同，略） ----------
+    // ---------- 导出题库 ----------
     function exportLibrary() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             alert('请先选择一个题库');
@@ -1273,6 +1283,7 @@
         alert('✅ 题库已导出（JSON + XLSX）');
     }
 
+    // ---------- 导出 PDF ----------
     function exportPdf() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             alert('请先选择一个题库');
@@ -1672,7 +1683,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.3.1 初始化完成');
+        console.log('✅ 刷题器 v2.3.3 初始化完成');
     }
 
     init();
