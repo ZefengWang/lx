@@ -1580,6 +1580,27 @@
         alert('✅ 题库已导出（JSON + XLSX）');
     }
 
+
+    function exportJsonOnly() {
+        if (!currentLibraryId || !allLibraries[currentLibraryId]) {
+            alert('请先选择一个题库');
+            return;
+        }
+        const lib = allLibraries[currentLibraryId];
+        const name = lib.name || '未命名题库';
+        const jsonData = JSON.stringify(lib, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('✅ 题库已导出为 JSON 文件');
+    }
+    
     // ---------- 导出 PDF ----------
     function exportPdf() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
@@ -1867,7 +1888,7 @@
         document.getElementById('manageCategoryBtn').addEventListener('click', showManageCategoryModal);
         pasteLibraryBtn.addEventListener('click', showPasteModal);
         exportLibraryBtn.addEventListener('click', exportLibrary);
-        exportPdfBtn.addEventListener('click', exportPdf);
+        exportPdfBtn.addEventListener('click', exportJsonOnly);
 
         exportBtn.addEventListener('click', exportAllProgress);
         copyBtn.addEventListener('click', copyAllProgress);
