@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    const VERSION = 'v2.2.0';
+    const VERSION = 'v2.3.0';
     console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- DOM 引用 ----------
@@ -114,8 +114,7 @@
         const questions = allLibraries[libId]?.questions || [];
         const total = questions.length;
         const prog = getLibraryProgress(libId);
-        let mastered = 0,
-            review = 0;
+        let mastered = 0, review = 0;
         questions.forEach(q => {
             const s = prog[q.id] || 'none';
             if (s === 'mastered') mastered++;
@@ -149,6 +148,42 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // ---------- 编辑答案/备注的模态框 ----------
+    function showEditModal(title, currentValue, onSave) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>${title}</h3>
+                <textarea id="editTextarea" rows="6" placeholder="输入内容...">${escapeHtml(currentValue)}</textarea>
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="editCancelBtn">取消</button>
+                    <button class="btn-primary" id="editSaveBtn">保存</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#editCancelBtn').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+        overlay.querySelector('#editSaveBtn').addEventListener('click', () => {
+            const val = overlay.querySelector('#editTextarea').value;
+            onSave(val);
+            close();
+        });
+        // 回车保存（Ctrl+Enter）
+        overlay.querySelector('#editTextarea').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                const val = overlay.querySelector('#editTextarea').value;
+                onSave(val);
+                close();
+            }
+        });
     }
 
     // ---------- 目录弹窗 ----------
@@ -212,6 +247,22 @@
         });
     }
 
+    // ---------- 保存当前题目的答案或备注 ----------
+    function saveQuestionField(field, value) {
+        if (!currentLibraryId || !filteredQuestions.length) return;
+        const q = filteredQuestions[currentIndex];
+        if (!q) return;
+        // 更新题库数据
+        const lib = allLibraries[currentLibraryId];
+        const question = lib.questions.find(item => item.id === q.id);
+        if (!question) return;
+        question[field] = value;
+        // 保存到 localStorage
+        saveLibraries(allLibraries);
+        // 重新渲染
+        renderCard();
+    }
+
     // ---------- 渲染卡片 ----------
     function renderCard() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
@@ -255,6 +306,7 @@
         const type = q.type || 'essay';
         let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
 
+        // 选择题渲染（同之前）
         if (type === 'single') {
             const options = q.options || [];
             const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
@@ -302,8 +354,8 @@
             html += `</div>`;
             html += `<div class="feedback" id="feedback"></div>`;
         } else {
-            // 简答题
-            const answerText = q.answerText || q.answer || '';
+            // 简答题：显示答案和备注内容（根据可见性）
+            const answerText = q.answerText || '';
             const remarks = q.remarks || '';
             if (answerText) {
                 html += `<div class="card-answer ${isAnswerVisible ? 'show' : ''}">
@@ -319,6 +371,7 @@
             }
         }
 
+        // 口诀/解析
         const explanation = q.explanation || q.mnemonic || '';
         if (explanation) {
             html += `
@@ -331,7 +384,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互
+        // 绑定选择题交互（同之前，省略）
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -493,9 +546,20 @@
         // 重建 card-actions
         let extraButtons = '';
         if (type === 'essay') {
+            // 答案按钮组
+            const hasAnswer = q.answerText && q.answerText.trim() !== '';
+            const answerBtnLabel = hasAnswer ? '✏️ 修改答案' : '➕ 添加答案';
+            const answerToggleLabel = isAnswerVisible ? '🙈 隐藏答案' : '👁️ 显示答案';
+            // 备注按钮组
+            const hasRemark = q.remarks && q.remarks.trim() !== '';
+            const remarkBtnLabel = hasRemark ? '✏️ 修改备注' : '➕ 添加备注';
+            const remarkToggleLabel = isRemarkVisible ? '🙈 隐藏备注' : '👁️ 显示备注';
+
             extraButtons = `
-                <button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="answerBtn">${isAnswerVisible ? '🙈 隐藏答案' : '📝 答案'}</button>
-                <button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="remarkBtn">${isRemarkVisible ? '🙈 隐藏备注' : '📌 备注'}</button>
+                <button class="hint-btn" id="editAnswerBtn">${answerBtnLabel}</button>
+                ${hasAnswer ? `<button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="toggleAnswerBtn">${answerToggleLabel}</button>` : ''}
+                <button class="hint-btn" id="editRemarkBtn">${remarkBtnLabel}</button>
+                ${hasRemark ? `<button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="toggleRemarkBtn">${remarkToggleLabel}</button>` : ''}
             `;
         }
         cardActions.innerHTML = `
@@ -509,24 +573,46 @@
             </div>
         `;
 
+        // 绑定事件
         document.getElementById('hintBtn').addEventListener('click', () => {
             isMnemonicVisible = !isMnemonicVisible;
             renderCard();
         });
-        const answerBtn = document.getElementById('answerBtn');
-        if (answerBtn) {
-            answerBtn.addEventListener('click', () => {
+        // 答案编辑
+        const editAnswerBtn = document.getElementById('editAnswerBtn');
+        if (editAnswerBtn) {
+            editAnswerBtn.addEventListener('click', () => {
+                showEditModal('编辑答案', q.answerText || '', (val) => {
+                    saveQuestionField('answerText', val.trim());
+                });
+            });
+        }
+        // 答案显示切换
+        const toggleAnswerBtn = document.getElementById('toggleAnswerBtn');
+        if (toggleAnswerBtn) {
+            toggleAnswerBtn.addEventListener('click', () => {
                 isAnswerVisible = !isAnswerVisible;
                 renderCard();
             });
         }
-        const remarkBtn = document.getElementById('remarkBtn');
-        if (remarkBtn) {
-            remarkBtn.addEventListener('click', () => {
+        // 备注编辑
+        const editRemarkBtn = document.getElementById('editRemarkBtn');
+        if (editRemarkBtn) {
+            editRemarkBtn.addEventListener('click', () => {
+                showEditModal('编辑备注', q.remarks || '', (val) => {
+                    saveQuestionField('remarks', val.trim());
+                });
+            });
+        }
+        // 备注显示切换
+        const toggleRemarkBtn = document.getElementById('toggleRemarkBtn');
+        if (toggleRemarkBtn) {
+            toggleRemarkBtn.addEventListener('click', () => {
                 isRemarkVisible = !isRemarkVisible;
                 renderCard();
             });
         }
+        // 导航
         document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
         document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
         document.getElementById('randomBtn').addEventListener('click', goRandom);
@@ -625,7 +711,7 @@
         }
     }
 
-    // ---------- 题库管理 ----------
+    // ---------- 题库管理（与之前相同，略） ----------
     function loadAllLibraries() {
         allLibraries = loadLibraries();
         Object.keys(allLibraries).forEach(id => {
@@ -716,8 +802,9 @@
         }
     }
 
-    // ---------- 解析 Excel ----------
+    // ---------- 解析 Excel（字段映射不变） ----------
     function parseExcelData(workbook) {
+        // 与之前相同，略
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
         if (!sheets.length) return [];
@@ -1106,7 +1193,7 @@
         });
     }
 
-    // ---------- 导出题库 ----------
+    // ---------- 导出题库、PDF、进度等（与之前相同，略） ----------
     function exportLibrary() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             alert('请先选择一个题库');
@@ -1115,6 +1202,7 @@
         const lib = allLibraries[currentLibraryId];
         const name = lib.name || '未命名题库';
 
+        // JSON
         const jsonData = JSON.stringify(lib, null, 2);
         const jsonBlob = new Blob([jsonData], { type: 'application/json' });
         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -1126,6 +1214,7 @@
         document.body.removeChild(aJson);
         URL.revokeObjectURL(jsonUrl);
 
+        // Excel
         const questions = lib.questions || [];
         const rows = [
             ['序号', '题型', '分类', '题目', '选项', '正确答案', '解析/口诀', '参考答案', '备注']
@@ -1161,7 +1250,6 @@
         alert('✅ 题库已导出（JSON + XLSX）');
     }
 
-    // ---------- 导出 PDF ----------
     function exportPdf() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) {
             alert('请先选择一个题库');
@@ -1210,11 +1298,10 @@
         printWindow.print();
     }
 
-    // ---------- 导出/导入进度 ----------
+    // ---------- 导出/导入进度（与之前相同，略） ----------
     function getExportData() {
         return JSON.stringify(loadProgress(), null, 2);
     }
-
     function exportAllProgress() {
         const dataStr = getExportData();
         try {
@@ -1233,12 +1320,10 @@
             });
         }
     }
-
     function copyAllProgress() {
         const dataStr = getExportData();
         copyToClipboard(dataStr);
     }
-
     function importProgressFromPaste() {
         showModal('📋 从剪贴板导入进度（覆盖所有题库进度）', '', '导入', (text) => {
             try {
@@ -1261,7 +1346,6 @@
             }
         });
     }
-
     function importProgressFromFile(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1330,8 +1414,8 @@
                     <ul>
                         <li>👆 左右滑动卡片切换题目</li>
                         <li>💡 点击“提示”查看口诀/解析（切换题目后自动隐藏）</li>
-                        <li>📝 点击“答案”查看参考答案（仅简答题）</li>
-                        <li>📌 点击“备注”查看补充说明（仅简答题）</li>
+                        <li>📝 简答题下方有“添加答案/修改答案”和“添加备注/修改备注”按钮，可随时编辑</li>
+                        <li>👁️ 显示/隐藏答案和备注，独立控制</li>
                         <li>⬅️➡️ 使用“上一题/下一题”按钮或键盘方向键</li>
                         <li>🎲 点击“随机”跳转至随机题目</li>
                         <li>📋 点击“目录”可查看所有题目列表，按颜色区分状态：绿色=已掌握，红色=待复习，灰色=未开始</li>
@@ -1383,12 +1467,11 @@
     }
 
     // ---------- 触摸滑动 ----------
-    let touchStartX = 0,
-        touchStartY = 0,
-        isSwiping = false;
+    let touchStartX = 0, touchStartY = 0, isSwiping = false;
 
     // ---------- 事件绑定 ----------
     function bindEvents() {
+        // 与之前完全相同，略
         librarySelect.addEventListener('change', (e) => {
             const id = e.target.value;
             if (id && allLibraries[id]) {
@@ -1565,7 +1648,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.2.0 初始化完成');
+        console.log('✅ 刷题器 v2.3.0 初始化完成');
     }
 
     init();
