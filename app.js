@@ -965,6 +965,28 @@
         let headerRow = null;
         let colMap = {};
 
+        // ===== 新增：预先扫描表头前的行，提取分类标题 =====
+        for (let i = 0; i < json.length; i++) {
+            const row = json[i];
+            if (!row || row.length === 0) continue;
+            // 检查这一行是否包含“序号”（即表头行），如果是则停止扫描
+            if (row.some(cell => String(cell).trim() === '序号')) {
+                break;
+            }
+            const firstCell = String(row[0] || '').trim();
+            // 如果第一列不是数字，且行中有非空内容，则视为分类标题
+            if (!/^\d+$/.test(firstCell) && firstCell.length > 0) {
+                // 取第一个非空单元格作为分类名称
+                const catName = row.find(cell => String(cell).trim()) || firstCell;
+                if (catName) {
+                    currentCategory = catName.trim();
+                    console.log('[parseExcelData] 识别到分类标题:', currentCategory);
+                }
+            }
+        }
+        // ===== 新增结束 =====
+
+        // 寻找表头行（包含“序号”）
         for (let i = 0; i < Math.min(10, json.length); i++) {
             const row = json[i];
             if (!row) continue;
@@ -975,6 +997,7 @@
         }
 
         if (headerRow !== null) {
+            // 有表头模式
             const headers = json[headerRow].map(h => String(h).trim());
             const findCol = (keywords) => {
                 for (let kw of keywords) {
@@ -995,6 +1018,7 @@
             if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
             if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
 
+            // 遍历数据行
             for (let i = headerRow + 1; i < json.length; i++) {
                 const row = json[i];
                 if (!row || row.length === 0) continue;
@@ -1008,7 +1032,7 @@
                     category = String(row[colMap.category] || '').trim();
                 }
                 if (!category) {
-                    category = currentCategory;
+                    category = currentCategory; // 使用预先提取的分类
                 }
 
                 let type = String(row[colMap.type] || 'essay').trim().toLowerCase();
@@ -1042,7 +1066,7 @@
                 });
             }
         } else {
-            // 无表头模式
+            // 无表头模式：按行解析，识别分类标题行
             for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
                 const row = json[rowIdx];
                 if (!row || row.length === 0) continue;
@@ -1114,15 +1138,12 @@
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
 
-            // 检测分类标题（包含常见关键词）
-            if (line.includes('教育学') || line.includes('小三门') || line.includes('心理学')) {
-                let cat = '';
-                if (line.includes('教育学')) cat = '教育学';
-                else if (line.includes('小三门')) cat = '小三门';
-                else if (line.includes('心理学')) cat = '心理学';
-                // 如果不是以数字开头，则视为分类标题
-                if (!/^\d/.test(line)) {
-                    currentCategory = cat;
+            // 【修改】通用分类检测：非数字开头，且不包含表头关键词（序号、题目、口诀）
+            if (!/^\d/.test(line) && !line.includes('序号') && !line.includes('题目') && !line.includes('口诀')) {
+                // 提取分类名称（取整行作为分类名，去除多余空格）
+                const catName = line.trim();
+                if (catName) {
+                    currentCategory = catName;
                     continue;
                 }
             }
