@@ -2,7 +2,7 @@
     'use strict';
 
     // ========== 版本号 ==========
-    const VERSION = 'v2.3.3';
+    const VERSION = 'v2.3.5';
     console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- 版本检查 ----------
@@ -40,6 +40,7 @@
     const importFileInput = document.getElementById('importFileInput');
     const resetAllBtn = document.getElementById('resetAllBtn');
     const addQuestionBtn = document.getElementById('addQuestionBtn');
+    const pasteLibraryBtn = document.getElementById('pasteLibraryBtn');
     const exportLibraryBtn = document.getElementById('exportLibraryBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
     const progressRing = document.getElementById('progressRing');
@@ -188,7 +189,6 @@
             onSave(val);
             close();
         });
-        // 回车保存（Ctrl+Enter）
         overlay.querySelector('#editTextarea').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 const val = overlay.querySelector('#editTextarea').value;
@@ -393,7 +393,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互（略，与之前相同）
+        // 绑定选择题交互
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -804,7 +804,7 @@
         }
     }
 
-    // ---------- 解析 Excel（通用分类识别） ----------
+    // ---------- 解析 Excel ----------
     function parseExcelData(workbook) {
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
@@ -816,7 +816,6 @@
         let headerRow = null;
         let colMap = {};
 
-        // 寻找表头行（包含“序号”）
         for (let i = 0; i < Math.min(10, json.length); i++) {
             const row = json[i];
             if (!row) continue;
@@ -827,7 +826,6 @@
         }
 
         if (headerRow !== null) {
-            // 有表头模式
             const headers = json[headerRow].map(h => String(h).trim());
             const findCol = (keywords) => {
                 for (let kw of keywords) {
@@ -848,7 +846,6 @@
             if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
             if (colMap.id === -1 && headers.length > 0) colMap.id = 0;
 
-            // 遍历数据行
             for (let i = headerRow + 1; i < json.length; i++) {
                 const row = json[i];
                 if (!row || row.length === 0) continue;
@@ -857,7 +854,6 @@
                 const question = String(row[colMap.question] || '').trim();
                 if (!question) continue;
 
-                // 尝试从“分类”列读取分类，若没有则使用当前累积的分类
                 let category = '';
                 if (colMap.category !== -1) {
                     category = String(row[colMap.category] || '').trim();
@@ -897,22 +893,19 @@
                 });
             }
         } else {
-            // 无表头模式：按行解析，识别分类标题行（非数字开头的行，且不含表头关键词）
+            // 无表头模式
             for (let rowIdx = 0; rowIdx < json.length; rowIdx++) {
                 const row = json[rowIdx];
                 if (!row || row.length === 0) continue;
                 const firstCell = String(row[0] || '').trim();
 
-                // 检查是否为分类标题行：第一列不是数字，且行中不包含“序号”、“题目”等表头关键词
                 const isNumber = /^\d+$/.test(firstCell);
-                // 检查是否包含表头关键词（防止误判）
                 const isHeaderRow = row.some(cell => {
                     const str = String(cell).trim();
                     return str.includes('序号') || str.includes('题目') || str.includes('口诀');
                 });
 
                 if (!isNumber && !isHeaderRow) {
-                    // 提取分类名称：取行中第一个非空单元格
                     let categoryName = '';
                     for (let cell of row) {
                         const str = String(cell).trim();
@@ -927,7 +920,6 @@
                     }
                 }
 
-                // 尝试解析序号行
                 const num = parseInt(firstCell, 10);
                 if (!isNaN(num) && row.length >= 3) {
                     const question = String(row[1] || '').trim();
@@ -954,6 +946,121 @@
         return questions;
     }
 
+    // ---------- 从粘贴文本解析题库 ----------
+    function parseTextToQuestions(text) {
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        const questions = [];
+        let currentCategory = '';
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // 检测分类标题
+            if (line.includes('教育学') || line.includes('小三门') || line.includes('心理学')) {
+                let cat = '';
+                if (line.includes('教育学')) cat = '教育学';
+                else if (line.includes('小三门')) cat = '小三门';
+                else if (line.includes('心理学')) cat = '心理学';
+                if (!/^\d/.test(line)) {
+                    currentCategory = cat;
+                    continue;
+                }
+            }
+
+            const match = line.match(/^(\d+)[.、]\s*(.*)/);
+            if (match) {
+                const id = parseInt(match[1], 10);
+                let rest = match[2];
+                let question = rest;
+                let mnemonic = '';
+                if (i + 1 < lines.length) {
+                    const nextLine = lines[i + 1];
+                    if (!/^\d/.test(nextLine) && !nextLine.includes('序号')) {
+                        mnemonic = nextLine;
+                        i++;
+                    }
+                }
+                if (!mnemonic) {
+                    const parts = rest.split(/\t+/);
+                    if (parts.length >= 2) {
+                        question = parts[0];
+                        mnemonic = parts.slice(1).join(' ');
+                    }
+                }
+                questions.push({
+                    id: id,
+                    category: currentCategory || '未分类',
+                    question: question.trim(),
+                    type: 'essay',
+                    options: [],
+                    answer: '',
+                    explanation: mnemonic.trim() || '（无口诀）',
+                    mnemonic: mnemonic.trim() || '（无口诀）',
+                    answerText: '',
+                    remarks: ''
+                });
+            }
+        }
+        return questions;
+    }
+
+    // ---------- 解析 PDF 文件 ----------
+    async function parsePdfFile(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        // 清理文本：合并多余空白，但保留换行以识别结构
+        // 由于 PDF 提取的文本可能包含大量空格，我们保留换行，但压缩连续空格
+        const cleaned = fullText.replace(/[ \t]+/g, ' ').replace(/\n\s*\n/g, '\n');
+        return parseTextToQuestions(cleaned);
+    }
+
+    // ---------- 粘贴题库模态框 ----------
+    function showPasteModal() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>📋 粘贴题库文本</h3>
+                <p style="font-size:14px;color:#475569;margin-bottom:12px;">请将PDF中的表格内容（从“序号”行开始）粘贴到下方文本框中，系统将自动解析。</p>
+                <textarea id="pasteTextarea" rows="10" placeholder="粘贴内容..."></textarea>
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="pasteCancelBtn">取消</button>
+                    <button class="btn-primary" id="pasteConfirmBtn">解析并导入</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const close = () => overlay.remove();
+        overlay.querySelector('#pasteCancelBtn').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        overlay.querySelector('#pasteConfirmBtn').addEventListener('click', () => {
+            const text = overlay.querySelector('#pasteTextarea').value;
+            if (!text.trim()) {
+                alert('请粘贴内容');
+                return;
+            }
+            const questions = parseTextToQuestions(text);
+            if (!questions.length) {
+                alert('未能解析出任何题目，请检查格式是否包含序号和题目。');
+                return;
+            }
+            const defaultName = '粘贴题库';
+            const name = prompt('请输入题库名称：', defaultName) || defaultName;
+            addNewLibrary(name, questions);
+            close();
+        });
+    }
+
     // ---------- 添加新题库 ----------
     function addNewLibrary(name, questions) {
         if (!questions || questions.length === 0) {
@@ -970,23 +1077,22 @@
         mainApp.style.display = 'flex';
     }
 
-    // ---------- 导入处理 ----------
+    // ---------- 统一文件处理（支持 Excel 和 PDF） ----------
     function handleFileUpload(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const parsed = parseExcelData(workbook);
-                if (!parsed.length) {
-                    alert('未能解析出题目，请检查 Excel 格式。');
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'pdf') {
+            // PDF 解析
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            parsePdfFile(file).then(questions => {
+                if (!questions.length) {
+                    alert('未能从 PDF 中解析出题目，请检查内容格式。');
                     return;
                 }
-                parsed.sort((a, b) => a.id - b.id);
-                const matchedId = findMatchingLibrary(parsed);
+                // 去重检查
+                const matchedId = findMatchingLibrary(questions);
                 if (matchedId) {
                     const libName = allLibraries[matchedId].name;
-                    if (confirm(`检测到题库“${libName}”与当前上传内容相同，是否切换到该题库？\n（点击“确定”切换，点击“取消”仍新建）`)) {
+                    if (confirm(`检测到题库“${libName}”与当前导入内容相同，是否切换到该题库？`)) {
                         switchToLibrary(matchedId);
                         uploadScreen.style.display = 'none';
                         mainApp.style.display = 'flex';
@@ -996,14 +1102,48 @@
                 const defaultName = file.name.replace(/\.[^.]+$/, '');
                 promptForLibraryName(defaultName, (name) => {
                     if (name) {
-                        addNewLibrary(name, parsed);
+                        addNewLibrary(name, questions);
                     }
                 });
-            } catch (err) {
-                alert('解析失败：' + err.message);
-            }
-        };
-        reader.readAsArrayBuffer(file);
+            }).catch(err => {
+                alert('PDF 解析失败：' + err.message);
+                console.error(err);
+            });
+        } else {
+            // Excel 解析
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const parsed = parseExcelData(workbook);
+                    if (!parsed.length) {
+                        alert('未能解析出题目，请检查 Excel 格式。');
+                        return;
+                    }
+                    parsed.sort((a, b) => a.id - b.id);
+                    const matchedId = findMatchingLibrary(parsed);
+                    if (matchedId) {
+                        const libName = allLibraries[matchedId].name;
+                        if (confirm(`检测到题库“${libName}”与当前上传内容相同，是否切换到该题库？\n（点击“确定”切换，点击“取消”仍新建）`)) {
+                            switchToLibrary(matchedId);
+                            uploadScreen.style.display = 'none';
+                            mainApp.style.display = 'flex';
+                            return;
+                        }
+                    }
+                    const defaultName = file.name.replace(/\.[^.]+$/, '');
+                    promptForLibraryName(defaultName, (name) => {
+                        if (name) {
+                            addNewLibrary(name, parsed);
+                        }
+                    });
+                } catch (err) {
+                    alert('解析失败：' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
     }
 
     function importJsonLibrary(file) {
@@ -1459,6 +1599,7 @@
                         <li>📤 点击“导出题库”可下载 JSON 和 Excel 文件</li>
                         <li>📄 点击“导出PDF”可生成当前题库的打印版（含所有答案和备注）</li>
                         <li>💾 底部“导出/导入”可备份所有题库进度，跨设备迁移</li>
+                        <li>📄 支持直接上传 PDF 文件，自动解析表格内容生成题库</li>
                     </ul>
                 </div>
                 <div class="modal-actions">
@@ -1566,6 +1707,7 @@
         helpBtn.addEventListener('click', showHelp);
 
         addQuestionBtn.addEventListener('click', showAddQuestionModal);
+        pasteLibraryBtn.addEventListener('click', showPasteModal);
         exportLibraryBtn.addEventListener('click', exportLibrary);
         exportPdfBtn.addEventListener('click', exportPdf);
 
@@ -1580,10 +1722,10 @@
             const ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'json') {
                 importJsonLibrary(file);
-            } else if (ext === 'xlsx' || ext === 'xls') {
+            } else if (ext === 'xlsx' || ext === 'xls' || ext === 'pdf') {
                 handleFileUpload(file);
             } else {
-                alert('不支持的文件格式，请选择 .xlsx, .xls 或 .json');
+                alert('不支持的文件格式，请选择 .xlsx, .xls, .pdf 或 .json');
             }
             e.target.value = '';
         });
@@ -1650,10 +1792,10 @@
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (ext === 'json') {
                     importJsonLibrary(file);
-                } else if (ext === 'xlsx' || ext === 'xls') {
+                } else if (ext === 'xlsx' || ext === 'xls' || ext === 'pdf') {
                     handleFileUpload(file);
                 } else {
-                    alert('不支持的文件格式，请上传 .xlsx, .xls 或 .json');
+                    alert('不支持的文件格式，请上传 .xlsx, .xls, .pdf 或 .json');
                 }
                 fileInput.files = e.dataTransfer.files;
             }
@@ -1661,7 +1803,14 @@
 
         fileInput.addEventListener('change', function(e) {
             if (this.files.length) {
-                handleFileUpload(this.files[0]);
+                const file = this.files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'xlsx' || ext === 'xls' || ext === 'pdf') {
+                    handleFileUpload(file);
+                } else {
+                    alert('不支持的文件格式，请选择 .xlsx, .xls 或 .pdf');
+                }
+                this.value = ''; // 允许重复上传同一个文件
             }
         });
     }
@@ -1671,6 +1820,7 @@
     window.addNewLibrary = addNewLibrary;
     window.exportPdf = exportPdf;
     window.showCatalog = showCatalog;
+    window.parseTextToQuestions = parseTextToQuestions;
 
     // ---------- 初始化 ----------
     function init() {
@@ -1683,7 +1833,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.3.3 初始化完成');
+        console.log('✅ 刷题器 v2.3.5 初始化完成');
     }
 
     init();

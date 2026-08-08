@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>刷题器 v2.3.3</title>
+    <title>刷题器 v2.3.5</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- PDF.js 用于解析 PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
     <div class="app-container" id="app">
         <!-- 上传界面 -->
         <div id="uploadScreen" class="upload-placeholder" style="display:flex;">
             <div class="icon">📤</div>
-            <div class="text">点击上传 或 拖拽 Excel 文件</div>
-            <div class="hint">支持 .xlsx / .xls，自动解析三大模块</div>
-            <input type="file" id="fileInput" accept=".xlsx,.xls">
+            <div class="text">点击上传 或 拖拽 Excel / PDF 文件</div>
+            <div class="hint">支持 .xlsx / .xls / .pdf，自动解析题目和口诀</div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.pdf">
         </div>
 
         <!-- 主界面 -->
         <div id="mainApp" style="display:none; flex-direction:column; height:100%;">
+            <!-- 头部与之前完全相同，保持不变 -->
             <div class="app-header">
                 <div class="header-top">
-                    <h1>📚 刷题 <small>v2.2.0</small></h1>
+                    <h1>📚 刷题 <small>v2.3.5</small></h1>
                     <div class="library-selector">
                         <span style="font-size:13px;color:#64748b;">📂</span>
                         <select id="librarySelect"></select>
@@ -86,13 +89,14 @@
             <div class="bottom-utils">
                 <div class="left-group">
                     <button id="addQuestionBtn" class="primary">➕ 添加题目</button>
+                    <button id="pasteLibraryBtn" class="primary">📋 粘贴题库</button>
                     <button id="exportLibraryBtn" class="primary">📤 导出题库</button>
                     <button id="exportPdfBtn" class="primary">📄 导出PDF</button>
                     <button id="exportBtn">📥 导出进度</button>
                     <button id="copyBtn">📋 复制进度</button>
                     <button id="pasteImportBtn">📋 从剪贴板导入</button>
                     <button id="importBtn">📤 导入文件</button>
-                    <input type="file" id="importFileInput" accept=".json,.xlsx,.xls">
+                    <input type="file" id="importFileInput" accept=".json,.xlsx,.xls,.pdf">
                 </div>
                 <div class="right-group">
                     <button id="resetAllBtn" class="danger">🗑️ 重置全部</button>
