@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>多题库刷题器</title>
+    <title>多题库刷题器 · 去重版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
     </script>
     <style>
@@ -34,6 +34,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transition: border-radius 0.2s;
         }
         .app-header {
             padding: 16px 24px 12px 24px;
@@ -87,6 +88,7 @@
             font-size: 18px;
             cursor: pointer;
             padding: 0 4px;
+            transition: 0.15s;
         }
         .library-selector button:active {
             transform: scale(0.9);
@@ -777,7 +779,7 @@
         (function() {
             'use strict';
 
-            // ---------- DOM ----------
+            // ---------- DOM 引用 ----------
             const uploadScreen = document.getElementById('uploadScreen');
             const mainApp = document.getElementById('mainApp');
             const fileInput = document.getElementById('fileInput');
@@ -809,7 +811,7 @@
             const reviewCount = document.getElementById('reviewCount');
 
             // ---------- 全局状态 ----------
-            let allLibraries = {}; // { libraryId: { name, questions: [ {id, category, question, mnemonic} ] } }
+            let allLibraries = {};
             let currentLibraryId = null;
             let currentQuestions = [];
             let filteredQuestions = [];
@@ -1147,7 +1149,7 @@
                 mainApp.style.display = 'flex';
             }
 
-            // ---------- 上传新题库 ----------
+            // ---------- 上传新题库（含去重） ----------
             function handleFileUpload(file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1159,7 +1161,23 @@
                             alert('未能解析出题目，请检查 Excel 格式。');
                             return;
                         }
-                        // 弹出名称输入
+                        // 按 id 排序以便比较
+                        parsed.sort((a, b) => a.id - b.id);
+
+                        // ---------- 去重检查 ----------
+                        const matchedId = findMatchingLibrary(parsed);
+                        if (matchedId) {
+                            const libName = allLibraries[matchedId].name;
+                            if (confirm(`检测到题库“${libName}”与当前上传内容相同，是否切换到该题库？\n（点击“确定”切换，点击“取消”仍新建）`)) {
+                                switchToLibrary(matchedId);
+                                uploadScreen.style.display = 'none';
+                                mainApp.style.display = 'flex';
+                                return;
+                            }
+                            // 用户取消，则继续新建（允许重复）
+                        }
+
+                        // 询问名称
                         const defaultName = file.name.replace(/\.[^.]+$/, '');
                         promptForLibraryName(defaultName, (name) => {
                             if (name) {
@@ -1173,8 +1191,23 @@
                 reader.readAsArrayBuffer(file);
             }
 
+            // ---------- 查找匹配题库 ----------
+            function findMatchingLibrary(questions) {
+                const sortedNew = [...questions].sort((a, b) => a.id - b.id);
+                const ids = Object.keys(allLibraries);
+                for (let id of ids) {
+                    const existing = allLibraries[id].questions;
+                    if (existing.length !== sortedNew.length) continue;
+                    const sortedExisting = [...existing].sort((a, b) => a.id - b.id);
+                    if (JSON.stringify(sortedExisting) === JSON.stringify(sortedNew)) {
+                        return id;
+                    }
+                }
+                return null;
+            }
+
+            // ---------- 询问名称模态框 ----------
             function promptForLibraryName(defaultName, callback) {
-                // 自定义模态框
                 const overlay = document.createElement('div');
                 overlay.className = 'modal-overlay';
                 overlay.innerHTML = `
@@ -1250,11 +1283,9 @@
                 return questions;
             }
 
-            // ---------- 导出/导入进度（支持多题库） ----------
+            // ---------- 导出/导入进度 ----------
             function getExportData() {
-                // 导出所有题库进度
-                const allProgress = loadProgress();
-                return JSON.stringify(allProgress, null, 2);
+                return JSON.stringify(loadProgress(), null, 2);
             }
 
             function exportAllProgress() {
@@ -1288,7 +1319,6 @@
                         if (typeof data === 'object' && data !== null) {
                             if (confirm('导入将覆盖当前所有题库的进度记录，确定继续吗？')) {
                                 saveProgress(data);
-                                // 刷新当前题库显示
                                 if (currentLibraryId && allLibraries[currentLibraryId]) {
                                     switchToLibrary(currentLibraryId);
                                 } else {
@@ -1549,9 +1579,8 @@
             }
 
             init();
-            console.log('🚀 多题库刷题器已启动');
+            console.log('🚀 多题库刷题器（去重版）已加载');
         })();
     </script>
-
 </body>
 </html>
