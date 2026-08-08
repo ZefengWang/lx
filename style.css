@@ -556,6 +556,13 @@ body {
 .card-actions .nav-group .random-btn:active {
     background: #c7d2fe;
 }
+.card-actions .nav-group .catalog-btn {
+    background: #fef3c7;
+    color: #b45309;
+}
+.card-actions .nav-group .catalog-btn:active {
+    background: #fde68a;
+}
 .bottom-actions {
     flex-shrink: 0;
     background: white;
@@ -694,6 +701,7 @@ body {
     padding: 40px 0;
     font-size: 16px;
 }
+/* 目录弹窗 */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -722,6 +730,70 @@ body {
     font-size: 18px;
     margin-bottom: 12px;
     color: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-box .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #94a3b8;
+}
+.modal-box .close-btn:active {
+    transform: scale(0.9);
+}
+.catalog-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 0;
+}
+.catalog-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: 0.15s;
+    background: #f8fafc;
+    border-left: 4px solid transparent;
+}
+.catalog-item:active {
+    transform: scale(0.98);
+}
+.catalog-item .index {
+    font-weight: 600;
+    color: #475569;
+    min-width: 40px;
+}
+.catalog-item .title {
+    flex: 1;
+    margin-left: 12px;
+    font-size: 14px;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.catalog-item.status-mastered {
+    background: #dcfce7;
+    border-left-color: #16a34a;
+}
+.catalog-item.status-review {
+    background: #fee2e2;
+    border-left-color: #dc2626;
+}
+.catalog-item.status-none {
+    background: #f1f5f9;
+    border-left-color: #94a3b8;
+}
+.catalog-item .status-badge {
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.7);
 }
 .modal-box .form-group {
     margin-bottom: 14px;
@@ -844,6 +916,9 @@ body {
     .card-actions .hint-btn:hover {
         background: #c7d2fe;
     }
+    .card-actions .nav-group .catalog-btn:hover {
+        background: #fde68a;
+    }
     .bottom-actions {
         padding: 16px 32px 20px 32px;
         gap: 12px;
@@ -866,6 +941,9 @@ body {
     }
     .upload-placeholder {
         min-height: 400px;
+    }
+    .catalog-item:hover {
+        background: #e9edf2;
     }
 }
 @media (max-width: 400px) {
@@ -929,6 +1007,12 @@ body {
         font-size: 11px;
         padding: 4px 8px;
     }
+    .modal-box {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px;
+        padding: 16px;
+    }
 }
 .card-wrapper::-webkit-scrollbar {
     width: 4px;
@@ -937,7 +1021,7 @@ body {
     background: #d1d9e6;
     border-radius: 4px;
 }
-/* 打印样式（用于导出PDF） */
+/* 打印样式 */
 @media print {
     body {
         background: white;

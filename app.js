@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    const VERSION = 'v2.1.1';
+    const VERSION = 'v2.2.0';
     console.log('🚀 刷题器版本:', VERSION);
 
     // ---------- DOM 引用 ----------
@@ -31,8 +31,6 @@
     const addQuestionBtn = document.getElementById('addQuestionBtn');
     const exportLibraryBtn = document.getElementById('exportLibraryBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
-    const jumpInput = document.getElementById('jumpInput');
-    const jumpBtn = document.getElementById('jumpBtn');
     const progressRing = document.getElementById('progressRing');
     const ringPercent = document.getElementById('ringPercent');
     const masteredCount = document.getElementById('masteredCount');
@@ -99,14 +97,10 @@
         updateStatsAndUI();
         renderCard();
     }
-
-    // ---------- 重置全部进度（修复：重置索引到0） ----------
     function resetAllProgressForLibrary(libId) {
         if (confirm(`确定要重置题库“${allLibraries[libId].name}”的所有进度吗？`)) {
             setLibraryProgress(libId, {});
-            // 重置索引到第一题
             currentIndex = 0;
-            // 隐藏所有辅助显示
             isMnemonicVisible = false;
             isAnswerVisible = false;
             isRemarkVisible = false;
@@ -157,30 +151,65 @@
         return div.innerHTML;
     }
 
-    // ---------- 跳转功能 ----------
-    function jumpToQuestion() {
+    // ---------- 目录弹窗 ----------
+    function showCatalog() {
         if (!filteredQuestions.length) {
-            alert('当前没有题目可跳转');
+            alert('当前没有题目');
             return;
         }
-        const val = parseInt(jumpInput.value);
-        if (isNaN(val) || val < 1 || val > filteredQuestions.length) {
-            alert(`请输入 1 到 ${filteredQuestions.length} 之间的数字`);
-            jumpInput.value = '';
-            return;
-        }
-        currentIndex = val - 1;
-        // 跳转时隐藏辅助显示
-        isMnemonicVisible = false;
-        isAnswerVisible = false;
-        isRemarkVisible = false;
-        // 如果是随机模式，切回顺序模式（让用户看到当前是第几题）
-        if (currentMode === 'random') {
-            currentMode = 'sequential';
-            modeSelect.value = 'sequential';
-        }
-        renderCard();
-        jumpInput.value = '';
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        let listHtml = '';
+        filteredQuestions.forEach((q, idx) => {
+            const status = getQuestionStatus(currentLibraryId, q.id);
+            const statusClass = status === 'mastered' ? 'status-mastered' :
+                status === 'review' ? 'status-review' : 'status-none';
+            const statusLabel = status === 'mastered' ? '✅' :
+                status === 'review' ? '🔄' : '⏳';
+            const shortTitle = q.question.length > 30 ? q.question.slice(0, 30) + '…' : q.question;
+            listHtml += `
+                <div class="catalog-item ${statusClass}" data-index="${idx}">
+                    <span class="index">#${q.id}</span>
+                    <span class="title">${escapeHtml(shortTitle)}</span>
+                    <span class="status-badge">${statusLabel}</span>
+                </div>
+            `;
+        });
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <h3>
+                    📋 目录 (${filteredQuestions.length}题)
+                    <button class="close-btn" id="catalogCloseBtn">✕</button>
+                </h3>
+                <div class="catalog-list">
+                    ${listHtml}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#catalogCloseBtn').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        overlay.querySelectorAll('.catalog-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.index);
+                if (!isNaN(idx) && idx >= 0 && idx < filteredQuestions.length) {
+                    currentIndex = idx;
+                    isMnemonicVisible = false;
+                    isAnswerVisible = false;
+                    isRemarkVisible = false;
+                    if (currentMode === 'random') {
+                        currentMode = 'sequential';
+                        modeSelect.value = 'sequential';
+                    }
+                    renderCard();
+                    overlay.remove();
+                }
+            });
+        });
     }
 
     // ---------- 渲染卡片 ----------
@@ -226,7 +255,6 @@
         const type = q.type || 'essay';
         let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
 
-        // 选择题交互
         if (type === 'single') {
             const options = q.options || [];
             const correctAnswer = q.answer ? q.answer.trim().toUpperCase() : '';
@@ -291,7 +319,6 @@
             }
         }
 
-        // 口诀/解析
         const explanation = q.explanation || q.mnemonic || '';
         if (explanation) {
             html += `
@@ -304,7 +331,7 @@
 
         cardContent.innerHTML = html;
 
-        // 绑定选择题交互（保持不变）
+        // 绑定选择题交互
         if (type === 'single') {
             const items = cardContent.querySelectorAll('.option-item');
             const feedback = document.getElementById('feedback');
@@ -464,20 +491,24 @@
         }
 
         // 重建 card-actions
-        cardActions.innerHTML = `
-            <button class="hint-btn ${isMnemonicVisible ? 'showing' : ''}" id="hintBtn">${isMnemonicVisible ? '🙈 隐藏口诀' : '💡 提示'}</button>
-            ${type === 'essay' ? `
+        let extraButtons = '';
+        if (type === 'essay') {
+            extraButtons = `
                 <button class="hint-btn ${isAnswerVisible ? 'showing' : ''}" id="answerBtn">${isAnswerVisible ? '🙈 隐藏答案' : '📝 答案'}</button>
                 <button class="hint-btn ${isRemarkVisible ? 'showing' : ''}" id="remarkBtn">${isRemarkVisible ? '🙈 隐藏备注' : '📌 备注'}</button>
-            ` : ''}
+            `;
+        }
+        cardActions.innerHTML = `
+            <button class="hint-btn ${isMnemonicVisible ? 'showing' : ''}" id="hintBtn">${isMnemonicVisible ? '🙈 隐藏口诀' : '💡 提示'}</button>
+            ${extraButtons}
             <div class="nav-group">
                 <button id="prevBtn">◀ 上一题</button>
+                <button id="catalogBtn" class="catalog-btn">📋 目录</button>
                 <button id="randomBtn" class="random-btn">🎲 随机</button>
                 <button id="nextBtn">下一题 ▶</button>
             </div>
         `;
 
-        // 绑定事件
         document.getElementById('hintBtn').addEventListener('click', () => {
             isMnemonicVisible = !isMnemonicVisible;
             renderCard();
@@ -499,6 +530,7 @@
         document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
         document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
         document.getElementById('randomBtn').addEventListener('click', goRandom);
+        document.getElementById('catalogBtn').addEventListener('click', showCatalog);
 
         updateStatsAndUI();
     }
@@ -560,7 +592,6 @@
 
         filteredQuestions = filtered;
         if (filteredQuestions.length) {
-            // 筛选后重置到第一题
             currentIndex = 0;
         } else {
             currentIndex = 0;
@@ -653,7 +684,6 @@
         isMnemonicVisible = false;
         isAnswerVisible = false;
         isRemarkVisible = false;
-        // 切换到新题库时重置索引到0
         currentIndex = 0;
         applyFilters();
     }
@@ -686,7 +716,7 @@
         }
     }
 
-    // ---------- 解析 Excel（保持不变） ----------
+    // ---------- 解析 Excel ----------
     function parseExcelData(workbook) {
         console.log('[parseExcelData] 开始解析');
         const sheets = workbook.SheetNames;
@@ -722,7 +752,7 @@
                 question: findCol(['题目', '内容']),
                 options: findCol(['选项']),
                 answer: findCol(['正确答案', '答案', '参考答案']),
-                explanation: findCol(['解析', '口诀', '备注']),
+                explanation: findCol(['解析', '口诀']),
                 category: findCol(['分类', '模块'])
             };
             if (colMap.question === -1 && headers.length > 1) colMap.question = 1;
@@ -759,7 +789,7 @@
                     question: question,
                     type: type,
                     options: options,
-                    answer: answer,
+                    answer: type === 'essay' ? '' : answer,
                     explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
                     mnemonic: explanation || (type === 'essay' ? '（无口诀）' : ''),
                     answerText: type === 'essay' ? answer : '',
@@ -982,15 +1012,15 @@
                     <label>选项（每行一个）</label>
                     <textarea id="qOptions" placeholder="选项A&#10;选项B&#10;选项C&#10;选项D"></textarea>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="answerGroup" style="display:block;">
                     <label>正确答案（单选/多选填选项字母，如 A；填空填答案文本；判断填“对”或“错”）</label>
                     <input type="text" id="qAnswer" placeholder="例如：A">
                 </div>
-                <div class="form-group" id="essayExtra" style="display:block;">
+                <div class="form-group" id="essayExtra" style="display:none;">
                     <label>参考答案（简答题专用）</label>
                     <textarea id="qAnswerText" placeholder="简答题的参考答案..."></textarea>
                 </div>
-                <div class="form-group" id="remarkGroup" style="display:block;">
+                <div class="form-group" id="remarkGroup" style="display:none;">
                     <label>备注（可选）</label>
                     <textarea id="qRemarks" placeholder="补充说明、拓展知识..."></textarea>
                 </div>
@@ -1009,11 +1039,15 @@
         const typeSelect = overlay.querySelector('#qType');
         const optionsGroup = overlay.querySelector('#optionsGroup');
         const essayExtra = overlay.querySelector('#essayExtra');
-        typeSelect.addEventListener('change', function() {
-            const val = this.value;
+        const remarkGroup = overlay.querySelector('#remarkGroup');
+        const updateFields = () => {
+            const val = typeSelect.value;
             optionsGroup.style.display = (val === 'single' || val === 'multi') ? 'block' : 'none';
             essayExtra.style.display = (val === 'essay') ? 'block' : 'none';
-        });
+            remarkGroup.style.display = (val === 'essay') ? 'block' : 'none';
+        };
+        updateFields();
+        typeSelect.addEventListener('change', updateFields);
 
         const close = () => overlay.remove();
         overlay.querySelector('#modalCancelBtn').addEventListener('click', close);
@@ -1053,11 +1087,11 @@
                 question: question,
                 type: type,
                 options: options,
-                answer: answer,
+                answer: type === 'essay' ? '' : answer,
                 explanation: explanation || (type === 'essay' ? '（无口诀）' : ''),
                 mnemonic: explanation || (type === 'essay' ? '（无口诀）' : ''),
-                answerText: answerText,
-                remarks: remarks
+                answerText: type === 'essay' ? answerText : '',
+                remarks: type === 'essay' ? remarks : ''
             };
 
             questions.push(newQuestion);
@@ -1300,13 +1334,13 @@
                         <li>📌 点击“备注”查看补充说明（仅简答题）</li>
                         <li>⬅️➡️ 使用“上一题/下一题”按钮或键盘方向键</li>
                         <li>🎲 点击“随机”跳转至随机题目</li>
+                        <li>📋 点击“目录”可查看所有题目列表，按颜色区分状态：绿色=已掌握，红色=待复习，灰色=未开始</li>
                         <li>✅🔄 底部“掌握/复习”标记题目状态，“重置”取消标记</li>
                         <li>📂 顶部下拉框切换不同题库，➕ 上传新题库，🗑️ 删除题库</li>
-                        <li>➕ 点击“添加题目”可自定义任意题型（含答案和备注）</li>
+                        <li>➕ 点击“添加题目”可自定义任意题型（简答题有独立的答案和备注）</li>
                         <li>📤 点击“导出题库”可下载 JSON 和 Excel 文件</li>
                         <li>📄 点击“导出PDF”可生成当前题库的打印版（含所有答案和备注）</li>
                         <li>💾 底部“导出/导入”可备份所有题库进度，跨设备迁移</li>
-                        <li>🔢 在底部输入题号后点击“跳转”可快速定位到任意题目</li>
                     </ul>
                 </div>
                 <div class="modal-actions">
@@ -1417,14 +1451,6 @@
         exportLibraryBtn.addEventListener('click', exportLibrary);
         exportPdfBtn.addEventListener('click', exportPdf);
 
-        // 跳转事件
-        jumpBtn.addEventListener('click', jumpToQuestion);
-        jumpInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                jumpToQuestion();
-            }
-        });
-
         exportBtn.addEventListener('click', exportAllProgress);
         copyBtn.addEventListener('click', copyAllProgress);
         pasteImportBtn.addEventListener('click', importProgressFromPaste);
@@ -1526,7 +1552,7 @@
     window.parseExcelData = parseExcelData;
     window.addNewLibrary = addNewLibrary;
     window.exportPdf = exportPdf;
-    window.jumpToQuestion = jumpToQuestion;
+    window.showCatalog = showCatalog;
 
     // ---------- 初始化 ----------
     function init() {
@@ -1539,7 +1565,7 @@
             uploadScreen.style.display = 'none';
             mainApp.style.display = 'flex';
         }
-        console.log('✅ 刷题器 v2.1.1 初始化完成');
+        console.log('✅ 刷题器 v2.2.0 初始化完成');
     }
 
     init();
