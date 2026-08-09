@@ -2199,7 +2199,7 @@
                 const ext = file.name.split('.').pop().toLowerCase();
                 if (ext === 'json') {
                     importJsonLibrary(file);
-                } else if (ext === 'xlsx' || ext === 'xls' || ext === 'pdf') {
+                } else if (ext === 'xlsx' || ext === 'xls' || ext === 'pdf' || ext === 'json') {
                     handleFileUpload(file);
                 } else {
                     alert('不支持的文件格式，请上传 .xlsx, .xls, .pdf 或 .json');
