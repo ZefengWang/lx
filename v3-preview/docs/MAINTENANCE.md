@@ -18,10 +18,10 @@
 ### 1.2 目录速览
 ```
 lx/
-├── app.html                # 主入口（UI 外壳 + 挂载点 + 外链 CDN）
-├── index.html              # 静态托管首页（可重定向到 app.html）
-├── style.css               # 全局样式（基础/布局/按钮）
+├── app.html                # 【唯一真入口】所有用户最终都应该跑到这里（UI 外壳 + 挂载点 + 外链 CDN + src/main.js 启动）
+├── index.html              # 目录路径默认文档：只做 0 秒 meta refresh 跳转到 ./app.html（绝不冗余拷贝一份 app.html！防止两份不同步 bug）
 ├── test.html               # 测试控制台入口（浏览器打开即跑 52 项测试）
+├── style.css               # 全局样式（基础/布局/按钮）
 ├── test-style.css
 ├── version.txt             # 版本号（与 src/api/index.js VERSION 同步）
 ├── serve.sh                # 一行起开发服务器（推荐）
@@ -466,6 +466,13 @@ A：不能引入 tsc 构建链，但可以写 JSDoc + `jsconfig.json`（当前�
 
 **Q：localStorage 超过 5MB 怎么办？**  
 A：`core/storage.js` 已经捕获 `QuotaExceededError` 并返回 `STORAGE_FULL` 的 `Result`；提示用户导出 JSON 备份后清理老题库。不要引入 IndexedDB（复杂度过高，维护灾难）。
+
+**Q：为什么有 index.html 又有 app.html？两份怎么同步？**  
+A：不要再搞两份拷贝了（2026-08 之前踩过这个坑）。现在约定是：
+- **app.html = 唯一真入口**（所有 HTML 修改只改 app.html 这一份：改样式 CDN、改 `<title>`、改 `<script>` 启动顺序都只改 app.html）。
+- **index.html = 纯跳转壳**（用 `<meta http-equiv="refresh" content="0; url=./app.html">` 0 秒跳转，内容只有一段提示文字 + noscript 链接）。
+- 维护时**任何时候都不许把 app.html 内容复制回 index.html**，否则将来必然又出"只改一份版本漂移"的隐性 bug。
+- v3-preview/ 子目录下同样遵守这套"index 只跳转 + app 才是真入口"的约定。
 
 ---
 

@@ -2,51 +2,21 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#4f46e5">
-    <meta name="description" content="刷题器 - 移动端优先的本地刷题应用">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="刷题器">
-    <!-- 应用图标：紫底圆 + 白书 + 绿对勾（SVG 矢量，任意尺寸不糊） -->
-    <link rel="icon" type="image/svg+xml" href="./src/render/assets/logo.svg">
-    <link rel="apple-touch-icon" href="./src/render/assets/logo.svg">
     <title>刷题器</title>
-
-    <!-- 第三方依赖：SheetJS / PDF.js -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-    <!-- 设计 Token 与全局 reset（必须先于 components.css） -->
-    <link rel="stylesheet" href="./src/render/theme.css">
-    <!-- 基础组件样式 -->
-    <link rel="stylesheet" href="./src/render/components.css">
-
-    <style>
-        /* 应用级最小补丁（仅本页专属） */
-        html, body { height: 100%; }
-        #app {
-            display: flex;
-            flex-direction: column;
-            min-height: 100dvh;
-            background: var(--lx-bg);
-        }
-        /* 首次加载占位（main.js 启动前显示） */
-        #app:empty::before {
-            content: "加载中…";
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100dvh;
-            color: var(--lx-text-muted);
-            font-size: 14px;
-        }
-    </style>
+    <!--
+      为什么把 index.html 做成跳转而不是重复一份 app.html？
+      - GitHub Pages 访问 https://zefengwang.github.io/lx/（目录路径）默认找 index.html
+      - 之前 index.html 和 app.html 是两份完全相同的拷贝，极易出现"只改一份导致版本不一致"的隐性 bug
+      - 所以这里用 0 秒 meta refresh 跳转到 app.html，保证任何时候用户永远只跑 app.html 这一份入口
+      - noscript 里放了显式跳转链接，兼容关闭 JS + 旧浏览器不识别 meta refresh 的极端场景
+    -->
+    <meta http-equiv="refresh" content="0; url=./app.html">
+    <link rel="icon" type="image/svg+xml" href="./src/render/assets/logo.svg">
 </head>
 <body>
-    <div id="app"></div>
-
-    <!-- 主应用入口（核心层 + API 层 + Render 层） -->
-    <script type="module" src="./src/main.js"></script>
+    <p>正在跳转 <a href="./app.html">刷题器主页</a>…（如果没有自动跳转请点这里）</p>
+    <noscript>
+        <p>您的浏览器禁用了脚本 / 不支持自动跳转，<a href="./app.html">点此进入刷题器</a>。</p>
+    </noscript>
 </body>
 </html>

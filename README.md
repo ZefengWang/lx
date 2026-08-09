@@ -52,3 +52,14 @@ core/    (基础层)     ← 零 DOM、零业务依赖；状态机、存储、�
 ```
 
 **禁止反向依赖：** core 不能 import api/render，render 不能 import core。详细规则见 `docs/MAINTENANCE.md` 第 2 节。
+
+## 入口文件约定（防止版本不一致）
+
+> 🔴 **维护铁律**：任何 HTML 修改（改 `<title>`、改 CDN 顺序、改启动脚本）**只改 app.html 这一份**，禁止把 app.html 拷回 index.html。
+
+| 文件 | 职责 | 为什么这么做 |
+|---|---|---|
+| **app.html** | **唯一真入口**：UI 外壳 + 外链 CDN + `<script src="./src/main.js">` 启动应用 | 实际加载 UI 的页面，所有改动集中在此 |
+| **index.html** | **纯跳转壳**：`<meta http-equiv="refresh" content="0; url=./app.html">` 0 秒跳到 app.html，附带无自动跳转时的兜底链接 | GitHub Pages / 静态托管访问目录路径（`/lx/`）时默认找 index.html；**绝对不要把 app.html 内容复制一份到 index.html**（过去两份拷贝踩过"只改一份导致线上版本漂移"的坑） |
+
+v3-preview/ 子目录同样遵守"index 只跳转、app 才是真入口"的约定（详见 `docs/MAINTENANCE.md` §9 FAQ）。
