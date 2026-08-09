@@ -725,7 +725,18 @@ body {
     max-height: 80vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* 防止整体滚动，内部滚动 */
 }
+
+/* 新增：内容容器可滚动 */
+.modal-box .modal-content {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px; /* 留出滚动条空间 */
+}
+
+/* 确保底部按钮不被压缩 */
+
 .modal-box h3 {
     font-size: 18px;
     margin-bottom: 12px;
@@ -836,10 +847,10 @@ body {
     min-height: 80px;
 }
 .modal-box .modal-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
-    justify-content: flex-end;
+    flex-shrink: 0;
+    padding-top: 16px;
+    border-top: 1px solid #f0f2f5;
+    margin-top: 12px;
 }
 .modal-box .modal-actions button {
     padding: 10px 24px;
@@ -950,16 +961,29 @@ body {
     .app-header {
         padding: 12px 16px 8px 16px;
     }
+    /* 顶部第一行：标题 + 统计 */
+    .header-top {
+        flex-direction: column;          /* 改为纵向排列 */
+        align-items: stretch;            /* 拉伸占满宽度 */
+        gap: 8px;
+    }
+
     .header-top h1 {
         font-size: 17px;
     }
+    /* 统计环形区域 */
     .stats-ring-wrapper {
-        padding: 4px 12px 4px 8px;
+        justify-content: center;         /* 内容居中 */
+        padding: 6px 12px;
         gap: 10px;
+        width: 100%;                     /* 占满宽度 */
+        flex-wrap: wrap;                 /* 允许换行 */
     }
+    /* 环形图容器缩小 */
     .ring-container {
         width: 40px;
         height: 40px;
+        flex-shrink: 0;                  /* 避免被压缩 */
     }
     .ring-container svg {
         width: 40px;
@@ -968,8 +992,31 @@ body {
     .ring-container .center-text {
         font-size: 11px;
     }
+    /* 统计文字 */
     .stats-text {
-        font-size: 10px;
+        font-size: 11px;                 /* 稍微缩小 */
+        line-height: 1.3;
+    }
+    .stats-text .num {
+        font-size: 13px;
+    }
+    /* 筛选栏：让下拉菜单和按钮自动换行并调整大小 */
+    .filter-bar {
+        gap: 6px;
+        padding: 4px 0;
+        flex-wrap: wrap;                 /* 允许换行 */
+        justify-content: flex-start;      /* 左对齐 */
+    }
+    .filter-bar select,
+    .filter-bar button {
+        font-size: 12px;
+        height: 32px;
+        padding: 4px 10px;
+        flex-shrink: 0;                  /* 避免被压缩 */
+    }
+    /* 卡片区域 */
+    .card-slide-area {
+        padding: 12px 16px 8px 16px;
     }
     .card-wrapper {
         padding: 18px 16px 12px 16px;
@@ -978,9 +1025,11 @@ body {
     .card-question {
         font-size: 16px;
     }
+    /* 卡片操作栏（提示、答案、导航） */
     .card-actions {
         gap: 6px;
         padding: 6px 0 0 0;
+        flex-wrap: wrap;
     }
     .card-actions .nav-group button {
         font-size: 12px;
@@ -988,32 +1037,60 @@ body {
     }
     .card-actions .hint-btn {
         font-size: 12px;
-        padding: 6px 14px;
+        padding: 6px 12px;
     }
+    .card-actions .nav-group button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    /* 底部操作栏（掌握/复习/重置/帮助） */
     .bottom-actions {
         padding: 8px 10px 12px 10px;
         gap: 6px;
+        grid-template-columns: 1fr 1fr;   /* 变为两列 */
     }
     .bottom-actions button {
         font-size: 12px;
         padding: 10px 0;
         border-radius: 12px;
     }
+    /* 底部工具条 */
     .bottom-utils {
         padding: 6px 10px 10px 10px;
         font-size: 11px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     .bottom-utils button {
         font-size: 11px;
         padding: 4px 8px;
     }
+    .bottom-utils input[type="file"] {
+        max-width: 100px;
+    }
     .modal-box {
-        width: 100%;
-        max-width: 100%;
-        border-radius: 16px;
-        padding: 16px;
+        background: white;
+        max-width: 92%;
+        width: 540px;
+        border-radius: 24px;
+        padding: 24px 20px 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* 防止整体滚动，内部滚动 */
+    }
+
+    /* 新增：内容容器可滚动 */
+    .modal-box .modal-content {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 4px; /* 留出滚动条空间 */
     }
 }
+
+
+
 .card-wrapper::-webkit-scrollbar {
     width: 4px;
 }

@@ -1431,43 +1431,45 @@
         overlay.innerHTML = `
             <div class="modal-box">
                 <h3>➕ 添加题目</h3>
-                <div class="form-group">
-                    <label>题型</label>
-                    <select id="qType">
-                        <option value="essay">简答</option>
-                        <option value="single">单选</option>
-                        <option value="multi">多选</option>
-                        <option value="fill">填空</option>
-                        <option value="judge">判断</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>题目内容 *</label>
-                    <textarea id="qQuestion" placeholder="请输入题目..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>分类（可选）</label>
-                    <input type="text" id="qCategory" placeholder="例如：教育学、心理学...">
-                </div>
-                <div class="form-group" id="optionsGroup" style="display:none;">
-                    <label>选项（每行一个）</label>
-                    <textarea id="qOptions" placeholder="选项A&#10;选项B&#10;选项C&#10;选项D"></textarea>
-                </div>
-                <div class="form-group" id="answerGroup" style="display:block;">
-                    <label>正确答案（单选/多选填选项字母，如 A；填空填答案文本；判断填“对”或“错”）</label>
-                    <input type="text" id="qAnswer" placeholder="例如：A">
-                </div>
-                <div class="form-group" id="essayExtra" style="display:none;">
-                    <label>参考答案（简答题专用）</label>
-                    <textarea id="qAnswerText" placeholder="简答题的参考答案..."></textarea>
-                </div>
-                <div class="form-group" id="remarkGroup" style="display:none;">
-                    <label>备注（可选）</label>
-                    <textarea id="qRemarks" placeholder="补充说明、拓展知识..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>解析 / 口诀（可选）</label>
-                    <textarea id="qExplanation" placeholder="解析或口诀"></textarea>
+                <div class="modal-content">
+                    <div class="form-group">
+                        <label>题型</label>
+                        <select id="qType">
+                            <option value="essay">简答</option>
+                            <option value="single">单选</option>
+                            <option value="multi">多选</option>
+                            <option value="fill">填空</option>
+                            <option value="judge">判断</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>题目内容 *</label>
+                        <textarea id="qQuestion" placeholder="请输入题目..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>分类（可选）</label>
+                        <input type="text" id="qCategory" placeholder="例如：教育学、心理学...">
+                    </div>
+                    <div class="form-group" id="optionsGroup" style="display:none;">
+                        <label>选项（每行一个）</label>
+                        <textarea id="qOptions" placeholder="选项A&#10;选项B&#10;选项C&#10;选项D"></textarea>
+                    </div>
+                    <div class="form-group" id="answerGroup" style="display:block;">
+                        <label>正确答案（单选/多选填选项字母，如 A；填空填答案文本；判断填“对”或“错”）</label>
+                        <input type="text" id="qAnswer" placeholder="例如：A">
+                    </div>
+                    <div class="form-group" id="essayExtra" style="display:none;">
+                        <label>参考答案（简答题专用）</label>
+                        <textarea id="qAnswerText" placeholder="简答题的参考答案..."></textarea>
+                    </div>
+                    <div class="form-group" id="remarkGroup" style="display:none;">
+                        <label>备注（可选）</label>
+                        <textarea id="qRemarks" placeholder="补充说明、拓展知识..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>解析 / 口诀（可选）</label>
+                        <textarea id="qExplanation" placeholder="解析或口诀"></textarea>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button class="btn-secondary" id="modalCancelBtn">取消</button>
