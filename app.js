@@ -105,13 +105,25 @@
         const prog = getLibraryProgress(libId);
         return prog[qId] || 'none';
     }
-    function setQuestionStatus(libId, qId, status) {
+    function setQuestionStatus(libId, qId, status, silent = false) {
         const prog = getLibraryProgress(libId);
         if (status === 'none') delete prog[qId];
         else prog[qId] = status;
         setLibraryProgress(libId, prog);
         updateStatsAndUI();
-        renderCard();
+
+        // 如果处于错题模式，检查错题是否清空
+        if (isInWrongBookMode && currentLibraryId === libId) {
+            const wrongCount = filteredQuestions.filter(q => getQuestionStatus(currentLibraryId, q.id) === 'review').length;
+            if (wrongCount === 0) {
+                alert('✅ 错题已全部清空，自动退出错题模式。');
+                exitWrongBookMode(false);
+                return; // 退出模式后无需再渲染
+            }
+        }
+        if (!silent) {
+            renderCard();
+        }
     }
     function resetAllProgressForLibrary(libId) {
         if (confirm(`确定要重置题库“${allLibraries[libId].name}”的所有进度吗？`)) {
@@ -442,8 +454,8 @@
                         this.classList.add('wrong-answer');
                         feedback.className = 'feedback show wrong';
                         feedback.innerHTML = '❌ 回答错误。正确答案是：' + (q.answer || '');
-                        // 自动标记为“待复习”
-                        setQuestionStatus(currentLibraryId, q.id, 'review');
+                        // 自动标记为“待复习”（不重新渲染）
+                        setQuestionStatus(currentLibraryId, q.id, 'review', true);
                     }
                     const expl = explanation.trim();
                     if (expl && expl !== '（无口诀）') {
@@ -505,7 +517,7 @@
                 } else {
                     feedback.className = 'feedback show wrong';
                     feedback.innerHTML = '❌ 有误，正确答案：' + correctAnswers.join(', ');
-                    setQuestionStatus(currentLibraryId, q.id, 'review');
+                    setQuestionStatus(currentLibraryId, q.id, 'review', true);
                 }
                 const expl = explanation.trim();
                 if (expl && expl !== '（无口诀）') {
@@ -539,7 +551,7 @@
                         feedback.className = 'feedback show wrong';
                         feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
                         // 自动标记为“待复习”
-                        setQuestionStatus(currentLibraryId, q.id, 'review');
+                        setQuestionStatus(currentLibraryId, q.id, 'review', true);
                     }
                     const expl = explanation.trim();
                     if (expl && expl !== '（无口诀）') {
@@ -570,7 +582,7 @@
                     feedback.className = 'feedback show wrong';
                     feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
                     // 自动标记为“待复习”
-                    setQuestionStatus(currentLibraryId, q.id, 'review');
+                    setQuestionStatus(currentLibraryId, q.id, 'review', true);
                 }
                 const expl = explanation.trim();
                 if (expl && expl !== '（无口诀）') {
