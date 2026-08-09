@@ -7,6 +7,7 @@
 import { h, render } from '../dom.js';
 import { navigate } from '../router.js';
 import { toastInfo } from '../toast.js';
+import { createLogo } from '../logo.js';
 
 export function createHomePage() {
     let _container = null;
@@ -29,9 +30,11 @@ export function createHomePage() {
 
         const elements = [];
 
-        // 欢迎卡
-        elements.push(h('div', { class: 'lx-card', style: { marginBottom: '16px' } }, [
-            h('div', { style: { fontSize: '24px', marginBottom: '8px' } }, ['👋']),
+        // 欢迎卡：大 logo + 欢迎语
+        elements.push(h('div', { class: 'lx-card', style: { marginBottom: '16px', textAlign: 'center' } }, [
+            h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: '12px' } }, [
+                createLogo({ size: 64 }),
+            ]),
             h('div', { class: 'lx-text-xl lx-font-semibold' }, [`欢迎来到刷题器`]),
             h('div', { class: 'lx-text-sm lx-text-muted', style: { marginTop: '4px' } }, [
                 current ? `当前正在学习：${current.name}` : '从下方选择一个题库开始学习',

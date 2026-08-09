@@ -287,6 +287,11 @@ export function createSettingsPage() {
         }
     }
 
+    /**
+     * 手动新建空题库的入口已移至左侧菜单（drawer.js → onCreateLibrary）
+     * settings 页保留"上传新题库"用于文件导入。
+     */
+
     function handleExportLibrary(format) {
         const LX = window.LX;
         const currentId = LX.LibraryAPI.current().data;

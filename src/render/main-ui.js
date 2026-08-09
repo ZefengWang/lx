@@ -17,8 +17,9 @@ import { createWrongBookPage } from './pages/wrongbook.js';
 import { createStatsPage } from './pages/stats.js';
 import { createSettingsPage } from './pages/settings.js';
 import { createCatalogPage } from './pages/catalog.js';
+import { createAddQuestionPage } from './pages/add-question.js';
 import { applyInitial as applyInitialTheme } from './theme.js';
-import { toastInfo } from './toast.js';
+import { toastInfo, toastSuccess, toastWarning } from './toast.js';
 
 /**
  * UI 主初始化
@@ -49,6 +50,7 @@ export function initUI(LX) {
     register('stats',    '#/stats',       () => createStatsPage());
     register('settings', '#/settings',    () => createSettingsPage());
     register('catalog',  '#/catalog',     () => createCatalogPage());
+    register('add-question', '#/add-question', () => createAddQuestionPage());
 
     // 3. 启动路由
     startRouter($('#lx-main'), (routeName) => {
@@ -232,6 +234,25 @@ function refreshDrawer() {
                 const btn = $('.lx-button--primary');
                 if (btn) btn.click();
             }, 100);
+        },
+        onCreateLibrary: () => {
+            // 在左侧菜单直接新建空题库：prompt 输入名 → 创建 → 切换 → 跳去添加题目
+            closeDrawer();
+            const name = window.prompt('请输入新题库名称：', '我的题库');
+            if (name == null) return; // 用户取消
+            const trimmed = String(name).trim();
+            if (!trimmed) {
+                toastWarning('题库名不能为空');
+                return;
+            }
+            const r = LX.LibraryAPI.create(trimmed, [], { skipDuplicateCheck: true });
+            if (!r.ok) {
+                toastWarning(`创建失败：${r.error?.message || '未知错误'}`);
+                return;
+            }
+            LX.LibraryAPI.switch(r.data.id);
+            toastSuccess(`已创建空题库「${trimmed}」，现在可以添加题目了`);
+            navigate('add-question');
         },
         onDeleteLibrary: () => {
             closeDrawer();

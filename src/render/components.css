@@ -10,6 +10,20 @@
  */
 
 /* ============================================================
+ * 0. 应用 Logo（紫底圆 + 白书 + 对勾）
+ * ============================================================ */
+.lx-logo {
+    border-radius: var(--lx-radius-full);
+    overflow: hidden;
+    line-height: 0;
+}
+.lx-logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ============================================================
  * 1. 按钮（DESIGN.md 5.1 触摸目标 ≥ 44px，推荐 48px）
  * ============================================================ */
 .lx-button {
@@ -1246,4 +1260,88 @@ input, textarea {
     background: var(--lx-primary-light);
     color: var(--lx-primary);
     font-weight: 600;
+}
+
+/* ============================================================
+ * 新增题目表单（add-question 页）
+ * ============================================================ */
+.lx-addq__type-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.lx-addq__type-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1.5px solid var(--lx-border);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-addq__type-btn:active {
+    transform: scale(0.97);
+}
+.lx-addq__type-btn--active {
+    border-color: var(--lx-primary);
+    background: var(--lx-primary-light);
+    color: var(--lx-primary);
+    font-weight: 600;
+}
+.lx-addq__dynamic {
+    margin-top: 4px;
+}
+/* 选项编辑行（single / multi） */
+.lx-addq__opt-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.lx-addq__opt-check {
+    flex: 0 0 36px;
+    height: 36px;
+    border: 1.5px solid var(--lx-border);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-addq__opt-check--active {
+    border-color: var(--lx-success);
+    background: var(--lx-success-light);
+    color: var(--lx-success);
+}
+.lx-addq__opt-input {
+    flex: 1;
+    min-height: 36px;
+}
+/* 判断题答案按钮 */
+.lx-addq__judge-row {
+    display: flex;
+    gap: 12px;
+}
+.lx-addq__judge-btn {
+    flex: 1;
+    min-height: 48px;
+    border: 1.5px solid var(--lx-border);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-addq__judge-btn--active {
+    border-color: var(--lx-success);
+    background: var(--lx-success-light);
+    color: var(--lx-success);
+    font-weight: 700;
 }

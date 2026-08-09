@@ -11,6 +11,7 @@
  */
 
 import { h } from './dom.js';
+import { createLogo } from './logo.js';
 
 /**
  * 渲染顶栏
@@ -55,13 +56,14 @@ export function renderTopbar(ctx = {}) {
     return h('header', { class: 'lx-topbar', role: 'banner' }, [
         leftBtn,
 
-        // 📚 题库名（可点击切换）
+        // 应用 logo + 题库名（可点击切换）
+        //   顶栏 logo 替代之前的 📚 emoji：既是应用品牌、又保留"书/题库"语义
         h('button', {
             class: 'lx-topbar__title',
             onclick: ctx.onLibraryClick,
             'aria-label': '切换题库',
         }, [
-            h('span', { class: 'lx-topbar__icon' }, ['📚']),
+            createLogo({ size: 22 }),
             h('span', { class: 'lx-topbar__title-text' }, [libName]),
             h('span', { class: 'lx-topbar__icon', style: { opacity: 0.5, fontSize: '12px' } }, ['▾']),
         ]),

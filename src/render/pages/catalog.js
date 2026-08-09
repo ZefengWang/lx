@@ -70,7 +70,7 @@ export function createCatalogPage() {
 
         const elements = [];
 
-        // 顶部：返回 + 题库信息
+        // 顶部：返回 + 题库信息 + 练习设置 + 新增题目入口
         elements.push(h('div', { class: 'lx-card', style: { marginBottom: '12px' } }, [
             h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' } }, [
                 h('button', {
@@ -83,8 +83,16 @@ export function createCatalogPage() {
                     h('div', { class: 'lx-text-xs lx-text-muted' }, [`${questions.length} 题`]),
                 ]),
             ]),
-            h('div', { class: 'lx-text-xs lx-text-light' }, [
-                '提示：点击题目直接跳转',
+            // 练习设置：模式切换 + 换一批 + 清除分类筛选
+            // 答题页保持简洁，所有"出题方式"集中到目录页
+            renderPracticeSettings(LX),
+            h('button', {
+                class: 'lx-button lx-button--primary lx-button--block',
+                style: { minHeight: '44px', marginTop: '12px' },
+                onclick: () => navigate('add-question'),
+            }, ['➕ 新增题目']),
+            h('div', { class: 'lx-text-xs lx-text-light', style: { marginTop: '8px' } }, [
+                '提示：点击题目直接跳转；点分类标题旁「只练本类」可只刷该分类',
             ]),
         ]));
 
@@ -161,4 +169,52 @@ export function createCatalogPage() {
             }
         },
     };
+}
+
+/**
+ * 练习设置区（目录页内联）
+ *   - 显示当前模式：顺序 / 随机
+ *   - 切换模式按钮
+ *   - 随机模式下显示「🎴 换一批」
+ *   - 当有分类筛选时显示「📁 当前：xxx  ✕ 清除」
+ *
+ * 分类筛选本身通过下方各分类分组的「🎯 只练本类」按钮触发，
+ * 这里只提供"清除筛选"回到全部分类的入口。
+ */
+function renderPracticeSettings(LX) {
+    const mode = LX.NavigationAPI.getMode();
+    const category = LX.NavigationAPI.getCategory();
+    const isRandom = mode === 'random';
+    const hasCategory = category && category !== 'all';
+
+    const btn = (text, onClick, opts = {}) =>
+        h('button', {
+            class: `lx-toolbar__btn${opts.active ? ' lx-toolbar__btn--active' : ''}`,
+            type: 'button',
+            onclick: onClick,
+            'aria-pressed': opts.active ? 'true' : 'false',
+        }, [text]);
+
+    const children = [
+        h('div', { class: 'lx-text-xs lx-text-muted', style: { marginBottom: '6px' } }, ['练习设置']),
+        h('div', { class: 'lx-study-toolbar' }, [
+            btn(isRandom ? '🔀 随机' : '➡️ 顺序', () => {
+                LX.NavigationAPI.setMode(isRandom ? 'sequential' : 'random');
+                toastInfo(isRandom ? '已切换为顺序模式' : '已切换为随机模式（已洗牌）');
+                // catalog.js 已订阅 NAVIGATION_CHANGED → 自动 refresh，无需手动调
+            }, { active: isRandom }),
+            isRandom && btn('🎴 换一批', () => {
+                LX.NavigationAPI.shuffle();
+                toastInfo('已重新洗牌');
+            }),
+            hasCategory && btn(`✕ 清除分类`, () => {
+                LX.NavigationAPI.setCategory('all');
+                toastInfo('已显示全部分类');
+            }, { active: true }),
+        ]),
+        hasCategory && h('div', { class: 'lx-text-xs lx-text-muted', style: { marginTop: '4px' } }, [
+            `当前仅练习分类：${category}`,
+        ]),
+    ];
+    return h('div', { style: { marginTop: '8px' } }, children);
 }

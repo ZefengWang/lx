@@ -7,6 +7,7 @@
 
 import { h, render, $ } from './dom.js';
 import { escapeHtml } from '../utils.js';
+import { createLogo } from './logo.js';
 
 /**
  * 渲染抽屉骨架（首次创建）
@@ -20,7 +21,8 @@ export function createDrawer() {
         'aria-hidden': 'true',
     }, [
         h('div', { class: 'lx-drawer__header' }, [
-            h('span', { class: 'lx-drawer__title' }, ['应用菜单']),
+            createLogo({ size: 28 }),
+            h('span', { class: 'lx-drawer__title' }, ['刷题器']),
             h('button', {
                 class: 'lx-button lx-button--icon',
                 'aria-label': '关闭菜单',
@@ -113,6 +115,7 @@ export function isDrawerOpen() {
  * @param {string} [ctx.currentLibId]
  * @param {() => void} [ctx.onSwitchLib]
  * @param {() => void} [ctx.onImportLibrary]
+ * @param {() => void} [ctx.onCreateLibrary]  手动新建空题库
  * @param {() => void} [ctx.onDeleteLibrary]
  * @param {() => void} [ctx.onExportLibrary]
  * @param {() => void} [ctx.onExportProgress]
@@ -141,6 +144,10 @@ export function renderDrawerContent(ctx = {}) {
             class: 'lx-button lx-button--secondary lx-button--block',
             onclick: ctx.onImportLibrary,
         }, ['＋ 上传新题库']),
+        h('button', {
+            class: 'lx-button lx-button--ghost lx-button--block',
+            onclick: ctx.onCreateLibrary,
+        }, ['✍️ 新建空题库']),
         h('button', {
             class: 'lx-button lx-button--ghost lx-button--block',
             onclick: ctx.onDeleteLibrary,
