@@ -450,6 +450,8 @@
                         this.classList.add('correct-answer');
                         feedback.className = 'feedback show correct';
                         feedback.innerHTML = '✅ 回答正确！';
+                        // 自动标记为“已掌握”
+                        setQuestionStatus(currentLibraryId, q.id, 'mastered', true);
                     } else {
                         this.classList.add('wrong-answer');
                         feedback.className = 'feedback show wrong';
@@ -496,29 +498,56 @@
                     alert('请至少选择一个选项');
                     return;
                 }
-                const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase())
-                    .filter(Boolean) : [];
+                const correctAnswers = q.answer ? q.answer.split(/[,，\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean) : [];
                 let allCorrect = true;
+
+                // 清除之前标记
+                items.forEach(el => {
+                    el.classList.remove('correct-answer', 'wrong-answer');
+                });
+
+                // 用户选中的选项
                 items.forEach(el => {
                     const label = el.dataset.label;
                     const isCorrect = correctAnswers.includes(label);
-                    if (isCorrect) {
-                        el.classList.add('correct-answer');
-                    } else {
-                        el.classList.add('wrong-answer');
-                    }
                     const userSelected = selectedLabels.includes(label);
-                    if (userSelected && !isCorrect) allCorrect = false;
-                    if (!userSelected && isCorrect) allCorrect = false;
+
+                    if (userSelected) {
+                        if (isCorrect) {
+                            el.classList.add('correct-answer');
+                        } else {
+                            el.classList.add('wrong-answer');
+                            allCorrect = false;
+                        }
+                    }
+                    // 未选中的选项不做标记
                 });
+
+                // 检查漏选
+                const missingCorrect = correctAnswers.filter(ans => !selectedLabels.includes(ans));
+                if (missingCorrect.length > 0) {
+                    allCorrect = false;
+                }
+
                 if (allCorrect && selectedLabels.length === correctAnswers.length) {
                     feedback.className = 'feedback show correct';
                     feedback.innerHTML = '✅ 全部正确！';
+                    // 自动标记为“已掌握”
+                    setQuestionStatus(currentLibraryId, q.id, 'mastered', true);
                 } else {
                     feedback.className = 'feedback show wrong';
-                    feedback.innerHTML = '❌ 有误，正确答案：' + correctAnswers.join(', ');
+                    let msg = '❌ 有误。';
+                    const wrongSelected = selectedLabels.filter(l => !correctAnswers.includes(l));
+                    if (wrongSelected.length > 0) {
+                        msg += ' 你选择了错误选项：' + wrongSelected.join(', ');
+                    }
+                    if (missingCorrect.length > 0) {
+                        msg += ' 漏选了：' + missingCorrect.join(', ');
+                    }
+                    feedback.innerHTML = msg;
                     setQuestionStatus(currentLibraryId, q.id, 'review', true);
                 }
+
                 const expl = explanation.trim();
                 if (expl && expl !== '（无口诀）') {
                     const explDiv = document.createElement('div');
@@ -529,6 +558,7 @@
                 confirmBtn.disabled = true;
                 items.forEach(el => el.style.pointerEvents = 'none');
             });
+
         } else if (type === 'judge') {
             const btns = cardContent.querySelectorAll('.judge-btn');
             const feedback = document.getElementById('feedback');
@@ -546,6 +576,8 @@
                         this.classList.add('correct');
                         feedback.className = 'feedback show correct';
                         feedback.innerHTML = '✅ 回答正确！';
+                        // 自动标记为“已掌握”
+                        setQuestionStatus(currentLibraryId, q.id, 'mastered', true);
                     } else {
                         this.classList.add('wrong');
                         feedback.className = 'feedback show wrong';
@@ -578,6 +610,8 @@
                 if (isCorrect) {
                     feedback.className = 'feedback show correct';
                     feedback.innerHTML = '✅ 回答正确！';
+                    // 自动标记为“已掌握”
+                    setQuestionStatus(currentLibraryId, q.id, 'mastered', true);
                 } else {
                     feedback.className = 'feedback show wrong';
                     feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
