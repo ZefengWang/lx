@@ -168,12 +168,49 @@ export function createCatalogPage() {
                     const status = statusR.ok ? statusR.data : 'none';
                     const statusIcon = STATUS_DOT[status] || '⏳';
                     const typeLabel = TYPE_LABELS[q.type] || '简答';
+                    const qCategory = q.category || '未分类';
 
                     return h('button', {
                         class: `lx-catalog-item${isCurrent ? ' lx-catalog-item--current' : ''}`,
                         onclick: () => {
-                            LX.NavigationAPI.goto(index);
-                            toastInfo(`跳到第 ${index + 1} 题`);
+                            // —— 跨分类跳转处理（对应用户问的"在 A 类里点 B 类题"）
+                            //   策略 1) 当前是全库模式('all')：不切分类，按全库 index 直接跳
+                            //        —— 保持用户"我在刷整个题库"的连续感
+                            //   策略 2) 当前是单分类过滤：点其他分类题时，先 setCategory(目标分类) 再跳
+                            //        —— 不做"请先切换分类"的阻碍提示。用户既然点了这题，就是想做这题，
+                            //           帮他把分类一起切过去，study 页后续上下一题都是该分类，体验更顺。
+                            //   注意：NavigationAPI.getCategory / getMode / getStatusFilter 都直接返回纯值（string），不是 Result！
+                            const currentCategory = LX.NavigationAPI.getCategory() || 'all';
+                            const targetCategory = qCategory;
+                            const isAllMode = currentCategory === 'all' || !currentCategory;
+                            let newIndex = index; // 默认：当作"全库未过滤"直接跳
+
+                            if (!isAllMode && targetCategory !== currentCategory) {
+                                const sc = LX.NavigationAPI.setCategory(targetCategory);
+                                if (!sc.ok) {
+                                    toastWarning(sc.error?.message || '切换分类失败');
+                                    return;
+                                }
+                            }
+                            // —— setCategory(或不切)之后，拉一次 active 列表，把这道题在 active 里的正确 index 找出来
+                            //    因为 NavigationAPI.goto(index) 的 index 是"过滤后 active 列表"的下标，不是全库下标
+                            //    getActiveList() 返回 Result<Question[]>，正常按 .ok/.data 取
+                            const activeListR = LX.NavigationAPI.getActiveList();
+                            if (activeListR.ok && Array.isArray(activeListR.data)) {
+                                const idx = activeListR.data.findIndex((qq) => qq.uid === q.uid);
+                                if (idx >= 0) newIndex = idx;
+                            }
+                            const gotoR = LX.NavigationAPI.goto(newIndex);
+                            if (!gotoR.ok) {
+                                toastWarning(gotoR.error?.message || '跳转失败');
+                                return;
+                            }
+                            // toast 文案：区分"跨分类切换" / "同分类 / 全库"，让用户感知到刚刚发生了什么
+                            if (!isAllMode && targetCategory !== currentCategory) {
+                                toastInfo(`已切换到「${targetCategory}」，跳到第 ${gotoR.data.index + 1} 题`);
+                            } else {
+                                toastInfo(`跳到第 ${gotoR.data.index + 1} 题`);
+                            }
                             navigate('study');
                         },
                     }, [

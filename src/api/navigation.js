@@ -227,6 +227,45 @@ export function listCategories() {
     return ok(cats);
 }
 
+/**
+ * 获取当前 active 题目列表（按「模式/分类筛选/状态筛选/错题本模式」过滤后的最终序列）
+ * 用于目录页（catalog）跨分类跳转时把"全库题号"映射回"过滤后 active 列表的 index"。
+ * （NavigationAPI.goto(index) 里的 index 只认 active 列表下标，不认全库下标）
+ *
+ * 注意：随机模式下顺序会随 shuffle() 而变，这里会走同一份洗牌序列保持一致。
+ *
+ * @returns {Result<Question[]>}
+ */
+export function getActiveList() {
+    const state = getState();
+    if (!state.currentLibId) return ok([]);
+    const r = LibraryAPI.get(state.currentLibId);
+    if (!r.ok) return ok([]);
+    let questions = r.data.questions || [];
+
+    if (state.isWrongBookMode) {
+        questions = questions.filter((q) => ProgressAPI.getStatus(q).data === 'review');
+    } else {
+        if (state.category && state.category !== 'all') {
+            questions = questions.filter((q) => (q.category || '未分类') === state.category);
+        }
+        if (state.statusFilter && state.statusFilter !== 'all') {
+            questions = questions.filter((q) => ProgressAPI.getStatus(q).data === state.statusFilter);
+        }
+    }
+
+    if (state.mode === 'random') {
+        // —— 顺序必须和 computeFilteredQIds 保持一致：
+        //   先用 uid 得到和 shuffleArray 同顺序的索引映射，再重排 questions
+        const ids = questions.map((q) => (q.uid != null ? q.uid : q.id));
+        const shuffledIds = shuffleArray([...ids]);
+        const idToIndex = new Map(); ids.forEach((id, i) => idToIndex.set(id, i));
+        const original = questions;
+        questions = shuffledIds.map((sid) => original[idToIndex.get(sid)]);
+    }
+    return ok(questions);
+}
+
 export const NavigationAPI = {
     current,
     goto,
@@ -241,4 +280,5 @@ export const NavigationAPI = {
     getCategory,
     getStatusFilter,
     listCategories,
+    getActiveList,
 };

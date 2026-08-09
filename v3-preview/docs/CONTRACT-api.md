@@ -33,6 +33,10 @@ window.LX = {
    if (!r.ok) { toastWarning(r.error.message); return; }
    const libs = r.data;  // 只有 ok:true 才能访问
    ```
+
+   > ⚠️ **唯一 3 个例外**（历史包袱，不改了）：`NavigationAPI.getMode() / getCategory() / getStatusFilter()`
+   > 直接返回字符串**（不是 Result）**，调用时写 `const cat = LX.NavigationAPI.getCategory() || 'all'` 即可。
+   > 不要写 `r.ok ? r.data : 'all'`——这是 BUG-014（跨分类永远走全库分支）。
 2. **禁止跨层调用**：render 不能 `import storage/state/events`，必须通过 `LX.on/LX.emit` 和 `LX.*API`。
 3. **API 不会 throw**：所有错误通过 `err(code, message)` 返回；除非是程序员错误（如 typo）。
 4. **状态值是枚举字符串**：禁止自创（如 `'pending'`），见 [§1 ProgressAPI](#1-progressapi)。
@@ -298,9 +302,14 @@ interface Library {
 
 #### `setCategory(category): Result<void>`
 
+- `category`：传入 `'all'` 或 `null / undefined` 都等价于"清除分类筛选（全库模式）"。
+- 调用后序列回到 0，触发 `NAVIGATION_CHANGED`（source=`category-change`）。
+
 #### `setStatusFilter(statusFilter): Result<void>`
 
 - `statusFilter`：`'all' | 'none' | 'mastered' | 'review'`
+- 传入 `'all'` 或空值 = 清除状态过滤。
+- 调用后序列回到 0，触发 `NAVIGATION_CHANGED`（source=`status-change`）。
 
 #### `getMode(): 'sequential' | 'random'`
 
@@ -308,9 +317,27 @@ interface Library {
 
 #### `getCategory(): string`
 
+- 直接返回字符串。`'all'` 代表"未过滤 / 全库模式"；否则就是当前选中的分类名。
+- 🔴 **调用方注意**：`LX.NavigationAPI.getCategory()` 不返回 Result，**不要**写 `r.ok ? r.data : 'all'`，否则你会永远拿到 fallback 而出 bug（这是踩过的坑，BUG-014）。
+
 #### `getStatusFilter(): string`
 
+- 直接返回字符串。`'all'` 代表"未过滤"，和上一条注意事项一致。
+
 #### `listCategories(): Result<string[]>`
+
+#### `getActiveList(): Result<Question[]>`
+
+- **新增（v3.0.1）**：返回当前「分类筛选 + 状态筛选 + 错题本模式 + 顺序/随机洗牌」过滤后的 active 题对象数组（不仅仅是 uid）。
+- **什么时候用**：当你手上只有一个「全库题对象/uid」（比如目录页 catalog 是全库视图），但你需要把它映射到 `goto(index)` 的过滤后下标时，就用它：
+  ```javascript
+  const listR = LX.NavigationAPI.getActiveList();
+  if (listR.ok) {
+    const index = listR.data.findIndex((q) => q.uid === targetUid);
+    if (index >= 0) LX.NavigationAPI.goto(index);
+  }
+  ```
+- **顺序一致性**：`random` 模式下会用和内部 `computeFilteredQIds` 同一份洗牌序列，保证 `goto(n)` → activeList[n].uid 和 current 里的 qId 一致。
 
 ### 4.2 事件 payload
 
