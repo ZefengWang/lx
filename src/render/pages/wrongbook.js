@@ -7,7 +7,7 @@
 
 import { h, render } from '../dom.js';
 import { renderQuestionCard, renderFeedback } from '../card.js';
-import { toastSuccess, toastInfo } from '../toast.js';
+import { toastSuccess, toastInfo, toastWarning } from '../toast.js';
 import { navigate } from '../router.js';
 import { attachSwipeGestures, attachKeyboardGuard } from '../gestures.js';
 
@@ -129,22 +129,68 @@ export function createWrongBookPage() {
         render(_container, elements);
     }
 
-    function handleAnswer(q, answer) {
+    function handleAnswer(q, answer, opts = {}) {
         const LX = window.LX;
+
+        // —— 多选：先逐次 toggle 勾选，{ commit:true } 时整卷提交判分（对齐 study.js 模式）
         if (q.type === 'multi') {
-            const cur = _localState.selectedAnswers.get(q.uid) || [];
-            const next = cur.includes(answer)
-                ? cur.filter((x) => x !== answer)
-                : [...cur, answer].sort();
-            _localState.selectedAnswers.set(q.uid, next);
-        } else {
-            _localState.selectedAnswers.set(q.uid, answer);
-            _localState.revealed.add(q.uid);
-            const r = LX.QuestionAPI.answer(q.uid, answer);
-            if (r.ok && r.data.correct) {
-                toastSuccess('答对了，自动标记为已掌握');
-                LX.ProgressAPI.setStatus(q, 'mastered');
+            const current = _localState.selectedAnswers.get(q.uid) || [];
+            let next;
+
+            if (opts.commit === true) {
+                // 用户点了「确认答案」：answer 已是已选数组
+                next = Array.isArray(answer) ? [...answer].sort() : current;
+                _localState.selectedAnswers.set(q.uid, next);
+
+                // Reveal + 判分
+                const r = LX.QuestionAPI.answer(q.uid, next);
+                if (r.ok) {
+                    _localState.revealed.add(q.uid);
+                    if (r.data.correct) {
+                        toastSuccess('✓ 答对了，已从错题本移出');
+                        // 错题本模式下 QuestionAPI.answer 不会自动 setStatus（见
+                        // question.js: !getState().isWrongBookMode 分支），所以
+                        // 这里手动：答对→掌握（自动移出）
+                        LX.ProgressAPI.setStatus(q, 'mastered');
+                    } else {
+                        toastWarning(`✗ 正确答案：${r.data.correctAnswer}`);
+                    }
+                } else {
+                    toastWarning(r.error?.message || '答题失败');
+                }
+                refresh();
+                return;
             }
+
+            // 单击选项 → toggle
+            next = Array.isArray(current)
+                ? (current.includes(answer)
+                    ? current.filter((x) => x !== answer)
+                    : [...current, answer].sort())
+                : [answer];
+            _localState.selectedAnswers.set(q.uid, next);
+            refresh();
+            return;
+        }
+
+        // —— 单选/判断/填空/简答
+        _localState.selectedAnswers.set(q.uid, answer);
+
+        if (opts.pending) {
+            // 填空/简答 oninput：只存草稿，不交卷
+            return;
+        }
+
+        _localState.revealed.add(q.uid);
+        const r = LX.QuestionAPI.answer(q.uid, answer);
+        if (r.ok && r.data.correct) {
+            // 错题本：答对了就自动掌握并移出
+            toastSuccess('✓ 答对了，已从错题本移出');
+            LX.ProgressAPI.setStatus(q, 'mastered');
+        } else if (r.ok && !r.data.correct) {
+            toastWarning(`✗ 正确答案：${r.data.correctAnswer}`);
+        } else if (!r.ok) {
+            toastWarning(r.error?.message || '答题失败');
         }
         refresh();
     }
