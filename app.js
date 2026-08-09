@@ -207,16 +207,20 @@
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
         let listHtml = '';
+        // 判断当前分类是否为“全部”
+        const isAllCategory = categoryFilter.value === 'all';
         filteredQuestions.forEach((q, idx) => {
             const status = getQuestionStatus(currentLibraryId, q.id);
             const statusClass = status === 'mastered' ? 'status-mastered' :
                 status === 'review' ? 'status-review' : 'status-none';
             const statusLabel = status === 'mastered' ? '✅' :
                 status === 'review' ? '🔄' : '⏳';
+            // 显示ID：全部分类用全局ID，具体分类用displayId
+            const displayId = isAllCategory ? q.id : (q.displayId || q.id);
             const shortTitle = q.question.length > 30 ? q.question.slice(0, 30) + '…' : q.question;
             listHtml += `
                 <div class="catalog-item ${statusClass}" data-index="${idx}">
-                    <span class="index">#${q.id}</span>
+                    <span class="index">#${displayId}</span>
                     <span class="title">${escapeHtml(shortTitle)}</span>
                     <span class="status-badge">${statusLabel}</span>
                 </div>
@@ -307,8 +311,10 @@
         if (status === 'mastered') cardWrapper.classList.add('mastered');
         else if (status === 'review') cardWrapper.classList.add('review');
 
-        categoryBadge.textContent = q.category || '未分类';
-        questionId.textContent = q.id;
+        const displayId = q.displayId || q.id;
+        questionId.textContent = displayId;
+        categoryBadge.textContent = (q.category || '未分类') + ' #' + displayId;
+        
         statusTag.className = 'status-tag ' + status;
         statusTag.textContent = status === 'mastered' ? '✅ 已掌握' : status === 'review' ? '🔄 待复习' : '⏳ 未开始';
 
@@ -1053,7 +1059,8 @@
                 const explanation = String(row[colMap.explanation] || '').trim();
 
                 questions.push({
-                    id: id,
+                    id: id,                   // 原始序号，后续会被 addNewLibrary 覆盖
+                    displayId: id,            // 保留原始序号用于显示
                     category: category || '未分类',
                     question: question,
                     type: type,
@@ -1146,6 +1153,7 @@
 
                 questions.push({
                     id: id,
+                    displayId: id,
                     category: currentCategory || '未分类',
                     question: question.trim(),
                     type: 'essay',
@@ -1220,11 +1228,18 @@
 
     // ---------- 添加新题库 ----------
     function addNewLibrary(name, questions) {
-        // ---- 新增：重新分配全局唯一 ID ----
+        // 重新分配全局唯一 ID，同时保留 displayId
         questions.forEach((q, index) => {
-            q.id = index + 1;  // 从1开始递增
+            q.uid = index + 1;           // 新增全局唯一ID
+            if (!q.displayId) {
+                q.displayId = q.id || index + 1; // 兼容旧数据
+            }
+            // 可选：如果希望显示ID连续，可以忽略原始 displayId，但为了保留原始序号，我们不覆盖
         });
-        // ---------------------------------
+        // 将 id 设置为 uid（用于与现有代码兼容，因为现有代码大量使用 q.id）
+        questions.forEach(q => {
+            q.id = q.uid;
+        });
 
         if (!questions || questions.length === 0) {
             alert('题库为空，无法添加');
@@ -1320,6 +1335,7 @@
                 }
                 const questions = libData.questions.map(q => ({
                     id: q.id || 0,
+                    displayId: q.displayId || q.id,
                     category: q.category || '未分类',
                     question: q.question || '',
                     type: q.type || 'essay',
@@ -1508,6 +1524,7 @@
 
             const newQuestion = {
                 id: newId,
+                displayId: newId,
                 category: category,
                 question: question,
                 type: type,
@@ -1558,15 +1575,15 @@
         questions.forEach(q => {
             const optStr = (q.options || []).join('; ');
             rows.push([
-                q.id,
-                q.type || 'essay',
-                q.category || '',
-                q.question,
-                optStr,
-                q.answer || '',
-                q.explanation || q.mnemonic || '',
-                q.answerText || '',
-                q.remarks || ''
+                q.displayId || q.id,           // 显示序号
+                q.category || '',               // 分类
+                q.type || 'essay',              // 题型
+                q.question,                     // 题目
+                optStr,                         // 选项
+                q.answer || '',                 // 正确答案
+                q.explanation || q.mnemonic || '', // 解析/口诀
+                q.answerText || '',             // 参考答案
+                q.remarks || ''                 // 备注
             ]);
         });
         const wb = XLSX.utils.book_new();
@@ -2009,25 +2026,29 @@
 
     // ---------- 初始化 ----------
     function init() {
-        // 读取版本号
-        fetch('version.txt')
-            .then(res => {
-                if (!res.ok) throw new Error('版本文件不存在');
-                return res.text();
-            })
-            .then(ver => {
-                const v = ver.trim();
-                const versionEl = document.querySelector('.header-top h1 small');
-                if (versionEl) {
-                    versionEl.textContent = 'v' + v;
-                }
-                console.log('当前版本:', v);
-                window.APP_VERSION = v;
-            })
-            .catch(() => {
-                console.warn('未找到 version.txt，使用默认版本');
-            });
-
+        // ---------- 读取版本号（仅限 HTTP/HTTPS 环境） ----------
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+            fetch('version.txt')
+                .then(res => {
+                    if (!res.ok) throw new Error('版本文件不存在');
+                    return res.text();
+                })
+                .then(ver => {
+                    const v = ver.trim();
+                    const versionEl = document.getElementById('appVersion');
+                    if (versionEl) {
+                        versionEl.textContent = 'v' + v;
+                    }
+                    console.log('当前版本:', v);
+                    window.APP_VERSION = v;
+                })
+                .catch(err => {
+                    console.warn('未找到 version.txt，使用默认版本', err);
+                    // 保留默认版本
+                });
+        } else {
+            console.warn('本地环境，跳过 version.txt 加载，使用默认版本');
+        }
         // 原有的 bindEvents, loadAllLibraries 等代码...
         bindEvents();
         loadAllLibraries();
@@ -2039,6 +2060,36 @@
             mainApp.style.display = 'flex';
         }
         console.log('✅ 刷题器初始化完成');
+        // ---------- 测试接口 ----------
+        window.importFromUrl = async function(url, name) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('网络请求失败');
+                const arrayBuffer = await response.arrayBuffer();
+                // 根据文件扩展名判断
+                const ext = url.split('.').pop().toLowerCase();
+                if (ext === 'xlsx' || ext === 'xls') {
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const questions = parseExcelData(workbook);
+                    if (!questions.length) { alert('解析失败'); return; }
+                    const defaultName = name || url.split('/').pop().replace(/\.[^.]+$/, '');
+                    addNewLibrary(defaultName, questions);
+                } else if (ext === 'pdf') {
+                    // 需要 PDF.js，但这里略
+                    alert('PDF导入请使用粘贴功能或文件上传');
+                } else {
+                    alert('不支持的文件类型');
+                }
+            } catch (e) {
+                alert('导入失败: ' + e.message);
+            }
+        };
+        window.importExcelBuffer = function(buffer, name) {
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            const questions = parseExcelData(workbook);
+            if (!questions.length) { alert('解析失败'); return; }
+            addNewLibrary(name || '导入题库', questions);
+        };
     }
 
     init();
