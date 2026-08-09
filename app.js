@@ -1258,7 +1258,45 @@
 
     // ---------- 从粘贴文本解析题库 ----------
     function parseTextToQuestions(text) {
-        const cleaned = cleanText(text);
+        const trimmed = text.trim();
+        
+        // ---------- 检测是否为 JSON 格式 ----------
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            try {
+                const data = JSON.parse(trimmed);
+                // 如果解析出来的是数组
+                let questions = [];
+                if (Array.isArray(data)) {
+                    questions = data;
+                } else if (data.questions && Array.isArray(data.questions)) {
+                    questions = data.questions;
+                } else {
+                    // 尝试作为单个对象
+                    questions = [data];
+                }
+                
+                // 转换为标准格式
+                return questions.map(q => ({
+                    id: q.id || q.displayId || 0,
+                    displayId: q.displayId || q.id || 0,
+                    category: q.category || '未分类',
+                    question: q.question || q.title || '',
+                    type: q.type || 'essay',
+                    options: q.options || [],
+                    answer: q.answer || '',
+                    explanation: q.explanation || q.mnemonic || '',
+                    mnemonic: q.mnemonic || q.explanation || '',
+                    answerText: q.answerText || '',
+                    remarks: q.remarks || ''
+                })).filter(q => q.question);
+            } catch (e) {
+                console.warn('JSON 解析失败，尝试按文本解析:', e);
+                // 继续往下走文本解析
+            }
+        }
+        
+        // ---------- 原有文本解析逻辑 ----------
+        const cleaned = cleanText(trimmed);
         const lines = cleaned.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const questions = [];
         let currentCategory = '';
