@@ -16,7 +16,7 @@ import * as ProgressAPI from './progress.js';
 
 /**
  * 列出所有题库（含统计摘要）
- * @returns {{ok: true, data: Array<{id, name, questionCount, masteredCount, reviewCount, percent}>}}
+ * @returns {Result<LibrarySummary[]>}
  */
 export function list() {
     const r = storage.getLibraries();
@@ -49,6 +49,8 @@ export function current() {
 
 /**
  * 获取题库详情
+ * @param {string} libId
+ * @returns {Result<Library>}
  */
 export function get(libId) {
     const r = storage.getLibraries();
@@ -91,9 +93,9 @@ export function findMatchingLibrary(questions) {
 /**
  * 创建题库
  * @param {string} name
- * @param {any[]} questions
- * @param {object} [options] - { skipDuplicateCheck?: boolean }
- * @returns {{ok: true, data: {id}} | {ok: false, error}}
+ * @param {Partial<Question>[]} questions - raw 题目数组（未归一化）
+ * @param {{ skipDuplicateCheck?: boolean }} [options]
+ * @returns {Result<{ id: string }>}
  */
 export function create(name, questions, options = {}) {
     if (!name || !name.trim()) {
@@ -214,7 +216,7 @@ export function rename(libId, newName) {
 
 /**
  * 获取当前题库的题目数组（便捷方法）
- * @returns {{ok: true, data: any[]} | {ok: false, error}}
+ * @returns {Result<Question[]>}
  */
 export function currentQuestions() {
     const libId = getState().currentLibId;

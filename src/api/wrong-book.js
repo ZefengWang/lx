@@ -90,7 +90,8 @@ export function exit() {
 
 /**
  * 标记题目掌握（移出错题本）
- * @param {string|number|object} qIdOrQuestion
+ * @param {Question|string|number} qIdOrQuestion
+ * @returns {Result<{ remaining: number; cleared: boolean }>}
  */
 export function markMastered(qIdOrQuestion) {
     const state = getState();

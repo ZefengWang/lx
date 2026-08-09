@@ -70,8 +70,8 @@ function adjustStats(libId, questions, qIdKey, oldStatus, newStatus) {
 
 /**
  * 获取单题状态
- * @param {string|number} qId - 题目对象或题目 id（推荐传 question 对象）
- * @returns {{ok: true, data: 'none'|'mastered'|'review'}}
+ * @param {Question|string|number} qId - 题目对象（推荐）或题目 id
+ * @returns {Result<QuestionStatus>}
  */
 export function getStatus(qId) {
     ensureLoaded();
@@ -85,9 +85,10 @@ export function getStatus(qId) {
 
 /**
  * 设置单题状态
- * @param {string|number|object} qIdOrQuestion
- * @param {'none'|'mastered'|'review'} status
- * @param {object} [context] - { libId?, questions? } 用于增量统计
+ * @param {Question|string|number} qIdOrQuestion - 题目对象（推荐）或题目 id
+ * @param {QuestionStatus} status - 状态值（禁止 'pending'，只能 'none'|'mastered'|'review'）
+ * @param {{ libId?: string; questions?: Question[]; source?: string }} [context] - 增量统计用
+ * @returns {Result<void>}
  */
 export function setStatus(qIdOrQuestion, status, context = {}) {
     ensureLoaded();
@@ -173,7 +174,8 @@ export function reset(libId) {
 /**
  * 获取统计
  * @param {string} [libId]
- * @param {object} [questions] - 题库题目数组（用于精确计算）
+ * @param {Question[]} [questions] - 题库题目数组（用于精确计算）
+ * @returns {Result<StatsSummary>}
  */
 export function stats(libId, questions) {
     ensureLoaded();

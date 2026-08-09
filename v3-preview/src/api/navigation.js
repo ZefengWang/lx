@@ -44,7 +44,7 @@ function computeFilteredQIds() {
 
 /**
  * 获取当前题目的位置信息
- * @returns {{ok: true, data: {index, qId, total}}}
+ * @returns {Result<NavPosition>}
  */
 export function current() {
     const state = getState();
@@ -210,7 +210,7 @@ export function getStatusFilter() {
 /**
  * 列出当前题库的所有分类（去重，保持出现顺序）
  * 用于 UI 的分类选择器
- * @returns {{ok: true, data: string[]}}
+ * @returns {Result<string[]>}
  */
 export function listCategories() {
     const state = getState();

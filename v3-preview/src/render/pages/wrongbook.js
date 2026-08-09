@@ -9,11 +9,12 @@ import { h, render } from '../dom.js';
 import { renderQuestionCard, renderFeedback } from '../card.js';
 import { toastSuccess, toastInfo, toastWarning } from '../toast.js';
 import { navigate } from '../router.js';
+import { bindEvents } from '../bind.js';
 import { attachSwipeGestures, attachKeyboardGuard } from '../gestures.js';
 
 export function createWrongBookPage() {
     let _container = null;
-    let _subs = [];
+    let _unbind = null;
     let _detachSwipe = null;
     let _detachKeyboard = null;
     let _localState = {
@@ -32,12 +33,14 @@ export function createWrongBookPage() {
             return;
         }
 
-        // 监听退出（全部掌握会自动退出）
-        _subs.push(LX.on(LX.Events.WRONGBOOK_EXITED, (payload) => {
-            render(_container, [renderCelebration(payload)]);
-        }));
-        _subs.push(LX.on(LX.Events.NAVIGATION_CHANGED, () => refresh()));
-        _subs.push(LX.on(LX.Events.QUESTION_STATUS_CHANGED, () => refresh()));
+        // 监听退出（全部掌握会自动退出）+ 导航/状态变化刷新
+        _unbind = bindEvents({
+            [LX.Events.WRONGBOOK_EXITED]: (payload) => {
+                render(_container, [renderCelebration(payload)]);
+            },
+            [LX.Events.NAVIGATION_CHANGED]: () => refresh(),
+            [LX.Events.QUESTION_STATUS_CHANGED]: () => refresh(),
+        });
 
         // 绑定手势 + 键盘守护（错题本模式：左滑下一题，上滑标记掌握）
         if (!_detachSwipe && _container) {
@@ -142,8 +145,8 @@ export function createWrongBookPage() {
                 next = Array.isArray(answer) ? [...answer].sort() : current;
                 _localState.selectedAnswers.set(q.uid, next);
 
-                // Reveal + 判分
-                const r = LX.QuestionAPI.answer(q.uid, next);
+                // Reveal + 判分（传 question 对象，见 CONTRACT-api.md §2.2）
+                const r = LX.QuestionAPI.answer(q, next);
                 if (r.ok) {
                     _localState.revealed.add(q.uid);
                     if (r.data.correct) {
@@ -182,7 +185,7 @@ export function createWrongBookPage() {
         }
 
         _localState.revealed.add(q.uid);
-        const r = LX.QuestionAPI.answer(q.uid, answer);
+        const r = LX.QuestionAPI.answer(q, answer);
         if (r.ok && r.data.correct) {
             // 错题本：答对了就自动掌握并移出
             toastSuccess('✓ 答对了，已从错题本移出');
@@ -210,8 +213,7 @@ export function createWrongBookPage() {
     }
 
     function onLeave() {
-        _subs.forEach((off) => off && off());
-        _subs = [];
+        if (_unbind) { _unbind(); _unbind = null; }
         if (_detachSwipe) { _detachSwipe(); _detachSwipe = null; }
         if (_detachKeyboard) { _detachKeyboard(); _detachKeyboard = null; }
         const LX = window.LX;

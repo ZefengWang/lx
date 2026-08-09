@@ -55,7 +55,8 @@ export function similarity(a, b) {
 
 /**
  * 列出当前题库的题目（支持筛选）
- * @param {object} [filter] - { category?, status?, mode? }
+ * @param {{ category?: string; status?: QuestionStatus; mode?: string }} [filter]
+ * @returns {Result<{ questions: Question[]; total: number }>}
  */
 export function list(filter = {}) {
     const libId = getState().currentLibId;
@@ -77,6 +78,8 @@ export function list(filter = {}) {
 
 /**
  * 获取单题（按 uid 或 id）
+ * @param {string|number} qId
+ * @returns {Result<Question>}
  */
 export function get(qId) {
     const libId = getState().currentLibId;
@@ -92,6 +95,8 @@ export function get(qId) {
 
 /**
  * 添加题目
+ * @param {Partial<Question> & { question: string }} partial
+ * @returns {Result<{ id: number; question: Question }>}
  */
 export function add(partial) {
     const libId = getState().currentLibId;
@@ -187,9 +192,9 @@ export function remove(qId) {
 
 /**
  * 答题判分（核心）
- * @param {string|number|object} qIdOrQuestion - 题目 ID 或题目对象
- * @param {string|string[]} userAnswer - 用户答案
- * @returns {{ok: true, data: {correct, correctAnswer, explanation, autoStatus}} | {ok: false, error}}
+ * @param {Question|string|number} qIdOrQuestion - 题目对象（推荐）或题目 ID
+ * @param {string|string[]} userAnswer - 用户答案（multi 为字符串数组）
+ * @returns {Result<AnswerResult>}
  */
 export function answer(qIdOrQuestion, userAnswer) {
     const libId = getState().currentLibId;

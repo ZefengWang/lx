@@ -26,3 +26,4 @@ import './integration/category-merge.test.js';
 
 // 回归测试
 import './regression/bugs.test.js';
+import './regression/multi-wrongbook.test.js';

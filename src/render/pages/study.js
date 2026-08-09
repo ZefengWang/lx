@@ -7,6 +7,7 @@
 import { h, render } from '../dom.js';
 import { renderQuestionCard, renderFeedback } from '../card.js';
 import { toastSuccess, toastWarning, toastInfo } from '../toast.js';
+import { bindEvents } from '../bind.js';
 import {
     attachSwipeGestures,
     attachKeyboardGuard,
@@ -47,25 +48,27 @@ export function createStudyPage() {
     function renderPage(container) {
         _container = container;
 
-        // 监听导航变化，重渲染
+        // 监听导航变化，重渲染（bindEvents 统一管理，避免散落的 on/off boilerplate）
         const LX = window.LX;
         if (!_unsubscribe) {
-            _unsubscribe = LX.on(LX.Events.NAVIGATION_CHANGED, () => {
-                if (_container) refreshCard();
-                refreshBottombarStatus();
-            });
-            LX.on(LX.Events.QUESTION_STATUS_CHANGED, () => {
-                if (_container) refreshCard();
-            });
-            LX.on(LX.Events.LIBRARY_SWITCHED, () => {
-                viewState.selectedAnswers.clear();
-                viewState.revealed.clear();
-                viewState.essayExpanded.clear();
-                viewState.pendingDrafts.clear();
-                if (_container) refreshCard();
-            });
-            LX.on(LX.Events.WRONGBOOK_EXITED, () => {
-                if (_container) refreshCard();
+            _unsubscribe = bindEvents({
+                [LX.Events.NAVIGATION_CHANGED]: () => {
+                    if (_container) refreshCard();
+                    refreshBottombarStatus();
+                },
+                [LX.Events.QUESTION_STATUS_CHANGED]: () => {
+                    if (_container) refreshCard();
+                },
+                [LX.Events.LIBRARY_SWITCHED]: () => {
+                    viewState.selectedAnswers.clear();
+                    viewState.revealed.clear();
+                    viewState.essayExpanded.clear();
+                    viewState.pendingDrafts.clear();
+                    if (_container) refreshCard();
+                },
+                [LX.Events.WRONGBOOK_EXITED]: () => {
+                    if (_container) refreshCard();
+                },
             });
         }
 
@@ -145,8 +148,8 @@ export function createStudyPage() {
         if (!q) return;
         const draft = viewState.pendingDrafts.get(q.uid);
         if (draft == null) return;
-        // 提交到核心层
-        const r = LX.QuestionAPI.answer(q.uid, draft.value);
+        // 提交到核心层（传 question 对象避免 answer() 内部重复查找，见 CONTRACT-api.md §2.2）
+        const r = LX.QuestionAPI.answer(q, draft.value);
         if (r.ok) {
             viewState.revealed.add(q.uid);
         }
@@ -255,8 +258,8 @@ export function createStudyPage() {
                 // 用户点「确认答案」按钮，answer 已是数组
                 next = Array.isArray(answer) ? [...answer].sort() : current;
                 viewState.selectedAnswers.set(q.uid, next);
-                // 真正提交判分
-                const r = LX.QuestionAPI.answer(q.uid, next);
+                // 真正提交判分（传 question 对象，见 CONTRACT-api.md §2.2）
+                const r = LX.QuestionAPI.answer(q, next);
                 if (r.ok) {
                     viewState.revealed.add(q.uid);
                     const data = r.data;
@@ -295,7 +298,7 @@ export function createStudyPage() {
             viewState.revealed.add(q.uid);
             viewState.essayExpanded.add(q.uid);
             viewState.pendingDrafts.delete(q.uid);
-            const r = LX.QuestionAPI.answer(q.uid, answer);
+            const r = LX.QuestionAPI.answer(q, answer);
             if (r.ok) {
                 viewState.essayResults.set(q.uid, {
                     correct: r.data.correct,
@@ -317,8 +320,8 @@ export function createStudyPage() {
             return;
         }
 
-        // 填空：commit === true 或非 pending → 调核心层判分
-        const r = LX.QuestionAPI.answer(q.uid, answer);
+        // 填空：commit === true 或非 pending → 调核心层判分（传 question 对象）
+        const r = LX.QuestionAPI.answer(q, answer);
         if (r.ok) {
             viewState.revealed.add(q.uid);
             viewState.pendingDrafts.delete(q.uid);
@@ -383,7 +386,7 @@ export function createStudyPage() {
     function handleSaveAnswerText(q, text) {
         const LX = window.LX;
         const nextText = String(text || '').trim();
-        const r = LX.QuestionAPI.update(q.uid, { answerText: nextText });
+        const r = LX.QuestionAPI.update(q.uid, { answerText: nextText });  // update 接 qId，不是 question 对象
         if (!r.ok) {
             toastWarning(r.error?.message || '保存参考答案失败');
             return;
@@ -395,7 +398,7 @@ export function createStudyPage() {
         if (viewState.revealed.has(q.uid)) {
             const userAnswer = viewState.selectedAnswers.get(q.uid);
             if (userAnswer != null) {
-                const ar = LX.QuestionAPI.answer(q.uid, userAnswer);
+                const ar = LX.QuestionAPI.answer(q, userAnswer);
                 if (ar.ok) {
                     viewState.essayResults.set(q.uid, {
                         correct: ar.data.correct,

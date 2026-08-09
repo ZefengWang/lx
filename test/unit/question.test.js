@@ -64,4 +64,45 @@ describe('QuestionAPI - 答题判分', () => {
         assertEqual(r.data.autoStatus, 'review', 'essay 默认 review');
         assertEqual(r.data.explanation, '解析');
     });
+
+    // —— T1.2 ID 约定锁住：传 question 对象 vs 传裸 id 应等价 ——
+    it('answer 传 question 对象与传裸 id 结果一致', () => {
+        const q = LX.QuestionAPI.get(1).data;
+
+        // 传 question 对象
+        const rObj = LX.QuestionAPI.answer(q, 'B');
+        assertOk(rObj);
+        assertTrue(rObj.data.correct, '传对象应判对');
+
+        // 传裸 id（向后兼容）
+        const rId = LX.QuestionAPI.answer(1, 'B');
+        assertOk(rId);
+        assertTrue(rId.data.correct, '传 id 应判对');
+
+        // 两者 autoStatus 一致
+        assertEqual(rObj.data.autoStatus, rId.data.autoStatus);
+    });
+
+    it('ProgressAPI.getStatus 传 question 对象与传裸 id 结果一致', () => {
+        const q = LX.QuestionAPI.get(1).data;
+        LX.QuestionAPI.answer(q, 'B');  // 答对 → mastered
+
+        const sObj = LX.ProgressAPI.getStatus(q);
+        const sId = LX.ProgressAPI.getStatus(q.uid);
+        assertEqual(sObj.data, sId.data, '传对象/传 id 应一致');
+        assertEqual(sObj.data, 'mastered');
+    });
+
+    it('ProgressAPI.setStatus 传 question 对象与传裸 id 等价', () => {
+        const q = LX.QuestionAPI.get(2).data;
+
+        const r1 = LX.ProgressAPI.setStatus(q, 'review');
+        assertOk(r1);
+        assertEqual(LX.ProgressAPI.getStatus(q).data, 'review');
+
+        // 清除
+        const r2 = LX.ProgressAPI.setStatus(q.uid, 'none');
+        assertOk(r2);
+        assertEqual(LX.ProgressAPI.getStatus(q).data, 'none', '传裸 id 清除应生效');
+    });
 });
