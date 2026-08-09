@@ -1,0 +1,1176 @@
+/**
+ * components.css — 基础组件样式
+ * 来源：DESIGN.md 第七章「核心组件设计」 + 第八章「各功能模块」
+ * 依赖：theme.css 必须先加载（CSS 变量）
+ *
+ * 命名规范：BEM-like，前缀 `lx-`，块__元素--修饰符
+ *   .lx-button          ← 块
+ *   .lx-button__icon    ← 元素
+ *   .lx-button--primary ← 修饰符
+ */
+
+/* ============================================================
+ * 1. 按钮（DESIGN.md 5.1 触摸目标 ≥ 44px，推荐 48px）
+ * ============================================================ */
+.lx-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lx-space-2);
+    min-height: var(--lx-touch-min);
+    min-width: var(--lx-touch-min);
+    padding: 0 var(--lx-space-4);
+    border-radius: var(--lx-radius-md);
+    font-size: var(--lx-text-base);
+    font-weight: 500;
+    line-height: 1;
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    border: 1px solid var(--lx-border);
+    transition: background var(--lx-dur-fast) var(--lx-ease),
+                transform var(--lx-dur-fast) var(--lx-ease),
+                border-color var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-button:active {
+    transform: scale(0.97);
+}
+.lx-button:disabled,
+.lx-button[aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 主按钮：紫底白字（仅用于最高频主操作） */
+.lx-button--primary {
+    background: var(--lx-primary);
+    color: #fff;
+    border-color: var(--lx-primary);
+}
+.lx-button--primary:hover { background: var(--lx-primary-hover); }
+
+/* 成功/警告/危险按钮（状态行专用） */
+.lx-button--success {
+    background: var(--lx-success);
+    color: #fff;
+    border-color: var(--lx-success);
+}
+.lx-button--warning {
+    background: var(--lx-warning);
+    color: #fff;
+    border-color: var(--lx-warning);
+}
+.lx-button--danger {
+    background: var(--lx-danger);
+    color: #fff;
+    border-color: var(--lx-danger);
+}
+
+/* 次要按钮：白底紫字紫边 */
+.lx-button--secondary {
+    background: var(--lx-primary-light);
+    color: var(--lx-primary);
+    border-color: var(--lx-primary-soft);
+}
+
+/* 幽灵按钮：透明底，用于抽屉/底栏次要操作 */
+.lx-button--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--lx-text-muted);
+}
+.lx-button--ghost:hover {
+    background: var(--lx-surface-alt);
+}
+
+/* 文字按钮：仅文字 */
+.lx-button--text {
+    background: transparent;
+    border-color: transparent;
+    color: var(--lx-primary);
+    padding: 0 var(--lx-space-2);
+    min-height: auto;
+    min-width: auto;
+}
+
+/* 块级按钮：占满父宽度 */
+.lx-button--block {
+    display: flex;
+    width: 100%;
+}
+
+/* 圆形图标按钮（顶栏 ☰/📕 等） */
+.lx-button--icon {
+    padding: 0;
+    width: var(--lx-touch-rec);
+    height: var(--lx-touch-rec);
+    min-width: auto;
+    border-radius: var(--lx-radius-full);
+    background: transparent;
+    border-color: transparent;
+    color: var(--lx-text);
+    font-size: 20px;
+}
+
+/* 底部操作区按钮：图标在上文字在下，全宽 */
+.lx-button--bar {
+    flex: 1 1 0%;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 44px;
+    padding: var(--lx-space-2) var(--lx-space-1);
+    border-radius: var(--lx-radius-md);
+    background: transparent;
+    border-color: transparent;
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-xs);
+    line-height: 1.2;
+}
+.lx-button--bar .lx-button__icon {
+    font-size: 18px;
+    line-height: 1;
+}
+.lx-button--bar:hover {
+    background: var(--lx-surface-alt);
+}
+
+/* ============================================================
+ * 2. 顶栏 TopBar（DESIGN.md 7.1）
+ * ============================================================ */
+.lx-topbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--lx-z-sticky);
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    height: var(--lx-topbar-h-mobile);
+    padding: 0 var(--lx-space-2) 0 var(--lx-space-2);
+    padding-top: var(--lx-safe-top);
+    background: var(--lx-surface);
+    border-bottom: 1px solid var(--lx-border);
+    box-shadow: var(--lx-shadow-sm);
+}
+@media (min-width: 768px) {
+    .lx-topbar { height: calc(var(--lx-topbar-h-desktop) + var(--lx-safe-top)); }
+}
+
+.lx-topbar__title {
+    flex: 1 1 0%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+    font-weight: 600;
+}
+.lx-topbar__title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.lx-topbar__icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* 顶栏右侧区域：错题角标 + 进度 */
+.lx-topbar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    flex-shrink: 0;
+}
+
+/* 错题角标：按钮 + 数字气泡 */
+.lx-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.lx-badge__count {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--lx-radius-full);
+    background: var(--lx-warning);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--lx-surface);
+}
+.lx-badge__count--zero {
+    background: var(--lx-text-light);
+}
+.lx-badge__count--pop {
+    animation: lx-pop var(--lx-dur-base) var(--lx-ease);
+}
+
+/* 进度文字：23/156 */
+.lx-progress-text {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.1;
+    color: var(--lx-text);
+    font-weight: 600;
+    font-size: var(--lx-text-sm);
+    font-variant-numeric: tabular-nums;
+}
+.lx-progress-text__sub {
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-xs);
+    font-weight: 400;
+}
+
+/* ============================================================
+ * 3. 主内容区 + 题目卡片 Card（DESIGN.md 7.2）
+ * ============================================================ */
+.lx-main {
+    flex: 1 1 0%;
+    min-height: 0;
+    padding: var(--lx-space-3);
+    padding-bottom: calc(var(--lx-bottombar-h-mobile) + var(--lx-safe-bottom) + var(--lx-space-3));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 768px) {
+    .lx-main { padding-bottom: calc(var(--lx-bottombar-h-mobile) + var(--lx-safe-bottom) + var(--lx-space-6)); }
+}
+
+.lx-card {
+    background: var(--lx-surface);
+    border: 1px solid var(--lx-border);
+    border-radius: var(--lx-radius-xl);
+    padding: var(--lx-space-4);
+    box-shadow: var(--lx-shadow-sm);
+    transition: border-color var(--lx-dur-fast) var(--lx-ease),
+                background var(--lx-dur-fast) var(--lx-ease);
+    /* 手势适配：允许垂直滚动（pan-y），水平滑动交给 JS 手势层处理
+       这样浏览器不会拦截水平滑动做其他行为（如返回手势） */
+    touch-action: pan-y;
+    /* 滑动时禁止文本选中，避免与切题手势冲突；
+       输入框/简答内容单独放开（下方 .lx-fill__input 等） */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* 输入框、简答内容、解析文本允许正常选中（用户可能要复制） */
+.lx-fill__input,
+.lx-essay-content,
+.lx-feedback__explanation,
+input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+/* 选项卡：touch-action 设为 manipulation（仅识别 tap，去除 300ms 延迟）
+   不用 pan-y，避免与选项点击冲突 */
+.lx-option,
+.lx-judge__btn,
+.lx-button--bar {
+    touch-action: manipulation;
+}
+
+/* 卡片状态：已掌握（浅绿）、错题（浅橙） */
+.lx-card--mastered {
+    background: var(--lx-success-light);
+    border-color: var(--lx-success-soft);
+}
+.lx-card--review {
+    background: var(--lx-warning-light);
+    border-color: var(--lx-warning-soft);
+}
+
+/* 卡片头部：题号 + 题型 + 状态徽章 */
+.lx-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lx-space-2);
+    margin-bottom: var(--lx-space-3);
+}
+.lx-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-sm);
+}
+.lx-card__id {
+    font-weight: 600;
+    color: var(--lx-text);
+    font-variant-numeric: tabular-nums;
+}
+.lx-card__type {
+    padding: 2px var(--lx-space-2);
+    border-radius: var(--lx-radius-sm);
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-xs);
+    font-weight: 500;
+}
+
+/* 卡片题干 */
+.lx-card__question {
+    font-size: var(--lx-text-lg);
+    line-height: var(--lx-leading-lg);
+    color: var(--lx-text);
+    word-break: break-word;
+}
+@media (min-width: 768px) {
+    .lx-card__question { font-size: var(--lx-text-xl); }
+}
+
+/* ============================================================
+ * 4. 状态徽章（卡片右上角，DESIGN.md 7.2）
+ * ============================================================ */
+.lx-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px var(--lx-space-2);
+    border-radius: var(--lx-radius-full);
+    font-size: var(--lx-text-xs);
+    font-weight: 600;
+    line-height: 1;
+}
+.lx-status-badge--mastered {
+    background: var(--lx-success-light);
+    color: var(--lx-success);
+}
+.lx-status-badge--review {
+    background: var(--lx-warning-light);
+    color: var(--lx-warning);
+}
+.lx-status-badge--pending {
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-light);
+}
+
+/* ============================================================
+ * 5. 选项卡片（单选/多选/判断，DESIGN.md 8.1）
+ * ============================================================ */
+.lx-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-2);
+    margin-top: var(--lx-space-4);
+}
+.lx-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--lx-space-3);
+    min-height: var(--lx-touch-min);
+    padding: var(--lx-space-3);
+    border: 1.5px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    text-align: left;
+    transition: border-color var(--lx-dur-fast) var(--lx-ease),
+                background var(--lx-dur-fast) var(--lx-ease),
+                transform var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-option:active { transform: scale(0.99); }
+
+/* 选项标签：A/B/C/D 圆形 */
+.lx-option__label {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--lx-radius-full);
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-sm);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--lx-dur-fast), color var(--lx-dur-fast);
+}
+.lx-option__text {
+    flex: 1 1 0%;
+    min-width: 0;
+    line-height: var(--lx-leading-base);
+    word-break: break-word;
+}
+
+/* 选中态 */
+.lx-option--selected {
+    border-color: var(--lx-primary);
+    background: var(--lx-primary-light);
+}
+.lx-option--selected .lx-option__label {
+    background: var(--lx-primary);
+    color: #fff;
+}
+
+/* 答题后正确/错误反馈（已交卷时显示） */
+.lx-option--correct {
+    border-color: var(--lx-success);
+    background: var(--lx-success-light);
+}
+.lx-option--correct .lx-option__label {
+    background: var(--lx-success);
+    color: #fff;
+}
+.lx-option--wrong {
+    border-color: var(--lx-danger);
+    background: var(--lx-danger-light);
+    animation: lx-shake var(--lx-dur-base) var(--lx-ease);
+}
+.lx-option--wrong .lx-option__label {
+    background: var(--lx-danger);
+    color: #fff;
+}
+
+/* 判断题：对/错两个大按钮 */
+.lx-judge {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--lx-space-3);
+    margin-top: var(--lx-space-4);
+}
+.lx-judge__btn {
+    min-height: var(--lx-touch-rec);
+    padding: var(--lx-space-3);
+    border: 1.5px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--lx-space-1);
+    transition: border-color var(--lx-dur-fast), background var(--lx-dur-fast);
+}
+.lx-judge__btn:active { transform: scale(0.98); }
+.lx-judge__btn-icon { font-size: 24px; line-height: 1; }
+.lx-judge__btn--selected {
+    border-color: var(--lx-primary);
+    background: var(--lx-primary-light);
+    color: var(--lx-primary);
+    font-weight: 600;
+}
+.lx-judge__btn--correct {
+    border-color: var(--lx-success);
+    background: var(--lx-success-light);
+    color: var(--lx-success);
+    font-weight: 600;
+}
+.lx-judge__btn--wrong {
+    border-color: var(--lx-danger);
+    background: var(--lx-danger-light);
+    color: var(--lx-danger);
+    font-weight: 600;
+    animation: lx-shake var(--lx-dur-base) var(--lx-ease);
+}
+
+/* ============================================================
+ * 6. 填空题（DESIGN.md 8.1）
+ * ============================================================ */
+.lx-fill {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-2);
+    margin-top: var(--lx-space-4);
+}
+.lx-fill__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: var(--lx-touch-min);
+    padding: var(--lx-space-3);
+    border: 1.5px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+    transition: border-color var(--lx-dur-fast);
+}
+.lx-fill__input:focus {
+    border-color: var(--lx-primary);
+}
+/* 填空题：输入框 + 确认按钮一行（移动端友好） */
+.lx-fill__row {
+    display: flex;
+    gap: var(--lx-space-2);
+    align-items: stretch;
+}
+.lx-fill__row .lx-submit-btn {
+    flex: 0 0 auto;
+    min-width: 76px;
+    min-height: var(--lx-touch-min);
+}
+
+/* ============================================================
+ * 6.1 「确认答案」按钮（移动端 BUG-006 修复）
+ *     多选/填空/简答在移动端无 Enter 键也能提交
+ * ============================================================ */
+.lx-submit-btn {
+    margin-top: var(--lx-space-3);
+    min-height: var(--lx-touch-min);
+    font-weight: 600;
+}
+.lx-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 简答题输入区 */
+.lx-essay-input-area {
+    margin-top: var(--lx-space-3);
+}
+.lx-essay-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: var(--lx-space-3);
+    border: 1.5px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+    line-height: var(--lx-leading-base);
+    resize: vertical;
+    font-family: inherit;
+    -webkit-user-select: text;
+    user-select: text;
+}
+.lx-essay-textarea:focus {
+    border-color: var(--lx-primary);
+    outline: none;
+}
+.lx-essay-actions {
+    display: flex;
+    gap: var(--lx-space-2);
+    margin-top: var(--lx-space-2);
+}
+.lx-essay-actions .lx-button {
+    flex: 1 1 0%;
+    min-height: var(--lx-touch-min);
+}
+.lx-essay-wrap {
+    margin-top: var(--lx-space-3);
+}
+
+/* ============================================================
+ * 7. 简答题折叠面板（DESIGN.md 7.3）
+ * ============================================================ */
+.lx-essay-panel {
+    margin-top: var(--lx-space-4);
+    border: 1px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    overflow: hidden;
+}
+.lx-essay-panel__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lx-space-2);
+    padding: var(--lx-space-3);
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-sm);
+    text-align: center;
+}
+.lx-essay-panel__toggle:hover {
+    background: var(--lx-border);
+}
+.lx-essay-panel__toggle-icon {
+    transition: transform var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-essay-panel--expanded .lx-essay-panel__toggle-icon {
+    transform: rotate(180deg);
+}
+
+.lx-essay-panel__body {
+    padding: var(--lx-space-3);
+    border-top: 1px solid var(--lx-border-light);
+}
+.lx-essay-panel[hidden] .lx-essay-panel__body {
+    display: none;
+}
+
+/* Tab 切换：[答案] [备注] [解析] */
+.lx-tabs {
+    display: flex;
+    gap: var(--lx-space-1);
+    margin-bottom: var(--lx-space-3);
+    border-bottom: 1px solid var(--lx-border);
+}
+.lx-tab {
+    flex: 1 1 0%;
+    min-height: 36px;
+    padding: var(--lx-space-2);
+    background: transparent;
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-sm);
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: color var(--lx-dur-fast), border-color var(--lx-dur-fast);
+}
+.lx-tab--active {
+    color: var(--lx-primary);
+    border-bottom-color: var(--lx-primary);
+}
+
+.lx-essay-content {
+    font-size: var(--lx-text-base);
+    line-height: var(--lx-leading-base);
+    color: var(--lx-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: var(--lx-space-8);
+}
+.lx-essay-content--empty {
+    color: var(--lx-text-light);
+    font-style: italic;
+}
+
+/* ============================================================
+ * 8. 底部操作区 BottomBar（DESIGN.md 7.4）
+ * ============================================================ */
+.lx-bottombar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--lx-z-sticky);
+    display: flex;
+    flex-direction: column;
+    background: var(--lx-surface);
+    border-top: 1px solid var(--lx-border);
+    padding-bottom: var(--lx-safe-bottom);
+    box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.04);
+}
+.lx-bottombar__row {
+    display: flex;
+    gap: var(--lx-space-1);
+    padding: var(--lx-space-2) var(--lx-space-2) 0;
+}
+.lx-bottombar__row:last-child {
+    padding-bottom: var(--lx-space-2);
+}
+
+/* 横屏 / 平板及以上：合并为单行 */
+@media (min-width: 768px) {
+    .lx-bottombar { flex-direction: row; }
+    .lx-bottombar__row {
+        flex: 1 1 0%;
+        padding: var(--lx-space-2);
+    }
+    .lx-bottombar__row:last-child { padding-bottom: var(--lx-space-2); }
+}
+
+/* ============================================================
+ * 9. 侧边抽屉 Drawer（DESIGN.md 7.5）
+ * ============================================================ */
+.lx-drawer {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 900;
+    width: 280px;
+    max-width: 86vw;
+    background: var(--lx-surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    /* 双重保险：初始不可见 + 移出屏幕（即便 transform 计算异常，抽屉也不会挡住内容）*/
+    visibility: hidden;
+    pointer-events: none;
+    -webkit-transform: translateX(-102%);
+    transform: translateX(-102%);
+    -webkit-transition: -webkit-transform .25s ease, visibility 0s linear .25s;
+    transition: transform .25s ease, visibility 0s linear .25s;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    padding-top: var(--lx-safe-top);
+    padding-bottom: var(--lx-safe-bottom);
+}
+.lx-drawer--open {
+    visibility: visible;
+    pointer-events: auto;
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+    -webkit-transition: -webkit-transform .25s ease, visibility 0s;
+    transition: transform .25s ease, visibility 0s;
+}
+
+.lx-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--lx-space-3) var(--lx-space-4);
+    border-bottom: 1px solid var(--lx-border);
+}
+.lx-drawer__title {
+    font-size: var(--lx-text-base);
+    font-weight: 600;
+    color: var(--lx-text);
+}
+.lx-drawer__body {
+    flex: 1 1 0%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--lx-space-2) 0;
+}
+.lx-drawer__section {
+    padding: var(--lx-space-2) var(--lx-space-4);
+}
+.lx-drawer__section-title {
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--lx-space-2);
+}
+.lx-drawer__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lx-space-2);
+    width: 100%;
+    min-height: var(--lx-touch-min);
+    padding: var(--lx-space-2) var(--lx-space-2);
+    border-radius: var(--lx-radius-sm);
+    color: var(--lx-text);
+    font-size: var(--lx-text-sm);
+    text-align: left;
+    background: transparent;
+    transition: background var(--lx-dur-fast);
+}
+.lx-drawer__item:hover { background: var(--lx-surface-alt); }
+.lx-drawer__item--active {
+    background: var(--lx-primary-light);
+    color: var(--lx-primary);
+    font-weight: 500;
+}
+.lx-drawer__item-meta {
+    color: var(--lx-text-light);
+    font-size: var(--lx-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 遮罩层（drawer / modal 共用） */
+.lx-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--lx-z-overlay);
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--lx-dur-base) var(--lx-ease),
+                visibility var(--lx-dur-base);
+}
+.lx-overlay--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 桌面端（>=1024px）：抽屉依然是按需滑出，不常驻。
+   这修复了用户反馈的"菜单一直显示在界面上"的问题。*/
+@media (min-width: 1024px) {
+    .lx-drawer {
+        width: 320px;
+        max-width: 320px;
+    }
+}
+
+/* ============================================================
+ * 10. 模态框 Modal（DESIGN.md 7.6）
+ * ============================================================ */
+.lx-modal {
+    position: fixed;
+    inset: 0;
+    z-index: var(--lx-z-modal);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+}
+.lx-modal--center {
+    align-items: center;
+}
+.lx-modal__panel {
+    width: 100%;
+    max-width: 600px;
+    background: var(--lx-surface);
+    border-radius: var(--lx-radius-lg) var(--lx-radius-lg) 0 0;
+    box-shadow: var(--lx-shadow-lg);
+    transform: translateY(100%);
+    transition: transform var(--lx-dur-base) var(--lx-ease);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: var(--lx-safe-bottom);
+    pointer-events: auto;
+}
+.lx-modal--center .lx-modal__panel {
+    border-radius: var(--lx-radius-lg);
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform var(--lx-dur-base) var(--lx-ease),
+                opacity var(--lx-dur-base) var(--lx-ease);
+}
+.lx-modal--open { pointer-events: auto; }
+.lx-modal--open .lx-modal__panel { transform: translateY(0); }
+.lx-modal--open.lx-modal--center .lx-modal__panel {
+    transform: scale(1);
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .lx-modal { align-items: center; }
+    .lx-modal__panel {
+        border-radius: var(--lx-radius-lg);
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform var(--lx-dur-base), opacity var(--lx-dur-base);
+    }
+    .lx-modal--open .lx-modal__panel { transform: scale(1); opacity: 1; }
+}
+
+.lx-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--lx-space-4);
+    border-bottom: 1px solid var(--lx-border);
+}
+.lx-modal__title {
+    font-size: var(--lx-text-lg);
+    font-weight: 600;
+}
+.lx-modal__body {
+    padding: var(--lx-space-4);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.lx-modal__footer {
+    display: flex;
+    gap: var(--lx-space-2);
+    padding: var(--lx-space-3) var(--lx-space-4);
+    border-top: 1px solid var(--lx-border);
+    padding-bottom: calc(var(--lx-space-3) + var(--lx-safe-bottom));
+}
+
+/* ============================================================
+ * 11. 表单（输入/选择/textarea）
+ * ============================================================ */
+.lx-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lx-space-1);
+    margin-bottom: var(--lx-space-3);
+}
+.lx-field__label {
+    font-size: var(--lx-text-sm);
+    font-weight: 500;
+    color: var(--lx-text-muted);
+}
+.lx-input,
+.lx-textarea,
+.lx-select {
+    width: 100%;
+    min-height: var(--lx-touch-min);
+    padding: var(--lx-space-2) var(--lx-space-3);
+    border: 1.5px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-surface);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+    transition: border-color var(--lx-dur-fast);
+}
+.lx-input:focus,
+.lx-textarea:focus,
+.lx-select:focus {
+    border-color: var(--lx-primary);
+}
+.lx-textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: var(--lx-leading-base);
+}
+.lx-field__hint {
+    font-size: var(--lx-text-xs);
+    color: var(--lx-text-light);
+}
+.lx-field__error {
+    font-size: var(--lx-text-xs);
+    color: var(--lx-danger);
+}
+
+/* ============================================================
+ * 12. 列表 / 空状态
+ * ============================================================ */
+.lx-list {
+    display: flex;
+    flex-direction: column;
+}
+.lx-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--lx-space-2);
+    padding: var(--lx-space-3) var(--lx-space-4);
+    border-bottom: 1px solid var(--lx-border-light);
+    color: var(--lx-text);
+    font-size: var(--lx-text-base);
+}
+.lx-list__item:last-child { border-bottom: none; }
+
+.lx-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--lx-space-8) var(--lx-space-4);
+    text-align: center;
+    color: var(--lx-text-light);
+}
+.lx-empty__icon {
+    font-size: 48px;
+    margin-bottom: var(--lx-space-3);
+    opacity: 0.6;
+}
+.lx-empty__title {
+    font-size: var(--lx-text-base);
+    font-weight: 500;
+    color: var(--lx-text-muted);
+    margin-bottom: var(--lx-space-1);
+}
+.lx-empty__desc {
+    font-size: var(--lx-text-sm);
+    color: var(--lx-text-light);
+}
+
+/* ============================================================
+ * 13. Toast 通知
+ * ============================================================ */
+.lx-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--lx-bottombar-h-mobile) + var(--lx-safe-bottom) + var(--lx-space-4));
+    transform: translateX(-50%);
+    z-index: var(--lx-z-toast);
+    padding: var(--lx-space-3) var(--lx-space-4);
+    border-radius: var(--lx-radius-md);
+    background: var(--lx-text);
+    color: var(--lx-surface);
+    font-size: var(--lx-text-sm);
+    box-shadow: var(--lx-shadow-md);
+    max-width: calc(100vw - var(--lx-space-8));
+    opacity: 0;
+    transform: translateX(-50%) translateY(var(--lx-space-2));
+    transition: opacity var(--lx-dur-base), transform var(--lx-dur-base);
+    pointer-events: none;
+}
+.lx-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.lx-toast--success { background: var(--lx-success); }
+.lx-toast--warning { background: var(--lx-warning); }
+.lx-toast--danger  { background: var(--lx-danger); }
+.lx-toast--info    { background: var(--lx-info); }
+
+/* ============================================================
+ * 14. 统计卡（首页用，简单文字版，无圆环）
+ * ============================================================ */
+.lx-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--lx-space-2);
+}
+@media (min-width: 640px) {
+    .lx-stat-grid { grid-template-columns: repeat(4, 1fr); }
+}
+.lx-stat-card {
+    padding: var(--lx-space-3);
+    background: var(--lx-surface);
+    border: 1px solid var(--lx-border);
+    border-radius: var(--lx-radius-md);
+    text-align: center;
+}
+.lx-stat-card__value {
+    font-size: var(--lx-text-2xl);
+    font-weight: 700;
+    color: var(--lx-text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+.lx-stat-card__label {
+    font-size: var(--lx-text-xs);
+    color: var(--lx-text-muted);
+    margin-top: var(--lx-space-1);
+}
+.lx-stat-card--success .lx-stat-card__value { color: var(--lx-success); }
+.lx-stat-card--warning .lx-stat-card__value { color: var(--lx-warning); }
+.lx-stat-card--primary .lx-stat-card__value { color: var(--lx-primary); }
+
+/* ============================================================
+ * 15. 进度条（线性）
+ * ============================================================ */
+.lx-progress {
+    width: 100%;
+    height: 6px;
+    background: var(--lx-surface-alt);
+    border-radius: var(--lx-radius-full);
+    overflow: hidden;
+}
+.lx-progress__bar {
+    height: 100%;
+    background: var(--lx-primary);
+    border-radius: var(--lx-radius-full);
+    transition: width var(--lx-dur-slow) var(--lx-ease);
+}
+.lx-progress__bar--success { background: var(--lx-success); }
+.lx-progress__bar--warning { background: var(--lx-warning); }
+
+/* ============================================================
+ * 16. 标签 Chip（分类筛选 / 题型筛选）
+ * ============================================================ */
+.lx-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--lx-space-2);
+}
+.lx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--lx-space-1);
+    min-height: 32px;
+    padding: 0 var(--lx-space-3);
+    border-radius: var(--lx-radius-full);
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-muted);
+    font-size: var(--lx-text-xs);
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: background var(--lx-dur-fast), color var(--lx-dur-fast);
+}
+.lx-chip--active {
+    background: var(--lx-primary);
+    color: #fff;
+}
+.lx-chip--success { background: var(--lx-success-light); color: var(--lx-success); }
+.lx-chip--warning { background: var(--lx-warning-light); color: var(--lx-warning); }
+
+/* ============================================================
+ * 17. 分隔符
+ * ============================================================ */
+.lx-divider {
+    height: 1px;
+    background: var(--lx-border-light);
+    margin: var(--lx-space-3) 0;
+}
+.lx-divider--text {
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    background: transparent;
+    height: auto;
+    color: var(--lx-text-light);
+    font-size: var(--lx-text-xs);
+}
+.lx-divider--text::before,
+.lx-divider--text::after {
+    content: "";
+    flex: 1 1 0%;
+    height: 1px;
+    background: var(--lx-border-light);
+}
+
+/* ============================================================
+ * 17.5 题目目录项（catalog 页，BUG-007）
+ * ============================================================ */
+.lx-catalog-item {
+    display: flex;
+    align-items: center;
+    gap: var(--lx-space-2);
+    width: 100%;
+    padding: var(--lx-space-3);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--lx-border-light);
+    text-align: left;
+    color: var(--lx-text);
+    font-size: var(--lx-text-sm);
+    cursor: pointer;
+    min-height: var(--lx-touch-min);
+}
+.lx-catalog-item:last-child {
+    border-bottom: none;
+}
+.lx-catalog-item:active {
+    background: var(--lx-surface-alt);
+}
+.lx-catalog-item--current {
+    background: var(--lx-primary-light);
+    color: var(--lx-primary);
+    font-weight: 600;
+}
+.lx-catalog-item__status {
+    flex: 0 0 auto;
+    font-size: 16px;
+}
+.lx-catalog-item__id {
+    flex: 0 0 auto;
+    color: var(--lx-text-muted);
+    font-family: monospace;
+    font-size: var(--lx-text-xs);
+}
+.lx-catalog-item__type {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: var(--lx-radius-sm);
+    background: var(--lx-surface-alt);
+    color: var(--lx-text-muted);
+    font-size: 10px;
+    font-weight: 500;
+}
+.lx-catalog-item__text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.lx-catalog-item__current {
+    flex: 0 0 auto;
+    color: var(--lx-primary);
+    font-size: 12px;
+}
+
+/* ============================================================
+ * 18. 庆祝动画（错题清空，DESIGN.md 8.2）
+ * ============================================================ */
+.lx-celebrate {
+    text-align: center;
+    padding: var(--lx-space-8) var(--lx-space-4);
+    animation: lx-scale-in var(--lx-dur-slow) var(--lx-ease);
+}
+.lx-celebrate__emoji {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: var(--lx-space-4);
+    animation: lx-pop 600ms var(--lx-ease);
+}
+.lx-celebrate__title {
+    font-size: var(--lx-text-3xl);
+    font-weight: 700;
+    color: var(--lx-success);
+    margin-bottom: var(--lx-space-2);
+}
+.lx-celebrate__desc {
+    font-size: var(--lx-text-base);
+    color: var(--lx-text-muted);
+}
