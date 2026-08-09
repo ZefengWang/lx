@@ -183,6 +183,50 @@ export function setStatusFilter(statusFilter) {
     return ok();
 }
 
+/**
+ * 读取当前浏览模式（供 UI 显示按钮态）
+ * @returns {'sequential'|'random'}
+ */
+export function getMode() {
+    return getState().mode || 'sequential';
+}
+
+/**
+ * 读取当前分类筛选
+ * @returns {string} 分类名或 'all'
+ */
+export function getCategory() {
+    return getState().category || 'all';
+}
+
+/**
+ * 读取当前状态筛选
+ * @returns {string}
+ */
+export function getStatusFilter() {
+    return getState().statusFilter || 'all';
+}
+
+/**
+ * 列出当前题库的所有分类（去重，保持出现顺序）
+ * 用于 UI 的分类选择器
+ * @returns {{ok: true, data: string[]}}
+ */
+export function listCategories() {
+    const state = getState();
+    if (!state.currentLibId) return ok([]);
+    const r = LibraryAPI.get(state.currentLibId);
+    if (!r.ok) return ok([]);
+    const questions = r.data.questions || [];
+    const seen = new Set();
+    const cats = [];
+    for (const q of questions) {
+        const c = q.category || '未分类';
+        if (!seen.has(c)) { seen.add(c); cats.push(c); }
+    }
+    return ok(cats);
+}
+
 export const NavigationAPI = {
     current,
     goto,
@@ -193,4 +237,8 @@ export const NavigationAPI = {
     shuffle,
     setCategory,
     setStatusFilter,
+    getMode,
+    getCategory,
+    getStatusFilter,
+    listCategories,
 };

@@ -92,9 +92,23 @@ export function createCatalogPage() {
         groups.forEach((items, cat) => {
             elements.push(h('div', { class: 'lx-card', style: { marginBottom: '12px' } }, [
                 h('div', {
-                    class: 'lx-text-sm lx-font-semibold',
-                    style: { marginBottom: '8px', color: 'var(--lx-primary)' },
-                }, [`📁 ${cat}（${items.length} 题）`]),
+                    style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' },
+                }, [
+                    h('div', {
+                        class: 'lx-text-sm lx-font-semibold',
+                        style: { flex: 1, color: 'var(--lx-primary)' },
+                    }, [`📁 ${cat}（${items.length} 题）`]),
+                    // 「只练本类」：设置分类筛选后返回答题页
+                    h('button', {
+                        class: 'lx-button lx-button--secondary',
+                        style: { fontSize: '12px', padding: '4px 10px', minHeight: 'auto' },
+                        onclick: () => {
+                            LX.NavigationAPI.setCategory(cat);
+                            toastInfo(`已切换到分类：${cat}（共 ${items.length} 题）`);
+                            navigate('study');
+                        },
+                    }, ['🎯 只练本类']),
+                ]),
                 h('div', { class: 'lx-list' }, items.map(({ q, index }) => {
                     const isCurrent = q.uid === currentQId;
                     const statusR = LX.ProgressAPI.getStatus(q);

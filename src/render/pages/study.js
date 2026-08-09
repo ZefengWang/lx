@@ -28,6 +28,8 @@ const viewState = {
     essayResults: new Map(),
     // essay「答案」Tab 是否处于 inline 编辑：uid set
     answerTextEditing: new Set(),
+    // 分类选择下拉是否展开（练习设置工具条）
+    categoryPickerOpen: false,
     // 未提交的填空/简答草稿：uid -> { type, value }
     // 用于 BACK 守护：避免误操作丢失已输入但未交卷的答案
     pendingDrafts: new Map(),
@@ -153,6 +155,79 @@ export function createStudyPage() {
         viewState.pendingDrafts.delete(q.uid);
     }
 
+    /**
+     * 练习设置工具条
+     *   - 分类选择器（点击展开下拉，列出当前题库的所有分类）
+     *   - 顺序 / 随机 模式切换
+     *   - 随机模式下显示「🎴 换一批」（重新洗牌）
+     *
+     * 后端：NavigationAPI.setCategory / setMode / shuffle / listCategories / getMode / getCategory
+     * 切换后会 emit NAVIGATION_CHANGED，study.js 已监听 → 自动 refreshCard
+     */
+    function renderStudyToolbar() {
+        const LX = window.LX;
+        const mode = LX.NavigationAPI.getMode();           // 'sequential' | 'random'
+        const category = LX.NavigationAPI.getCategory();   // 'all' | 分类名
+        const catsR = LX.NavigationAPI.listCategories();
+        const cats = (catsR && catsR.ok && catsR.data) ? catsR.data : [];
+        const isRandom = mode === 'random';
+        const categoryLabel = category === 'all' ? '全部分类' : category;
+        const pickerOpen = viewState.categoryPickerOpen;
+
+        const btn = (text, onClick, opts = {}) =>
+            h('button', {
+                class: `lx-toolbar__btn${opts.active ? ' lx-toolbar__btn--active' : ''}`,
+                type: 'button',
+                onclick: onClick,
+                'aria-pressed': opts.active ? 'true' : 'false',
+            }, [text]);
+
+        const children = [
+            btn(`📁 ${categoryLabel} ▾`, () => {
+                viewState.categoryPickerOpen = !viewState.categoryPickerOpen;
+                refreshCard();
+            }, { active: category !== 'all' }),
+            btn(isRandom ? '🔀 随机' : '➡️ 顺序', () => {
+                LX.NavigationAPI.setMode(isRandom ? 'sequential' : 'random');
+                viewState.categoryPickerOpen = false;
+                toastInfo(isRandom ? '已切换为顺序模式' : '已切换为随机模式（已洗牌）');
+            }, { active: isRandom }),
+        ];
+        if (isRandom) {
+            children.push(btn('🎴 换一批', () => {
+                LX.NavigationAPI.shuffle();
+                toastInfo('已重新洗牌');
+            }));
+        }
+
+        // 分类下拉（展开时显示）
+        if (pickerOpen) {
+            const options = [
+                h('button', {
+                    class: `lx-toolbar__option${category === 'all' ? ' lx-toolbar__option--active' : ''}`,
+                    type: 'button',
+                    onclick: () => {
+                        LX.NavigationAPI.setCategory('all');
+                        viewState.categoryPickerOpen = false;
+                        toastInfo('已显示全部分类');
+                    },
+                }, ['📁 全部分类']),
+                ...cats.map((cat) => h('button', {
+                    class: `lx-toolbar__option${category === cat ? ' lx-toolbar__option--active' : ''}`,
+                    type: 'button',
+                    onclick: () => {
+                        LX.NavigationAPI.setCategory(cat);
+                        viewState.categoryPickerOpen = false;
+                        toastInfo(`已切换到分类：${cat}`);
+                    },
+                }, [`📁 ${cat}`])),
+            ];
+            children.push(h('div', { class: 'lx-toolbar__dropdown' }, options));
+        }
+
+        return h('div', { class: 'lx-study-toolbar' }, children);
+    }
+
     function refreshCard() {
         const LX = window.LX;
         if (!_container) return;
@@ -214,11 +289,15 @@ export function createStudyPage() {
 
         const card = renderQuestionCard(q, ctx);
 
-        // 6. 已交卷时附加反馈
+        // 6. 练习设置工具条（分类筛选 + 顺序/随机 + 换一批）
+        //    放卡片上方，进入答题页第一眼可见当前练习范围与模式
+        const toolbar = renderStudyToolbar();
+
+        // 7. 已交卷时附加反馈
         //   - 单选/多选/判断/填空：直接判分
         //   - 简答：仅当题目设置了参考答案（有 answerText）时才判分；
         //     未设置参考答案的简答（notGraded=true）只提示用户自行对比，不打对错红绿
-        const elements = [card];
+        const elements = [toolbar, card];
         if (viewState.revealed.has(q.uid)) {
             if (q.type === 'essay') {
                 const r = viewState.essayResults.get(q.uid);
