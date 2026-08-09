@@ -26,6 +26,10 @@ const STATUS_DOT = {
 export function createCatalogPage() {
     let _container = null;
     let _unsubscribe = null;
+    // —— 分类折叠状态（纯 UI 层，不存全局、不持久化）
+    //    key = 分类名（groups 的 key），value = true 表示「已折叠（题目列表隐藏）」
+    //    默认：全展开（false），符合用户"默认看得到所有题目"的直觉
+    const _collapsed = new Map();
 
     function renderPage(container) {
         _container = container;
@@ -92,32 +96,73 @@ export function createCatalogPage() {
                 onclick: () => navigate('add-question'),
             }, ['➕ 新增题目']),
             h('div', { class: 'lx-text-xs lx-text-light', style: { marginTop: '8px' } }, [
-                '提示：点击题目直接跳转；点分类标题旁「只练本类」可只刷该分类',
+                '提示：点击题目直接跳转；点分类标题旁「只练本类」可只刷该分类；点 ▼ / ▶ 可折叠 / 展开分类，1 万题也能秒切下一个分类',
+            ]),
+            // —— 折叠/展开快捷操作（有多个分类时才显示，避免空屏浪费空间）
+            groups.size > 1 && h('div', { class: 'lx-study-toolbar', style: { marginTop: '10px' } }, [
+                h('button', {
+                    class: 'lx-toolbar__btn',
+                    type: 'button',
+                    onclick: () => {
+                        for (const cat of groups.keys()) _collapsed.set(cat, true);
+                        refresh();
+                    },
+                }, ['🔽 全部折叠']),
+                h('button', {
+                    class: 'lx-toolbar__btn',
+                    type: 'button',
+                    onclick: () => {
+                        for (const cat of groups.keys()) _collapsed.set(cat, false);
+                        refresh();
+                    },
+                }, ['🔼 全部展开']),
             ]),
         ]));
 
         // 各分组题目列表
         groups.forEach((items, cat) => {
+            const collapsed = !!_collapsed.get(cat);
+            // 切换折叠的小函数：箭头按钮 / 分类标题整行点击都会触发
+            const toggle = () => {
+                _collapsed.set(cat, !collapsed);
+                refresh();
+            };
+            const arrow = collapsed ? '▶' : '▼';
+
             elements.push(h('div', { class: 'lx-card', style: { marginBottom: '12px' } }, [
                 h('div', {
-                    style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' },
+                    style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: collapsed ? '0' : '8px', cursor: 'pointer', userSelect: 'none', padding: '2px 0', borderRadius: '4px' },
+                    onclick: toggle,
+                    title: collapsed ? '点击展开本分类' : '点击折叠本分类',
                 }, [
+                    // —— 折叠箭头（独立 span，视觉更清晰）
+                    h('span', {
+                        class: 'lx-catalog-item__type',
+                        style: { display: 'inline-flex', width: '20px', height: '20px', alignItems: 'center', justifyContent: 'center', color: 'var(--lx-primary)', fontWeight: 'bold', flexShrink: 0 },
+                        'aria-label': collapsed ? '展开' : '折叠',
+                    }, [arrow]),
                     h('div', {
                         class: 'lx-text-sm lx-font-semibold',
                         style: { flex: 1, color: 'var(--lx-primary)' },
                     }, [`📁 ${cat}（${items.length} 题）`]),
                     // 「只练本类」：设置分类筛选后返回答题页
-                    h('button', {
-                        class: 'lx-button lx-button--secondary',
-                        style: { fontSize: '12px', padding: '4px 10px', minHeight: 'auto' },
-                        onclick: () => {
-                            LX.NavigationAPI.setCategory(cat);
-                            toastInfo(`已切换到分类：${cat}（共 ${items.length} 题）`);
-                            navigate('study');
-                        },
-                    }, ['🎯 只练本类']),
+                    //   —— 单独再包一层 onclick 用 stopPropagation 防止误触发分类折叠
+                    h('span', { onclick: (ev) => { ev.stopPropagation && ev.stopPropagation(); } }, [
+                        h('button', {
+                            class: 'lx-button lx-button--secondary',
+                            style: { fontSize: '12px', padding: '4px 10px', minHeight: 'auto' },
+                            type: 'button',
+                            onclick: (ev) => {
+                                // 双重保险：stopPropagation 防止冒泡到外层分类标题的 toggle
+                                ev.stopPropagation && ev.stopPropagation();
+                                LX.NavigationAPI.setCategory(cat);
+                                toastInfo(`已切换到分类：${cat}（共 ${items.length} 题）`);
+                                navigate('study');
+                            },
+                        }, ['🎯 只练本类']),
+                    ]),
                 ]),
-                h('div', { class: 'lx-list' }, items.map(({ q, index }) => {
+                !collapsed && h('div', { class: 'lx-list' }, items.map(({ q, index }) => {
                     const isCurrent = q.uid === currentQId;
                     const statusR = LX.ProgressAPI.getStatus(q);
                     const status = statusR.ok ? statusR.data : 'none';
