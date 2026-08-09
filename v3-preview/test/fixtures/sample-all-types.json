@@ -1,0 +1,53 @@
+[
+  {
+    "id": 1,
+    "displayId": 1,
+    "type": "single",
+    "category": "示例",
+    "question": "建构主义学习理论的代表人物是？",
+    "options": ["斯金纳", "皮亚杰", "巴甫洛夫", "桑代克"],
+    "answer": "B",
+    "explanation": "皮亚杰是建构主义代表"
+  },
+  {
+    "id": 2,
+    "displayId": 2,
+    "type": "multi",
+    "category": "示例",
+    "question": "下列哪些属于人本主义心理学家？",
+    "options": ["马斯洛", "罗杰斯", "华生", "弗洛伊德"],
+    "answer": "A,B",
+    "explanation": "马斯洛和罗杰斯是人本主义代表"
+  },
+  {
+    "id": 3,
+    "displayId": 3,
+    "type": "judge",
+    "category": "示例",
+    "question": "认知负荷理论认为工作记忆容量是无限的。",
+    "options": [],
+    "answer": "错",
+    "explanation": "工作记忆容量有限"
+  },
+  {
+    "id": 4,
+    "displayId": 4,
+    "type": "fill",
+    "category": "示例",
+    "question": "心理学之父是______。",
+    "options": [],
+    "answer": "冯特",
+    "explanation": "冯特 1879 年建立第一个心理学实验室"
+  },
+  {
+    "id": 5,
+    "displayId": 5,
+    "type": "essay",
+    "category": "示例",
+    "question": "简述最近发展区理论。",
+    "options": [],
+    "answer": "",
+    "explanation": "维果茨基提出，现有水平与潜在水平之间的差距",
+    "answerText": "最近发展区指儿童现有水平与潜在发展水平之间的差距..."
+  }
+]
