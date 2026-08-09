@@ -103,7 +103,7 @@ export function createWrongBookPage() {
             selectedAnswer: _localState.selectedAnswers.get(q.uid) || (q.type === 'multi' ? [] : ''),
             revealed: _localState.revealed.has(q.uid),
             essayExpanded: true,
-            onAnswer: (qq, ans) => handleAnswer(qq, ans),
+            onAnswer: (qq, ans, opts = {}) => handleAnswer(qq, ans, opts),
             onToggleStatus: () => handleMastered(q),
             onToggleEssay: () => {},
             onSwitchEssayTab: () => {},
