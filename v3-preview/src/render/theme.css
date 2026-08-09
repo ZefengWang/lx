@@ -444,7 +444,8 @@ img, svg, video {
     --lx-primary-active: #1d4ed8;
     --lx-primary-light:  #eff6ff;
     --lx-primary-soft:   #bfdbfe;
-    --lx-bg:             #f3e7fb;   /* 红蓝混合微染 */
+    /* 背景：浅红 → 浅蓝 渐变（~90% 明度，与其他主题一致） */
+    --lx-bg:             linear-gradient(135deg, #fce9e9 0%, #e2ecfd 100%);
 }
 /* 蓝绿 */
 :root[data-theme="blue-green"] {
@@ -453,7 +454,8 @@ img, svg, video {
     --lx-primary-active: #10b981;
     --lx-primary-light:  #ecfdf5;
     --lx-primary-soft:   #6ee7b7;
-    --lx-bg:             #ddf6ee;   /* 蓝绿混合微染 */
+    /* 背景：浅蓝 → 浅绿 渐变 */
+    --lx-bg:             linear-gradient(135deg, #e2ecfd 0%, #e4f5ea 100%);
 }
 /* 彩虹色：primary 换成彩虹渐变按钮，色主色用紫 */
 :root[data-theme="rainbow"] {
@@ -462,7 +464,16 @@ img, svg, video {
     --lx-primary-active: #0891b2;
     --lx-primary-light:  #fdf4ff;
     --lx-primary-soft:   #f5d0fe;
-    --lx-bg:             #efe7ff;   /* 以紫为底，呼应彩虹末端 */
+    /* 背景：七色彩虹浅色渐变（与按钮彩虹同序、但 90%+ 明度），呼应彩虹色主题 */
+    --lx-bg:             linear-gradient(135deg,
+                                #fce9e9 0%,    /* 红 */
+                                #fcebe3 16%,   /* 橙 */
+                                #fbf2da 32%,   /* 黄 */
+                                #e4f5ea 48%,   /* 绿 */
+                                #ddf3f8 64%,   /* 青 */
+                                #e2ecfd 80%,   /* 蓝 */
+                                #efe7ff 100%   /* 紫 */
+                              );
 }
 
 /* 彩虹主题下主按钮用线性渐变 */

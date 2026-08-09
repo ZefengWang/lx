@@ -20,7 +20,7 @@ import { createCatalogPage } from './pages/catalog.js';
 import { createAddQuestionPage } from './pages/add-question.js';
 import { createHelpPage } from './pages/help.js';
 import { applyInitial as applyInitialTheme } from './theme.js';
-import { toastInfo, toastSuccess, toastWarning } from './toast.js';
+import { toastInfo, toastPrimary, toastSuccess, toastWarning } from './toast.js';
 
 /**
  * UI 主初始化
@@ -61,7 +61,7 @@ export function initUI(LX) {
         refreshDrawer();
     });
 
-    // 4. 事件订阅：核心状态变化 → 重渲染顶栏
+    // 4. 事件订阅：核心状态变化 → 重渲染顶栏/底栏/抽屉
     [
         LX.Events.LIBRARY_SWITCHED,
         LX.Events.LIBRARY_CREATED,
@@ -74,6 +74,7 @@ export function initUI(LX) {
     ].forEach((evt) => {
         LX.on(evt, () => {
             refreshTopbar();
+            refreshBottombar(currentRoute());
             refreshDrawer();
         });
     });
@@ -166,8 +167,10 @@ function refreshBottombar(routeName) {
     const navR = LX.NavigationAPI.current();
     const nav = navR.ok ? navR.data : null;
     const q = nav?.qId ? LX.QuestionAPI.get(nav.qId).data : null;
+    // 注意 ProgressAPI 状态值：'none' = 未开始/未标记，'mastered' = 掌握，'review' = 错题
+    // 禁止传 'pending'（API 不认识，会直接 err）
     const statusR = q ? LX.ProgressAPI.getStatus(q) : { ok: false };
-    const status = statusR.ok ? statusR.data : 'pending';
+    const status = statusR.ok ? statusR.data : 'none';
 
     // 错题本模式下底部隐藏（用页面内按钮替代）
     if (routeName === 'wrong') {
@@ -181,21 +184,31 @@ function refreshBottombar(routeName) {
             canNext: true,
             isMastered: status === 'mastered',
             isWrong: status === 'review',
+            canReset: status !== 'none',
             onReset: () => {
                 if (!q) return;
-                if (status === 'pending') {
+                if (status === 'none') {
                     toastInfo('当前题目尚未开始');
                     return;
                 }
-                LX.ProgressAPI.setStatus(q, 'pending');
+                const wasMastered = status === 'mastered';
+                const wasWrong = status === 'review';
+                const res = LX.ProgressAPI.setStatus(q, 'none');
+                if (!res.ok) {
+                    toastWarning('清除失败：' + (res.error?.message || '未知错误'));
+                    return;
+                }
+                if (wasMastered) toastPrimary('已取消「掌握」标记');
+                else if (wasWrong) toastPrimary('已移出错题本');
+                else toastInfo('已重置当前题目状态');
             },
             onMastered: () => {
                 if (!q) return;
-                LX.ProgressAPI.setStatus(q, status === 'mastered' ? 'pending' : 'mastered');
+                LX.ProgressAPI.setStatus(q, status === 'mastered' ? 'none' : 'mastered');
             },
             onWrong: () => {
                 if (!q) return;
-                LX.ProgressAPI.setStatus(q, status === 'review' ? 'pending' : 'review');
+                LX.ProgressAPI.setStatus(q, status === 'review' ? 'none' : 'review');
             },
             onPrev: () => LX.NavigationAPI.prev(),
             onCatalog: () => {

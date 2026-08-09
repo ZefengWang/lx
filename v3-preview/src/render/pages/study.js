@@ -185,9 +185,9 @@ export function createStudyPage() {
         }
         const q = qR.data;
 
-        // 4. 取当前状态
+        // 4. 取当前状态（ProgressAPI 合法值：'none' | 'mastered' | 'review'）
         const statusR = LX.ProgressAPI.getStatus(q);
-        const status = statusR.ok ? statusR.data : 'pending';
+        const status = statusR.ok ? statusR.data : 'none';
 
         // 5. 渲染卡片
         const ctx = {
@@ -344,14 +344,18 @@ export function createStudyPage() {
 
     function handleToggleStatus(q, current) {
         const LX = window.LX;
-        // 循环：pending → mastered → review → pending
-        const next = current === 'pending' ? 'mastered'
+        // 循环：none → mastered → review → none
+        // 注意 ProgressAPI 合法值只有 'none'/'mastered'/'review'，传 'pending' 会被直接拒绝
+        const next = current === 'none' ? 'mastered'
                    : current === 'mastered' ? 'review'
-                   : 'pending';
+                   : 'none';
         const r = LX.ProgressAPI.setStatus(q, next);
         if (r.ok) {
             if (next === 'mastered') toastSuccess('标记为已掌握');
             else if (next === 'review') toastWarning('标记为错题');
+            else if (next === 'none') toastInfo('已清除标记');
+        } else {
+            toastWarning('操作失败：' + (r.error?.message || '未知错误'));
         }
         refreshCard();
     }

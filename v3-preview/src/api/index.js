@@ -19,7 +19,7 @@ import { IOAPI } from './io.js';
 import { bus, Events } from '../core/events.js';
 
 /** 应用版本（与 version.txt 保持一致） */
-export const VERSION = '2.6.0';
+export const VERSION = '2.6.1';
 
 /**
  * 装配 window.LX

@@ -20,7 +20,7 @@ const TYPE_LABELS = {
 const STATUS_DOT = {
     mastered: '✅',
     review:   '📕',
-    pending:  '⏳',
+    none:     '⏳',   // ProgressAPI 默认值：未标记/未开始
 };
 
 export function createCatalogPage() {
@@ -120,7 +120,7 @@ export function createCatalogPage() {
                 h('div', { class: 'lx-list' }, items.map(({ q, index }) => {
                     const isCurrent = q.uid === currentQId;
                     const statusR = LX.ProgressAPI.getStatus(q);
-                    const status = statusR.ok ? statusR.data : 'pending';
+                    const status = statusR.ok ? statusR.data : 'none';
                     const statusIcon = STATUS_DOT[status] || '⏳';
                     const typeLabel = TYPE_LABELS[q.type] || '简答';
 

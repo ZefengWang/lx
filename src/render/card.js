@@ -32,7 +32,7 @@ const STATUS_BADGE = {
  * @returns {HTMLElement}
  */
 export function renderQuestionCard(q, ctx = {}) {
-    const status = ctx.currentStatus || 'pending';
+    const status = ctx.currentStatus || 'none';
     const cardClass = [
         'lx-card',
         status === 'mastered' && 'lx-card--mastered',
