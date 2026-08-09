@@ -1,0 +1,34 @@
+{
+  "format": "lx-quiz-library",
+  "version": "1.0",
+  "library": {
+    "name": "大型混合样本",
+    "questions": [
+      { "id": 1, "type": "single", "category": "教育学", "question": "教育学第 1 题题干", "options": ["A 选项", "B 选项", "C 选项", "D 选项"], "answer": "A", "explanation": "解析 1" },
+      { "id": 2, "type": "multi", "category": "教育学", "question": "教育学第 2 题题干", "options": ["A", "B", "C", "D"], "answer": "A,C", "explanation": "解析 2" },
+      { "id": 3, "type": "judge", "category": "教育学", "question": "教育学第 3 题题干", "options": [], "answer": "对", "explanation": "解析 3" },
+      { "id": 4, "type": "fill", "category": "教育学", "question": "教育学第 4 题题干____", "options": [], "answer": "答案", "explanation": "解析 4" },
+      { "id": 5, "type": "essay", "category": "教育学", "question": "教育学第 5 题题干", "options": [], "answer": "", "explanation": "解析 5", "answerText": "参考答案 5" },
+      { "id": 6, "type": "single", "category": "心理学", "question": "心理学第 6 题题干", "options": ["A", "B", "C", "D"], "answer": "B", "explanation": "解析 6" },
+      { "id": 7, "type": "multi", "category": "心理学", "question": "心理学第 7 题题干", "options": ["A", "B", "C", "D"], "answer": "B,D", "explanation": "解析 7" },
+      { "id": 8, "type": "judge", "category": "心理学", "question": "心理学第 8 题题干", "options": [], "answer": "错", "explanation": "解析 8" },
+      { "id": 9, "type": "fill", "category": "心理学", "question": "心理学第 9 题题干____", "options": [], "answer": "答案", "explanation": "解析 9" },
+      { "id": 10, "type": "essay", "category": "心理学", "question": "心理学第 10 题题干", "options": [], "answer": "", "explanation": "解析 10", "answerText": "参考答案 10" },
+      { "id": 11, "type": "single", "category": "哲学", "question": "哲学第 11 题", "options": ["A", "B", "C", "D"], "answer": "C", "explanation": "解析 11" },
+      { "id": 12, "type": "single", "category": "哲学", "question": "哲学第 12 题", "options": ["A", "B", "C", "D"], "answer": "D", "explanation": "解析 12" },
+      { "id": 13, "type": "essay", "category": "哲学", "question": "哲学第 13 题", "options": [], "answer": "", "explanation": "解析 13", "answerText": "参考答案 13" },
+      { "id": 14, "type": "essay", "category": "哲学", "question": "哲学第 14 题", "options": [], "answer": "", "explanation": "解析 14", "answerText": "参考答案 14" },
+      { "id": 15, "type": "judge", "category": "历史", "question": "历史第 15 题", "options": [], "answer": "对", "explanation": "解析 15" },
+      { "id": 16, "type": "judge", "category": "历史", "question": "历史第 16 题", "options": [], "answer": "错", "explanation": "解析 16" },
+      { "id": 17, "type": "fill", "category": "历史", "question": "历史第 17 题____", "options": [], "answer": "答案", "explanation": "解析 17" },
+      { "id": 18, "type": "fill", "category": "历史", "question": "历史第 18 题____", "options": [], "answer": "答案", "explanation": "解析 18" },
+      { "id": 19, "type": "multi", "category": "教育学", "question": "教育学第 19 题", "options": ["A", "B", "C", "D"], "answer": "A,B,C,D", "explanation": "解析 19" },
+      { "id": 20, "type": "multi", "category": "教育学", "question": "教育学第 20 题", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "解析 20" },
+      { "id": 21, "type": "single", "category": "教育学", "question": "教育学第 21 题", "options": ["A", "B", "C", "D"], "answer": "A", "explanation": "解析 21" },
+      { "id": 22, "type": "single", "category": "教育学", "question": "教育学第 22 题", "options": ["A", "B", "C", "D"], "answer": "B", "explanation": "解析 22" },
+      { "id": 23, "type": "essay", "category": "教育学", "question": "教育学第 23 题", "options": [], "answer": "", "explanation": "解析 23", "answerText": "参考答案 23" },
+      { "id": 24, "type": "essay", "category": "教育学", "question": "教育学第 24 题", "options": [], "answer": "", "explanation": "解析 24", "answerText": "参考答案 24" },
+      { "id": 25, "type": "essay", "category": "教育学", "question": "教育学第 25 题", "options": [], "answer": "", "explanation": "解析 25", "answerText": "参考答案 25" }
+    ]
+  }
+}
