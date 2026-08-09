@@ -52,6 +52,10 @@
     const statusTag = document.getElementById('statusTag');
 
     // ---------- 状态 ----------
+    let isInWrongBookMode = false;
+    let savedCategoryBeforeWrongBook = 'all';
+    let savedModeBeforeWrongBook = 'sequential';
+    let savedIndexBeforeWrongBook = 0;
     let allLibraries = {};
     let currentLibraryId = null;
     let currentQuestions = [];
@@ -116,8 +120,18 @@
             isMnemonicVisible = false;
             isAnswerVisible = false;
             isRemarkVisible = false;
-            updateStatsAndUI();
-            renderCard();
+            // 如果处于错题模式，退出
+            if (isInWrongBookMode) {
+                exitWrongBookMode(false);
+            }
+            // 如果当前筛选状态是 'review'，切回 'all'，避免空状态
+            if (statusFilter.value === 'review') {
+                statusFilter.value = 'all';
+                statusFilter.dispatchEvent(new Event('change'));
+            } else {
+                updateStatsAndUI();
+                renderCard();
+            }
         }
     }
 
@@ -154,6 +168,10 @@
         if (stats.pct >= 80) progressRing.style.stroke = '#16a34a';
         else if (stats.pct >= 40) progressRing.style.stroke = '#eab308';
         else progressRing.style.stroke = '#4f46e5';
+        // 更新错题数量
+        const wrongCount = filteredQuestions.filter(q => getQuestionStatus(currentLibraryId, q.id) === 'review').length;
+        const wrongCountEl = document.getElementById('wrongCount');
+        if (wrongCountEl) wrongCountEl.textContent = wrongCount;
     }
 
     // ---------- 辅助函数 ----------
@@ -181,9 +199,9 @@
 
         const close = () => overlay.remove();
         overlay.querySelector('#editCancelBtn').addEventListener('click', close);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close();
-        });
+        // overlay.addEventListener('click', (e) => {
+        //     if (e.target === overlay) close();
+        // });
         overlay.querySelector('#editSaveBtn').addEventListener('click', () => {
             const val = overlay.querySelector('#editTextarea').value;
             onSave(val);
@@ -314,9 +332,15 @@
         const displayId = q.displayId || q.id;
         questionId.textContent = displayId;
         categoryBadge.textContent = (q.category || '未分类') + ' #' + displayId;
+
+        // 显示错题模式横幅（在卡片上方）
+        const bannerContainer = document.getElementById('wrongBookBanner');
+        if (bannerContainer) {
+            updateUIForWrongBookMode(); // 统一更新
+        }
         
         statusTag.className = 'status-tag ' + status;
-        statusTag.textContent = status === 'mastered' ? '✅ 已掌握' : status === 'review' ? '🔄 待复习' : '⏳ 未开始';
+        statusTag.textContent = status === 'mastered' ? '✅ 已掌握' : status === 'review' ? '📕 错题本' : '⏳ 未开始';
 
         const type = q.type || 'essay';
         let html = `<div class="card-question">${escapeHtml(q.question)}</div>`;
@@ -418,6 +442,8 @@
                         this.classList.add('wrong-answer');
                         feedback.className = 'feedback show wrong';
                         feedback.innerHTML = '❌ 回答错误。正确答案是：' + (q.answer || '');
+                        // 自动标记为“待复习”
+                        setQuestionStatus(currentLibraryId, q.id, 'review');
                     }
                     const expl = explanation.trim();
                     if (expl && expl !== '（无口诀）') {
@@ -479,6 +505,7 @@
                 } else {
                     feedback.className = 'feedback show wrong';
                     feedback.innerHTML = '❌ 有误，正确答案：' + correctAnswers.join(', ');
+                    setQuestionStatus(currentLibraryId, q.id, 'review');
                 }
                 const expl = explanation.trim();
                 if (expl && expl !== '（无口诀）') {
@@ -511,6 +538,8 @@
                         this.classList.add('wrong');
                         feedback.className = 'feedback show wrong';
                         feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                        // 自动标记为“待复习”
+                        setQuestionStatus(currentLibraryId, q.id, 'review');
                     }
                     const expl = explanation.trim();
                     if (expl && expl !== '（无口诀）') {
@@ -540,6 +569,8 @@
                 } else {
                     feedback.className = 'feedback show wrong';
                     feedback.innerHTML = '❌ 回答错误。正确答案：' + correctAnswer;
+                    // 自动标记为“待复习”
+                    setQuestionStatus(currentLibraryId, q.id, 'review');
                 }
                 const expl = explanation.trim();
                 if (expl && expl !== '（无口诀）') {
@@ -710,6 +741,78 @@
         renderCard();
     }
 
+    function enterWrongBookMode() {
+        if (!currentLibraryId) return;
+        const category = categoryFilter.value;
+        const wrongQuestions = filteredQuestions.filter(q => getQuestionStatus(currentLibraryId, q.id) === 'review');
+        if (wrongQuestions.length === 0) {
+            alert('🎉 当前分类下没有错题！');
+            return;
+        }
+        // 保存当前状态
+        savedCategoryBeforeWrongBook = category;
+        savedModeBeforeWrongBook = modeSelect.value;
+        savedIndexBeforeWrongBook = currentIndex;
+        // 设置模式标志
+        isInWrongBookMode = true;
+        // 强制状态筛选为 review
+        statusFilter.value = 'review';
+        // 重新筛选
+        applyFilters();
+        // 重置索引到第一道错题
+        if (filteredQuestions.length) currentIndex = 0;
+        renderCard();
+        updateUIForWrongBookMode();
+    }
+
+    function exitWrongBookMode(keepCategory = false, restoreStatus = true) {
+        if (!isInWrongBookMode) return;
+        isInWrongBookMode = false;
+        if (!keepCategory) {
+            categoryFilter.value = savedCategoryBeforeWrongBook;
+        }
+        modeSelect.value = savedModeBeforeWrongBook;
+        currentIndex = savedIndexBeforeWrongBook;
+        if (restoreStatus) {
+            statusFilter.value = 'all';
+        }
+        applyFilters();
+        renderCard();
+        updateUIForWrongBookMode();
+    }
+
+    function updateUIForWrongBookMode() {
+        const btn = document.getElementById('wrongBookBtn');
+        const banner = document.getElementById('wrongBookBanner');
+        if (isInWrongBookMode) {
+            if (btn) {
+                btn.style.background = '#4f46e5';
+                btn.style.color = 'white';
+                btn.innerHTML = '📕 退出错题本';
+            }
+            if (banner) {
+                const category = categoryFilter.value;
+                banner.innerHTML = `
+                    <div style="background:#fef3c7;padding:8px 16px;text-align:center;font-size:14px;border-bottom:1px solid #f59e0b;display:flex;justify-content:space-between;align-items:center;">
+                        <span>📕 错题模式（当前分类：${escapeHtml(category)}）</span>
+                        <button id="exitWrongBookBtn" style="background:none;border:none;color:#b45309;font-weight:bold;cursor:pointer;">退出</button>
+                    </div>
+                `;
+                document.getElementById('exitWrongBookBtn').addEventListener('click', () => exitWrongBookMode(false));
+            }
+        } else {
+            if (btn) {
+                btn.style.background = '#fef3c7';
+                btn.style.color = '#b45309';
+                const wrongCount = filteredQuestions.filter(q => getQuestionStatus(currentLibraryId, q.id) === 'review').length;
+                btn.innerHTML = `📕 错题本 ${wrongCount}`;
+            }
+            if (banner) {
+                banner.innerHTML = '';
+            }
+        }
+    }
+
     function getUniqueCategories() {
         if (!currentLibraryId || !allLibraries[currentLibraryId]) return [];
         const questions = allLibraries[currentLibraryId].questions || [];
@@ -846,6 +949,7 @@
 
         if (currentMode === 'random') shuffleArray(filteredQuestions);
         renderCard();
+        updateUIForWrongBookMode();
     }
 
     function shuffleArray(arr) {
@@ -1494,9 +1598,9 @@
 
         const close = () => overlay.remove();
         overlay.querySelector('#modalCancelBtn').addEventListener('click', close);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close();
-        });
+        // overlay.addEventListener('click', (e) => {
+        //     if (e.target === overlay) close();
+        // });
 
         overlay.querySelector('#modalConfirmBtn').addEventListener('click', () => {
             const type = typeSelect.value;
@@ -1867,14 +1971,29 @@
             mainApp.style.display = 'none';
         });
 
-        categoryFilter.addEventListener('change', () => { isMnemonicVisible = false;
+        categoryFilter.addEventListener('change', () => {
+            if (isInWrongBookMode) {
+                // 切换分类时自动退出错题模式，但保留新分类
+                exitWrongBookMode(true); // keepCategory = true
+            }
+            isMnemonicVisible = false;
             isAnswerVisible = false;
             isRemarkVisible = false;
-            applyFilters(); });
-        statusFilter.addEventListener('change', () => { isMnemonicVisible = false;
+            applyFilters();
+        });
+        statusFilter.addEventListener('change', () => {
+            if (isInWrongBookMode) {
+                // 如果用户在错题模式下手动更改状态筛选，则退出错题模式，并应用新状态
+                exitWrongBookMode(false, false); // 恢复进入前的分类和模式，但保留用户选择的状态？
+                // 但更合理的是：退出错题模式，但保留用户选择的状态（不覆盖），所以我们需要在 exitWrongBookMode 中不恢复 statusFilter
+                // 修改 exitWrongBookMode 逻辑：退出时不强制设置 statusFilter，而是让用户的选择生效。
+                // 所以我将修改 exitWrongBookMode 的默认行为：不自动设置 statusFilter，而是由调用者决定。
+            }
+            isMnemonicVisible = false;
             isAnswerVisible = false;
             isRemarkVisible = false;
-            applyFilters(); });
+            applyFilters();
+        });
         modeSelect.addEventListener('change', (e) => {
             const newMode = e.target.value;
             if (newMode === 'random' && currentMode !== 'random') {
@@ -2015,6 +2134,14 @@
                     alert('不支持的文件格式，请选择 .xlsx, .xls 或 .pdf');
                 }
                 this.value = ''; // 允许重复上传同一个文件
+            }
+        });
+        // 错题本按钮
+        document.getElementById('wrongBookBtn').addEventListener('click', function() {
+            if (isInWrongBookMode) {
+                exitWrongBookMode(false);
+            } else {
+                enterWrongBookMode();
             }
         });
     }

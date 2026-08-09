@@ -53,17 +53,21 @@
                         <option value="all">📋 全部状态</option>
                         <option value="none">⏳ 未开始</option>
                         <option value="mastered">✅ 已掌握</option>
-                        <option value="review">🔄 待复习</option>
+                        <option value="review">📕 错题本</option>
                     </select>
                     <select id="modeSelect">
                         <option value="sequential">➡️ 顺序</option>
                         <option value="random">🎲 随机</option>
                     </select>
+                    <button id="wrongBookBtn" style="background:#fef3c7;color:#b45309;border:none;border-radius:20px;padding:6px 14px;font-weight:500;font-size:13px;cursor:pointer;flex-shrink:0;">
+                        📕 错题本 <span id="wrongCount">0</span>
+                    </button>
                     <button id="shuffleBtn">🔀 洗牌</button>
                 </div>
             </div>
 
             <div class="card-slide-area" id="cardSlideArea">
+                <div id="wrongBookBanner"></div>   <!-- 新增 -->
                 <div class="card-wrapper" id="cardWrapper">
                     <div class="swipe-hint left">‹</div>
                     <div class="swipe-hint right">›</div>
@@ -82,7 +86,7 @@
 
             <div class="bottom-actions">
                 <button class="btn-master" id="actionMaster">✅ 掌握</button>
-                <button class="btn-review" id="actionReview">🔄 复习</button>
+                <button class="btn-review" id="actionReview">📕 错题本</button>
                 <button class="btn-reset" id="actionReset">↩️ 重置</button>
                 <button class="btn-help" id="helpBtn">❓ 帮助</button>
             </div>
