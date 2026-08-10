@@ -4,7 +4,7 @@
  * - CDN（SheetJS / pdf.js）：network-first，失败回退缓存
  * - 题库数据仍在 localStorage，SW 不替代存储
  */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `lx-static-${CACHE_VERSION}`;
 const CDN_CACHE = `lx-cdn-${CACHE_VERSION}`;
 

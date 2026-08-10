@@ -82,15 +82,28 @@ export async function bootstrap() {
         console.warn('[lx] 恢复上次题库失败：', e);
     }
 
-    // 5. 测试模式：动态挂 TestAPI；并卸掉 SW，避免 cache-first 挡住新模块
+    // 5. 测试模式：卸掉 SW + 清缓存，避免旧 cache-first 资源挡新版本
     if (isTestMode()) {
         try {
-            if (typeof navigator !== 'undefined' && navigator.serviceWorker?.getRegistrations) {
+            if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+                // 5a. 注销所有 SW
                 const regs = await navigator.serviceWorker.getRegistrations();
                 await Promise.all(regs.map((r) => r.unregister()));
+                // 5b. 主动清除所有 lx- 开头的 CacheStorage（关键！SW 卸载了缓存还留着）
+                if (typeof caches !== 'undefined') {
+                    const cacheNames = await caches.keys();
+                    for (const name of cacheNames) {
+                        if (name.startsWith('lx-')) {
+                            await caches.delete(name);
+                            console.info('[lx] 已清除 SW 缓存:', name);
+                        }
+                    }
+                }
+                // 5c. 硬刷新：让 app.html 自身也绕过缓存（通过 meta refresh）
+                // 这里不做，只清 SW 缓存；app.html 的刷新由用户手动完成
             }
         } catch (e) {
-            console.warn('[lx] 测试模式卸载 SW 失败：', e);
+            console.warn('[lx] 测试模式卸载 SW / 清缓存失败：', e);
         }
         try {
             const mod = await import('./api/test.js');
