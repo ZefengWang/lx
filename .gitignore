@@ -19,3 +19,6 @@ node_modules/
 test-results/
 playwright-report/
 coverage/
+
+# 真实样张文件（含可能的版权数据，不入库；本地保留供手动测试）
+test/fixtures/real/

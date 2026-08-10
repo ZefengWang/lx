@@ -68,4 +68,37 @@ describe('UI 按钮：首页 home', () => {
         assertTextIncludes(mounted.root, /题库|上传|开始|帮助|空/);
         assertTrue(mounted.root.isConnected);
     });
+
+    it('S=无题库 A=挂载 → R=显示「加载示例题库」按钮', async () => {
+        await resetStateBeforeEach();
+        LX = getLX();
+        mounted.destroy();
+        mounted = mountPage(createHomePage);
+        assertTextIncludes(mounted.root, '加载示例题库');
+        assertTrue(!!mounted.root.querySelector('[data-testid="load-default-library"]'));
+    });
+
+    it('S=无题库 A=点击「加载示例题库」→ R=创建题库 + navigate study', async () => {
+        await resetStateBeforeEach();
+        LX = getLX();
+        mounted.destroy();
+        mounted = mountPage(createHomePage);
+        clearNavigateLog();
+
+        clickText(mounted.root, '加载示例题库');
+
+        // 题库应被创建并 switch
+        const list = LX.LibraryAPI.list().data;
+        assertEqual(list.length, 1, '应创建 1 个题库');
+        assertEqual(list[0].name, '通识综合示例题库');
+        assertEqual(LX.LibraryAPI.current().data, list[0].id, '应已 switch');
+        assertEqual(list[0].questionCount, 50);
+        assertNavigatedTo('study');
+    });
+
+    it('S=有题库 A=挂载 → R=不显示「加载示例题库」按钮（非空态无此入口）', () => {
+        // beforeEach 已 createAndSwitchLibrary，处于非空态
+        assertTrue(!mounted.root.querySelector('[data-testid="load-default-library"]'),
+            '非空状态不应显示加载示例题库按钮');
+    });
 }, { layer: 'ui', tags: ['buttons', 'home', 'sar'] });

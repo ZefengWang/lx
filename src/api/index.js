@@ -17,10 +17,11 @@ import { CategoryAPI } from './category.js';
 import { StatsAPI } from './stats.js';
 import { IOAPI } from './io.js';
 import { DrillAPI } from './drill.js';
+import { DefaultLibraryAPI } from './default-library.js';
 import { bus, Events } from '../core/events.js';
 
 /** 应用版本（与 version.txt 保持一致） */
-export const VERSION = '3.1.0';
+export const VERSION = '3.2.0';
 
 /**
  * 装配 window.LX
@@ -40,6 +41,7 @@ export function mountLX() {
         StatsAPI,
         IOAPI,
         DrillAPI,
+        DefaultLibraryAPI,
 
         // 事件总线快捷方法
         on: (event, handler) => bus.on(event, handler),

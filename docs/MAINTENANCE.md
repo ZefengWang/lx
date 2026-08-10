@@ -525,3 +525,35 @@ A：不要再搞两份拷贝了（2026-08 之前踩过这个坑）。现在约�
 | 版本号 | `version.txt` ↔ `src/api/index.js VERSION` |
 
 > 修任何 Bug / 加任何功能之前，先打开本手册 + 两份 CONTRACT 文档 = 30 分钟读完胜过半天试错。
+
+---
+
+## 11. 默认题库维护说明
+
+内置示例题库（10 学科 × 5 题型 = 50 题）打包在 JS 模块里，首次访问即可一键加载体验。
+
+### 11.1 修改默认题库内容
+
+编辑 [`src/api/default-library.js`](file:///home/w/proj/software/lx/src/api/default-library.js) 的 `DEFAULT_QUESTIONS` 数组。
+
+**字段约定**（参考 `src/core/validators/question.js` 的 `normalizeQuestion`）：
+- `id`：序号（1 起，全局唯一）
+- `type`：`'single' | 'multi' | 'judge' | 'fill' | 'essay'`
+- `category`：学科分类（用于浏览页分类筛选）
+- `question`：题干
+- `options`：选项数组（single/multi 必填 ≥2；judge/fill/essay 可空）
+- `answer`：正确答案（single=`'A'`/`'B'`；multi=`'A,B,D'`；judge=`'对'`/`'错'`；fill=答案文本；essay 可空）
+- `explanation`：解析
+- `answerText`：仅 essay 需要，参考答案
+
+**修改后必跑**：`test/unit/default-library.test.js`（12 项断言含「每分类 5 题型齐全」+「加载后能删除」）+ `test/system/default-library-journey.test.js`。
+
+### 11.2 loadDefault 的纯函数约束
+
+- 不要在 `loadDefault` 里加副作用（toast / navigate / appConfirm 等属于 UI 层）
+- 保持结构：一次 `LibraryAPI.create`（带去重）+ 一次可选 `LibraryAPI.switch`
+- 三种结果（新建 / 重复 / 失败）的 UI 处理统一走 [`src/render/contracts/default-library-flow.js`](file:///home/w/proj/software/lx/src/render/contracts/default-library-flow.js) 的 `loadDefaultLibrary(LX)`，禁止在页面内重复实现
+
+### 11.3 仓库清理：真实样张不入库
+
+`test/fixtures/real/` 下的真实 xlsx 样张（可能含版权数据）已在 [.gitignore](file:///home/w/proj/software/lx/.gitignore) 排除，本地保留供手动导入测试。CI / 克隆环境无此文件不影响任何自动化测试（已确认无测试硬依赖该目录）。

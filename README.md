@@ -17,6 +17,8 @@
 - UI：http://127.0.0.1:8080/app.html（支持 PWA：`manifest.json` + Service Worker，可加到主屏幕 / 离线刷题）
 - 测试控制台：http://127.0.0.1:8080/test.html （点「▶ 运行全部」，目标 **全通过**；支持 `?autorun=1` 无头跑测；可展开「应用预览」内嵌真 app）
 
+> **第一次用？** 打开 `app.html` 后，首页空状态点「📚 加载示例题库」即可体验（内置 10 学科分类、50 题、5 种题型全覆盖，可随时删除）。
+
 在线预览：
 - 稳定版：https://zefengwang.github.io/lx/app.html
 - 预览版（v3-preview）：https://zefengwang.github.io/lx/v3-preview/app.html
@@ -45,7 +47,7 @@
 
 ## 版本号
 
-当前版本：**3.1.0**（[version.txt](version.txt) ↔ [src/api/index.js](src/api/index.js) 的 `VERSION` 常量，两者必须同步）
+当前版本：**3.2.0**（[version.txt](version.txt) ↔ [src/api/index.js](src/api/index.js) 的 `VERSION` 常量，两者必须同步）
 
 **唯一测试控制台**：[`test.html`](test.html)（见 [`docs/TESTING.md`](docs/TESTING.md)）。  
 Agent 可用 `python3 tools/run-tests.py` 无头驱动同一页面并落盘 JSON，**不是第二套框架**。  

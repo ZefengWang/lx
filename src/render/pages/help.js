@@ -9,6 +9,7 @@
 import { h, render } from '../dom.js';
 import { navigate } from '../router.js';
 import { createLogo } from '../logo.js';
+import { loadDefaultLibrary } from '../contracts/default-library-flow.js';
 
 /** @type {string|null} */
 let _pendingSection = null;
@@ -183,9 +184,21 @@ export function createHelpPage() {
                 '首页选中题库后点「▶ 开始学习」，进入答题页即可作答。'),
             step(3, '标记进度',
                 '答完用底部按钮或手势标记「已掌握 / 错题」，掌握率会自动累计。'),
+            h('div', {
+                class: 'lx-text-xs lx-text-muted',
+                style: { marginTop: '10px', lineHeight: '1.6' },
+            }, [
+                '💡 第一次用？也可以直接加载内置示例题库体验（10 个学科分类、50 题、5 种题型全覆盖）。',
+            ]),
+            h('button', {
+                class: 'lx-button lx-button--primary lx-button--block',
+                'data-testid': 'help-load-default-library',
+                style: { marginTop: '8px' },
+                onclick: () => loadDefaultLibrary(window.LX),
+            }, ['📚 加载示例题库（10 学科 50 题）']),
             h('div', { style: { marginTop: '10px' } }, [
                 h('button', {
-                    class: 'lx-button lx-button--primary lx-button--block',
+                    class: 'lx-button lx-button--secondary lx-button--block',
                     onclick: () => navigate('study'),
                 }, ['▶ 去刷题']),
             ]),

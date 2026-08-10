@@ -8,6 +8,7 @@ import { h, render } from '../dom.js';
 import { navigate } from '../router.js';
 import { toastInfo } from '../toast.js';
 import { createLogo } from '../logo.js';
+import { loadDefaultLibrary } from '../contracts/default-library-flow.js';
 
 export function createHomePage() {
     let _container = null;
@@ -61,7 +62,18 @@ export function createHomePage() {
             elements.push(h('div', { class: 'lx-empty' }, [
                 h('div', { class: 'lx-empty__icon' }, ['📚']),
                 h('div', { class: 'lx-empty__title' }, ['还没有题库']),
-                h('div', { class: 'lx-empty__desc' }, ['从右上角菜单 ☰ 上传你的第一个题库']),
+                h('div', { class: 'lx-empty__desc' }, ['快速加载示例题库体验，或上传你自己的题库']),
+                h('div', { style: { marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' } }, [
+                    h('button', {
+                        class: 'lx-button lx-button--primary lx-button--block',
+                        'data-testid': 'load-default-library',
+                        onclick: () => loadDefaultLibrary(window.LX),
+                    }, ['📚 加载示例题库（10 学科 50 题）']),
+                    h('button', {
+                        class: 'lx-button lx-button--ghost lx-button--block',
+                        onclick: () => navigate('settings'),
+                    }, ['＋ 上传我的题库']),
+                ]),
             ]));
         } else {
             elements.push(h('div', { class: 'lx-card' }, [

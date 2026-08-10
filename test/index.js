@@ -35,6 +35,7 @@ import './unit/category.test.js';
 import './unit/io.test.js';
 import './unit/stats.test.js';
 import './unit/test-api.test.js';
+import './unit/default-library.test.js';
 
 // —— UI 契约 / 生命周期 / 钩子 ——
 import './unit/router-hook.test.js';
@@ -76,6 +77,7 @@ import './system/full-journey.test.js';
 import './system/search-journey.test.js';
 import './system/drill-journey.test.js';
 import './system/failure-injection.test.js';
+import './system/default-library-journey.test.js';
 // 手写 ui-state-* 样板已由矩阵 iframe SAR 覆盖；仅保留高风险稀有锁
 import './system/ui-state-risk-locks.test.js';
 import './system/ui-iframe-smoke.test.js';

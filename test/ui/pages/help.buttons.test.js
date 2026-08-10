@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from '../../runner.js';
 import { assertEqual, assertTrue } from '../../assert.js';
-import { resetStateBeforeEach } from '../../helpers.js';
+import { getLX, resetStateBeforeEach } from '../../helpers.js';
 import {
     createHelpPage,
     openHelpSection,
@@ -16,11 +16,13 @@ import {
  * SAR：帮助页导航 + 章节高亮（含未知 section 失败对照）
  */
 describe('UI 按钮：帮助页 help', () => {
+    let LX;
     let mounted;
     let restoreHash;
 
     beforeEach(async () => {
         await resetStateBeforeEach();
+        LX = getLX();
         restoreHash = preserveHash();
         __clearHighlightLogForTest();
         mounted = mountPage(createHelpPage);
@@ -59,6 +61,23 @@ describe('UI 按钮：帮助页 help', () => {
         mounted = mountPage(createHelpPage);
         clickText(mounted.root, '前往设置');
         assertNavigatedTo('settings');
+    });
+
+    it('快速上手章节显示「加载示例题库」按钮', () => {
+        assertTextIncludes(mounted.root, '加载示例题库');
+        assertTrue(!!mounted.root.querySelector('[data-testid="help-load-default-library"]'));
+    });
+
+    it('点击「加载示例题库」→ 创建题库 + navigate study', () => {
+        clearNavigateLog();
+        clickText(mounted.root, '加载示例题库');
+
+        const list = LX.LibraryAPI.list().data;
+        assertEqual(list.length, 1, '应创建 1 个题库');
+        assertEqual(list[0].name, '通识综合示例题库');
+        assertEqual(list[0].questionCount, 50);
+        assertEqual(LX.LibraryAPI.current().data, list[0].id, '应已 switch');
+        assertNavigatedTo('study');
     });
 
     it('S=已渲染 A=__highlightSectionForTest(practice-mode) → R=日志+flash class', () => {

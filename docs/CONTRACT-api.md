@@ -16,6 +16,7 @@ window.LX = {
   // 业务 API
   LibraryAPI, QuestionAPI, ProgressAPI, NavigationAPI,
   WrongBookAPI, CategoryAPI, StatsAPI, IOAPI,
+  DefaultLibraryAPI, DrillAPI,
 
   // 事件总线（直通 core/events.js 的 bus）
   on, off, once, emit, Events,
@@ -518,6 +519,51 @@ interface CategoryStat {
 #### `importProgress(jsonString): Result<void>`
 
 - 等价于 `ProgressAPI.import`。
+
+---
+
+## 9b. `DefaultLibraryAPI`（内置示例题库）
+
+内置一个 10 学科 × 5 题型 = 50 题的通识示例题库，打包进 JS 模块（不走 fetch、不依赖 SW），
+首次访问立即可用。UI 入口：首页空状态、帮助页「快速上手」章节。
+
+### 9b.1 常量
+
+| 常量 | 类型 | 说明 |
+|---|---|---|
+| `DEFAULT_LIBRARY_NAME` | `string` | `'通识综合示例题库'` |
+| `DEFAULT_QUESTIONS` | `object[]` | 50 题原始数据（未归一化） |
+
+### 9b.2 方法签名
+
+#### `loadDefault(opts?): Result<{ id, name, questionCount, switched, duplicateOf? }>`
+
+加载内置示例题库。内部调用 `LibraryAPI.create`（带指纹去重）+ 可选 `LibraryAPI.switch`。
+
+- `opts.skipDuplicateCheck?: boolean`（默认 `false`）— 跳过去重检测，强制创建第二个
+- `opts.switchAfterCreate?: boolean`（默认 `true`）— 创建后自动 switch 到新库
+
+返回（始终 `ok:true`，除非底层 create 出错）：
+- 新建成功：`{ ok:true, data:{ id, name, questionCount:50, switched:true } }`
+- 已存在同指纹库（默认去重）：`{ ok:true, data:{ id:matchingLibId, name, questionCount:50, switched, duplicateOf:matchingLibId } }`
+  - 调用方根据 `data.duplicateOf` 判断「已存在」分支（UI 应 appConfirm 询问是否切换）
+- 底层 create 失败：`{ ok:false, error }`（原样透传）
+
+> UI 调用应走 `render/contracts/default-library-flow.js` 的 `loadDefaultLibrary(LX)`，
+> 它内联处理了三种结果的 toast/appConfirm/navigate，禁止在页面内重复实现。
+
+#### `getDefaultLibraryMeta(): { name, subjectCount, questionCount, subjects }`
+
+不创建题库，只返回元数据（给 UI 展示用）。
+
+### 9b.3 调用示例
+
+```javascript
+const r = LX.DefaultLibraryAPI.loadDefault();
+if (!r.ok) { /* 失败 */ }
+else if (r.data.duplicateOf) { /* 已存在，询问是否切换 */ }
+else { /* 新建成功，已 switch */ }
+```
 
 ---
 
