@@ -5,9 +5,9 @@
  * - 题库数据仍在 localStorage，SW 不替代存储
  * - 版本升级时 CACHE_VERSION + RELEASE_VERSION 双变，强制所有客户端拿新资源
  */
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 // 与 version.txt / src/api/index.js VERSION 同步；给 main.js 等核心资源做 cache-bust
-const RELEASE_VERSION = '3.2.1';
+const RELEASE_VERSION = '3.2.2';
 const STATIC_CACHE = `lx-static-${CACHE_VERSION}`;
 const CDN_CACHE = `lx-cdn-${CACHE_VERSION}`;
 

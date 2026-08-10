@@ -77,6 +77,7 @@ export function initUI(LX) {
         LX.Events.PROGRESS_RESET,
         LX.Events.WRONGBOOK_ENTERED,
         LX.Events.WRONGBOOK_EXITED,
+        LX.Events.WRONGBOOK_MARKED,
     ].forEach((evt) => {
         LX.on(evt, () => {
             refreshTopbar();

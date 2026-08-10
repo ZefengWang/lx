@@ -25,6 +25,7 @@ export const Events = Object.freeze({
     WRONGBOOK_ENTERED: 'wrongbook:entered',
     WRONGBOOK_EXITED: 'wrongbook:exited',
     WRONGBOOK_CLEARED: 'wrongbook:cleared',
+    WRONGBOOK_MARKED: 'wrongbook:marked',
 
     CATEGORY_RENAMED: 'category:renamed',
 

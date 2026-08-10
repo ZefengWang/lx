@@ -118,9 +118,11 @@ export function markMastered(qIdOrQuestion) {
         bus.emit(Events.WRONGBOOK_CLEARED, { libId: state.currentLibId });
         // 自动退出
         exit();
+        bus.emit(Events.WRONGBOOK_MARKED, { remaining: 0, cleared: true });
         return ok({ remaining: 0, cleared: true });
     }
     bus.emit(Events.NAVIGATION_CHANGED, { source: 'wrongbook-mark' });
+    bus.emit(Events.WRONGBOOK_MARKED, { remaining, cleared: false });
     return ok({ remaining, cleared: false });
 }
 

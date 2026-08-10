@@ -52,12 +52,22 @@ export function createWrongBookPage() {
                 _celebrateActive = true;
                 render(_container, [renderCelebration(payload)]);
             },
+            [LX.Events.WRONGBOOK_MARKED]: (payload) => {
+                // markMastered 完成后的显式通知：无论 remaining 是否为 0，
+                // 都必须刷新 UI（用户的核心诉求：按钮 → API → 发通知 → UI 更新）
+                if (_celebrateActive) return; // 庆祝页已渲染，勿覆盖
+                refresh();
+            },
             [LX.Events.NAVIGATION_CHANGED]: () => {
                 // 庆祝锁定 或 已退出错题模式 → 勿 refresh 盖掉庆祝页
                 if (_celebrateActive || !window.LX || !getWrongBookActive()) return;
                 refresh();
             },
-            [LX.Events.QUESTION_STATUS_CHANGED]: () => {
+            [LX.Events.QUESTION_STATUS_CHANGED]: (payload) => {
+                // 新错题加入时清除庆祝锁定（用户在庆祝页时又产生了新错题）
+                if (payload?.newStatus === 'review') {
+                    _celebrateActive = false;
+                }
                 if (_celebrateActive || !window.LX || !getWrongBookActive()) return;
                 refresh();
             },
@@ -236,7 +246,10 @@ export function createWrongBookPage() {
         if (r.ok) {
             if (r.data.cleared) {
                 toastSuccess('全部掌握！');
-                // 已自动 exit，庆祝页由 WRONGBOOK_EXITED 订阅渲染；勿 refresh 覆盖庆祝
+                // 已自动 exit，庆祝页由 WRONGBOOK_EXITED 订阅渲染
+                // 安全网：如果 WRONGBOOK_EXITED 订阅者因某种原因没渲染庆祝页，
+                // refresh() 会检查 _celebrateActive → 若已庆祝则 no-op，否则渲染空状态
+                refresh();
                 return;
             }
             toastSuccess('已掌握，从错题本移出');
@@ -253,10 +266,14 @@ export function createWrongBookPage() {
         if (_detachSwipe) { _detachSwipe(); _detachSwipe = null; }
         if (_detachKeyboard) { _detachKeyboard(); _detachKeyboard = null; }
         const LX = window.LX;
-        // 离开页面时退出错题模式
-        try {
-            LX.WrongBookAPI.exit();
-        } catch (_) {}
+        // 仅当导航离开 wrongbook 路由时才退出错题模式
+        // 同路由重入时 location.hash 仍为 #/wrong，不应 exit → enter 来回折腾
+        const newHash = location.hash || '#/';
+        if (newHash !== '#/wrong') {
+            try {
+                LX.WrongBookAPI.exit();
+            } catch (_) {}
+        }
     }
 
     return { render: renderPage, onLeave };
