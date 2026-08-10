@@ -92,6 +92,17 @@ function progressFileInput(root) {
         });
 }
 
+/**
+ * 找到 triggerFileImport() 动态创建的临时题库导入 input。
+ * 该 input 被 append 到 document.body（非 #app 内），accept 含 'xlsx'。
+ * 进度 input 的 accept 是 '.json'（不含 xlsx），不会误匹配。
+ */
+function findTempImportInput(iframe) {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    return [...doc.querySelectorAll('input[type="file"]')]
+        .find((el) => (el.accept || '').includes('xlsx'));
+}
+
 function assertUnchangedCore(before, after) {
     assertStateDelta(before, after, {}, [
         'domain.libCount',
@@ -659,8 +670,12 @@ const iframeHandlers = {
         navigateIframe(iframe, '#/settings');
         await wait(40);
         const root = iframeAppRoot(iframe);
-        const input = libFileInput(root);
         const LX = iframe.contentWindow.LX;
+        // 点击「上传新题库」→ triggerFileImport() 创建 temp input（append 到 body）
+        clickText(root, '上传新题库');
+        await wait(40);
+        const input = findTempImportInput(iframe);
+        if (!input) throw new Error('点击上传后应创建 temp file input');
         if (isUnhappy(c) && has(c, '取消')) {
             const before = await collectAppUiState(iframe);
             input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -813,20 +828,29 @@ const iframeHandlers = {
         await wait(40);
         const root = iframeAppRoot(iframe);
         if (isUnhappy(c)) {
+            // 取消选文件：点上传只创建 temp input，不选文件 → 不增库
             const before = await collectAppUiState(iframe);
             softClickText(root, '上传新题库');
+            await wait(40);
             assertStateDelta(before, await collectAppUiState(iframe), {}, ['domain.libCount']);
             return;
         }
-        const input = libFileInput(root);
-        let clicked = false;
-        const orig = input.click.bind(input);
-        input.click = () => { clicked = true; };
-        try {
-            clickText(root, '上传新题库');
-            if (!clicked) throw new Error('应触发 fileInput.click');
-        } finally {
-            input.click = orig;
+        // happy：点「上传新题库」→ triggerFileImport 创建 temp input → assignFile 触发导入
+        clickText(root, '上传新题库');
+        await wait(40);
+        const tempInput = findTempImportInput(iframe);
+        if (!tempInput) throw new Error('点击上传后应创建 temp file input');
+        const LX = iframe.contentWindow.LX;
+        const before = await collectAppUiState(iframe);
+        const qs = [{ id: 1, type: 'essay', question: '上传按钮导入IF', answer: '' }];
+        assignFile(tempInput, LX.TestAPI.mockFile(JSON.stringify(qs), '上传IF.json'));
+        await wait(280);
+        const after = await collectAppUiState(iframe);
+        if (!toastIncludes(after, /成功导入|导入/)) {
+            throw new Error(`期望导入成功 toast，实际=${after.meta.toastLast}`);
+        }
+        if (after.domain.libCount <= before.domain.libCount) {
+            throw new Error('上传应增库');
         }
     },
 

@@ -10,6 +10,7 @@ import { appConfirm } from '../confirm.js';
 import { triggerBlobDownload } from '../download.js';
 import { THEMES, MODES, getTheme, getMode, setTheme, setMode, swatchStyle } from '../theme.js';
 import { loadDefaultLibrary } from '../contracts/default-library-flow.js';
+import { triggerFileImport } from '../contracts/import-library-flow.js';
 
 /**
  * 把 "background: red; border: 1px solid #000;" 这种内联字符串
@@ -30,7 +31,6 @@ function parseStyle(cssText) {
 
 export function createSettingsPage() {
     let _container = null;
-    let _fileInput = null;
     let _progressInput = null;
 
     function renderPage(container) {
@@ -50,13 +50,7 @@ export function createSettingsPage() {
 
         const elements = [];
 
-        // 隐藏的 file input
-        _fileInput = h('input', {
-            type: 'file',
-            accept: '.xlsx,.xls,.json,.csv,.txt',
-            style: { display: 'none' },
-            onchange: (e) => handleImportFile(e.target.files[0]),
-        });
+        // 隐藏的 progress file input（题库导入已改用 triggerFileImport 动态创建 input）
         _progressInput = h('input', {
             type: 'file',
             accept: '.json',
@@ -100,13 +94,13 @@ export function createSettingsPage() {
                 h('button', {
                     class: 'lx-button lx-button--secondary lx-button--block',
                     style: { marginTop: '8px' },
-                    onclick: () => _fileInput.click(),
+                    onclick: () => triggerFileImport(),
                 }, ['＋ 上传我的题库']),
             ] : [
                 h('button', {
                     class: 'lx-button lx-button--primary lx-button--block',
                     style: { marginTop: '12px' },
-                    onclick: () => _fileInput.click(),
+                    onclick: () => triggerFileImport(),
                 }, ['＋ 上传新题库']),
             ]),
         ]));
@@ -261,43 +255,7 @@ export function createSettingsPage() {
             ]),
         ]));
 
-        render(_container, [_fileInput, _progressInput, ...elements]);
-    }
-
-    async function handleImportFile(file) {
-        if (!file) return;
-        const LX = window.LX;
-        // 注意：File.name 是只读属性（现代浏览器严格执行：Cannot set property name of #<File> which has only a getter）
-        // 这里绝对不能再给 file.name 赋值，否则直接抛异常
-        const fileName = (file && file.name) ? file.name : 'upload.xlsx';
-        try {
-            const parseR = await LX.IOAPI.parseFile(file, { fileName });
-            if (!parseR.ok) {
-                toastWarning(`解析失败：${parseR.error?.message || '未知错误'}`);
-                return;
-            }
-            const qs = parseR.data.questions;
-            if (!qs || qs.length === 0) {
-                toastWarning('文件解析后没有题目，请检查格式');
-                return;
-            }
-
-            const name = fileName.replace(/\.(xlsx|xls|json|csv|txt)$/i, '');
-            const impR = LX.IOAPI.importLibrary(name, qs);
-            if (!impR.ok) {
-                if (impR.error?.code === 'DUPLICATE') {
-                    toastWarning(`题库已存在（重复内容）：${impR.error.message}`);
-                    return;
-                }
-                toastWarning(`导入失败：${impR.error?.message || '未知错误'}`);
-                return;
-            }
-            LX.LibraryAPI.switch(impR.data.id);
-            toastSuccess(`成功导入 ${qs.length} 题`);
-            refresh();
-        } catch (e) {
-            toastWarning(`导入异常：${e.message}`);
-        }
+        render(_container, [_progressInput, ...elements]);
     }
 
     function handleDeleteLibrary(lib) {

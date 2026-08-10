@@ -23,6 +23,7 @@ import { applyInitial as applyInitialTheme } from './theme.js';
 import { toastInfo, toastPrimary, toastSuccess, toastWarning } from './toast.js';
 import { appConfirm } from './confirm.js';
 import { appPrompt } from './prompt.js';
+import { triggerFileImport } from './contracts/import-library-flow.js';
 
 /**
  * UI 主初始化
@@ -247,12 +248,9 @@ function refreshDrawer() {
             navigate('study');
         },
         onImportLibrary: () => {
+            // 直接绑定到导入逻辑（contract），不再 navigate+点按钮这种脆弱 hack
             closeDrawer();
-            navigate('settings');
-            setTimeout(() => {
-                const btn = $('.lx-button--primary');
-                if (btn) btn.click();
-            }, 100);
+            triggerFileImport();
         },
         onCreateLibrary: () => {
             // 在左侧菜单直接新建空题库：prompt 输入名 → 创建 → 切换 → 跳去添加题目

@@ -481,30 +481,37 @@ const handlers = {
         const s = mountShell({ routeName: 'study' });
         cleanups.push(() => s.destroy());
         openDrawer('sar');
-        if (isUnhappy(c)) {
+        if (isUnhappy(c) && !has(c, '取消')) {
+            // 无库态：点上传只 triggerFileImport 开 dialog，不选文件 → 不增库
             const before = collectUiState(s.root);
-            // 取消选文件：仅导航到 settings 不选文件；或无库态点
-            if (has(c, '取消')) {
-                clearNavigateLog();
-                clickText(s.root, '上传新题库');
-                assertNavigatedTo('settings');
-                assertUnchangedCore(before, { ...collectUiState(s.root), domain: { ...before.domain, /* nav ok */ ...collectUiState(s.root).domain } });
-                // libCount 不变即可
-                if (collectUiState(s.root).domain.libCount !== before.domain.libCount) {
-                    throw new Error('取消选文件路径不应增库');
-                }
-                return;
-            }
-            s.destroy();
-            await runUnreachable(c, cleanups, async (ctx2) => {
-                openDrawer('sar');
-                softClickText(ctx2.root, '上传新题库');
-            });
+            softClickText(s.root, '上传新题库');
+            assertUnchangedCore(before, collectUiState(s.root));
             return;
         }
-        clearNavigateLog();
+        const before = collectUiState(s.root);
+        // 点击「上传新题库」→ closeDrawer + triggerFileImport() 创建 temp input
         clickText(s.root, '上传新题库');
-        assertNavigatedTo('settings');
+        if (isUnhappy(c) && has(c, '取消')) {
+            // 用户取消选文件：temp input 存在但无 change → 不增库
+            if (collectUiState(s.root).domain.libCount !== before.domain.libCount) {
+                throw new Error('取消选文件路径不应增库');
+            }
+            return;
+        }
+        // happy：找到 temp input（append 到 document.body），assignFile 触发导入
+        const tempInput = [...document.querySelectorAll('input[type="file"]')]
+            .find((el) => (el.accept || '').includes('xlsx'));
+        if (!tempInput) throw new Error('点击上传后应创建 temp file input');
+        const LX = getLX();
+        const qs = [{ id: 1, type: 'essay', question: '抽屉导入题SAR', answer: '' }];
+        assignFile(tempInput, LX.TestAPI.mockFile(JSON.stringify(qs), '抽屉导入.json'));
+        const after = collectUiState(s.root);
+        if (!String(after.meta?.toastLast || '').match(/成功导入|导入/)) {
+            throw new Error(`期望导入成功 toast，实际=${after.meta?.toastLast}`);
+        }
+        if (after.domain.libCount <= before.domain.libCount) {
+            throw new Error('导入应增库');
+        }
     },
 
     async 'drawer.createLibrary'(c, ctx, cleanups) {

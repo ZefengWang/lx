@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from '../../runner.js';
 import { assertEqual, assertTrue, assertOk } from '../../assert.js';
 import { getLX, resetStateBeforeEach, createAndSwitchLibrary } from '../../helpers.js';
 import { createSettingsPage } from '../../../src/render/pages/settings.js';
+import { handleImportFile } from '../../../src/render/contracts/import-library-flow.js';
 import { setTheme, setMode } from '../../../src/render/theme.js';
 import {
     mountPage, clickText, assertTextIncludes, preserveHash,
@@ -203,26 +204,26 @@ describe('UI 按钮：设置页 settings（SAR）', () => {
         assertToastIncludes(/切换|夜间/);
     });
 
-    it('S=合法 JSON 文件 A=上传新题库 → R=导入成功 toast', async () => {
+    it('S=合法 JSON 文件 A=handleImportFile → R=导入成功 toast + navigate study', async () => {
         const qs = [
             { id: 1, type: 'essay', question: '导入题干IMPORT99', answer: '', category: 'I' },
         ];
         const file = LX.TestAPI.mockFile(JSON.stringify(qs), '导入SAR库.json');
-        assignFile(libFileInput(mounted.root), file);
         clearToastLog();
-        await new Promise((r) => setTimeout(r, 200));
+        clearNavigateLog();
+        await handleImportFile(file);
         assertToastIncludes(/成功导入|导入/);
+        assertNavigatedTo('study');
         assertTrue(
             LX.QuestionAPI.search('IMPORT99').data.total >= 1
             || LX.LibraryAPI.list().data.some((l) => (l.name || '').includes('导入SAR')),
         );
     });
 
-    it('S=空题目 JSON A=上传 → R=toast 没有题目', async () => {
+    it('S=空题目 JSON A=handleImportFile → R=toast 没有题目', async () => {
         const file = LX.TestAPI.mockFile(JSON.stringify([]), '空库.json');
-        assignFile(libFileInput(mounted.root), file);
         clearToastLog();
-        await new Promise((r) => setTimeout(r, 200));
+        await handleImportFile(file);
         assertToastIncludes(/没有题目|解析失败|检查格式/);
     });
 

@@ -27,8 +27,12 @@ export function registerRestHandlers(handlers, api) {
             seedLib('SAR设置导入库');
             const s = mountShellWithPage(createSettingsPage, { routeName: 'settings', showBottombar: false });
             cleanups.push(() => s.destroy());
-            const input = libFileInput(s.root);
             const LX = getLX();
+            // 点击「上传新题库」→ triggerFileImport() 创建 temp input（append 到 body）
+            clickText(s.root, '上传新题库');
+            const input = [...document.querySelectorAll('input[type="file"]')]
+                .find((el) => (el.accept || '').includes('xlsx'));
+            if (!input) throw new Error('点击上传后应创建 temp file input');
             if (isUnhappy(c) && has(c, '取消')) {
                 const before = collectUiState(s.root);
                 input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -178,21 +182,25 @@ export function registerRestHandlers(handlers, api) {
             const s = mountShellWithPage(createSettingsPage, { routeName: 'settings', showBottombar: false });
             cleanups.push(() => s.destroy());
             if (isUnhappy(c)) {
+                // 取消选文件：点上传只创建 temp input，不选文件 → 不增库
                 const before = collectUiState(s.root);
-                // 点上传只触发 fileInput.click，不选文件
                 softClickText(s.root, '上传新题库');
                 assertStateDelta(before, collectUiState(s.root), {}, ['domain.libCount']);
                 return;
             }
-            const input = libFileInput(s.root);
-            let clicked = false;
-            const orig = input.click.bind(input);
-            input.click = () => { clicked = true; };
-            try {
-                clickText(s.root, '上传新题库');
-                if (!clicked) throw new Error('应触发 fileInput.click');
-            } finally {
-                input.click = orig;
+            // happy：点「上传新题库」→ triggerFileImport 创建 temp input → assignFile 触发导入
+            clickText(s.root, '上传新题库');
+            const tempInput = [...document.querySelectorAll('input[type="file"]')]
+                .find((el) => (el.accept || '').includes('xlsx'));
+            if (!tempInput) throw new Error('点击上传后应创建 temp file input');
+            const LX = getLX();
+            const before = collectUiState(s.root);
+            const qs = [{ id: 1, type: 'essay', question: '上传按钮导入SAR', answer: '' }];
+            assignFile(tempInput, LX.TestAPI.mockFile(JSON.stringify(qs), '上传SAR.json'));
+            await wait(250);
+            assertToastIncludes(/成功导入|导入/);
+            if (collectUiState(s.root).domain.libCount <= before.domain.libCount) {
+                throw new Error('上传应增库');
             }
         },
 

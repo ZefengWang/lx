@@ -79,6 +79,26 @@ function toastIncludes(st, re) {
     return re.test(t);
 }
 
+function assignFile(input, file) {
+    if (!input) throw new Error('file input 为空');
+    if (typeof DataTransfer === 'undefined') throw new Error('无 DataTransfer');
+    const dt = new DataTransfer();
+    if (file) dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/**
+ * 找到 triggerFileImport() 动态创建的临时题库导入 input。
+ * 该 input 被 append 到 document.body（非 #app 内），accept 含 'xlsx'。
+ * 进度 input 的 accept 是 '.json'（不含 xlsx），不会误匹配。
+ */
+function findTempImportInput(iframe) {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    return [...doc.querySelectorAll('input[type="file"]')]
+        .find((el) => (el.accept || '').includes('xlsx'));
+}
+
 let _ifLibSeq = 0;
 function nextLibName() {
     _ifLibSeq += 1;
@@ -288,11 +308,13 @@ export function registerIframeRestHandlers(handlers) {
 
         async 'drawer.importLibrary'(c, cleanups) {
             if (isUnhappy(c) && !has(c, '取消')) {
+                // 无库态：点上传只 triggerFileImport 开 dialog，不选文件 → 不增库
                 const iframe = await seedIframeEmpty('#/study');
                 cleanups.push(() => {});
                 await openIframeDrawer(iframe);
                 const before = await collectAppUiState(iframe);
                 softClickText(iframeAppRoot(iframe), '上传新题库');
+                await wait(40);
                 assertUnchangedCore(before, await collectAppUiState(iframe));
                 return;
             }
@@ -300,13 +322,29 @@ export function registerIframeRestHandlers(handlers) {
             cleanups.push(() => {});
             await openIframeDrawer(iframe);
             const before = await collectAppUiState(iframe);
+            // 点击「上传新题库」→ closeDrawer + triggerFileImport() 创建 temp input
             clickIframeText(iframe, '上传新题库');
             await wait(40);
-            assertIframeHash(iframe, 'settings');
             if (isUnhappy(c) && has(c, '取消')) {
+                // 用户取消选文件：temp input 存在但无 change → 不增库
                 if ((await collectAppUiState(iframe)).domain.libCount !== before.domain.libCount) {
                     throw new Error('取消选文件路径不应增库');
                 }
+                return;
+            }
+            // happy：找到 temp input，assignFile 触发 handleImportFile 完整导入
+            const tempInput = findTempImportInput(iframe);
+            if (!tempInput) throw new Error('点击上传后应创建 temp file input');
+            const LX = iframe.contentWindow.LX;
+            const qs = [{ id: 1, type: 'essay', question: '抽屉导入题IF', answer: '' }];
+            assignFile(tempInput, LX.TestAPI.mockFile(JSON.stringify(qs), '抽屉导入.json'));
+            await wait(280);
+            const after = await collectAppUiState(iframe);
+            if (!toastIncludes(after, /成功导入|导入/)) {
+                throw new Error(`期望导入成功 toast，实际=${after.meta.toastLast}`);
+            }
+            if (after.domain.libCount <= before.domain.libCount) {
+                throw new Error('导入应增库');
             }
         },
 
