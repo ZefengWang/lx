@@ -63,21 +63,13 @@ describe('UI 按钮：帮助页 help', () => {
         assertNavigatedTo('settings');
     });
 
-    it('快速上手章节显示「加载示例题库」按钮', () => {
+    it('快速上手章节只做文字引导，不承载加载按钮', () => {
+        // help 是文档页，关注点分离：只引导，不承担加载操作
         assertTextIncludes(mounted.root, '加载示例题库');
-        assertTrue(!!mounted.root.querySelector('[data-testid="help-load-default-library"]'));
-    });
-
-    it('点击「加载示例题库」→ 创建题库 + navigate study', () => {
-        clearNavigateLog();
-        clickText(mounted.root, '加载示例题库');
-
-        const list = LX.LibraryAPI.list().data;
-        assertEqual(list.length, 1, '应创建 1 个题库');
-        assertEqual(list[0].name, '通识综合示例题库');
-        assertEqual(list[0].questionCount, 50);
-        assertEqual(LX.LibraryAPI.current().data, list[0].id, '应已 switch');
-        assertNavigatedTo('study');
+        assertTrue(!mounted.root.querySelector('[data-testid="help-load-default-library"]'),
+            'help 页不应有加载示例题库按钮');
+        assertTrue(!mounted.root.querySelector('[data-testid="load-default-library"]'),
+            'help 页不应有加载示例题库按钮');
     });
 
     it('S=已渲染 A=__highlightSectionForTest(practice-mode) → R=日志+flash class', () => {

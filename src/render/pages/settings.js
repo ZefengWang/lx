@@ -9,6 +9,7 @@ import { toastSuccess, toastWarning, toastInfo, toastPrimary } from '../toast.js
 import { appConfirm } from '../confirm.js';
 import { triggerBlobDownload } from '../download.js';
 import { THEMES, MODES, getTheme, getMode, setTheme, setMode, swatchStyle } from '../theme.js';
+import { loadDefaultLibrary } from '../contracts/default-library-flow.js';
 
 /**
  * 把 "background: red; border: 1px solid #000;" 这种内联字符串
@@ -89,11 +90,25 @@ export function createSettingsPage() {
                     }, ['删除']),
                 ]),
             ]))),
-            h('button', {
-                class: 'lx-button lx-button--primary lx-button--block',
-                style: { marginTop: '12px' },
-                onclick: () => _fileInput.click(),
-            }, ['＋ 上传新题库']),
+            ...(libs.length === 0 ? [
+                h('button', {
+                    class: 'lx-button lx-button--primary lx-button--block',
+                    'data-testid': 'load-default-library',
+                    style: { marginTop: '12px' },
+                    onclick: () => loadDefaultLibrary(window.LX),
+                }, ['📚 加载示例题库（10 学科 50 题）']),
+                h('button', {
+                    class: 'lx-button lx-button--secondary lx-button--block',
+                    style: { marginTop: '8px' },
+                    onclick: () => _fileInput.click(),
+                }, ['＋ 上传我的题库']),
+            ] : [
+                h('button', {
+                    class: 'lx-button lx-button--primary lx-button--block',
+                    style: { marginTop: '12px' },
+                    onclick: () => _fileInput.click(),
+                }, ['＋ 上传新题库']),
+            ]),
         ]));
 
         // 学习进度

@@ -245,4 +245,37 @@ describe('UI 按钮：设置页 settings（SAR）', () => {
         assertToastIncludes('进度已恢复');
         assertEqual(LX.ProgressAPI.getStatus(q).data, 'mastered');
     });
+
+    // —— 默认题库加载（题库管理卡片，空库时显示按钮）——
+    it('S=空题库 A=渲染 → R=题库管理显示「加载示例题库」按钮', () => {
+        // beforeEach 建了题库，清空到空状态再 mount
+        LX.LibraryAPI.list().data.forEach((lib) => LX.LibraryAPI.delete(lib.id));
+        mounted.destroy();
+        mounted = mountPage(createSettingsPage);
+        assertTextIncludes(mounted.root, '还没有题库');
+        assertTextIncludes(mounted.root, '加载示例题库');
+        assertTrue(!!mounted.root.querySelector('[data-testid="load-default-library"]'),
+            '空库时应显示加载示例题库按钮');
+    });
+
+    it('S=有题库 A=渲染 → R=不显示「加载示例题库」按钮', () => {
+        // beforeEach 已建题库
+        assertTrue(!mounted.root.querySelector('[data-testid="load-default-library"]'),
+            '有题库时不应显示加载示例题库按钮');
+    });
+
+    it('S=空题库 A=点「加载示例题库」→ R=创建 50 题库 + navigate study', () => {
+        LX.LibraryAPI.list().data.forEach((lib) => LX.LibraryAPI.delete(lib.id));
+        mounted.destroy();
+        mounted = mountPage(createSettingsPage);
+        clearNavigateLog();
+        clickText(mounted.root, '加载示例题库');
+
+        const list = LX.LibraryAPI.list().data;
+        assertEqual(list.length, 1, '应创建 1 个题库');
+        assertEqual(list[0].name, '通识综合示例题库');
+        assertEqual(list[0].questionCount, 50);
+        assertEqual(LX.LibraryAPI.current().data, list[0].id, '应已 switch');
+        assertNavigatedTo('study');
+    });
 }, { layer: 'ui', tags: ['buttons', 'settings', 'sar'] });
