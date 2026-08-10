@@ -3,11 +3,15 @@
  * - 同源壳资源：cache-first（预缓存失败不阻断安装）
  * - CDN（SheetJS / pdf.js）：network-first，失败回退缓存
  * - 题库数据仍在 localStorage，SW 不替代存储
+ * - 版本升级时 CACHE_VERSION + RELEASE_VERSION 双变，强制所有客户端拿新资源
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
+// 与 version.txt / src/api/index.js VERSION 同步；给 main.js 等核心资源做 cache-bust
+const RELEASE_VERSION = '3.2.0';
 const STATIC_CACHE = `lx-static-${CACHE_VERSION}`;
 const CDN_CACHE = `lx-cdn-${CACHE_VERSION}`;
 
+// 核心资源带版本号：URL 变化 → 旧缓存自动失效（SW activate 会删旧 cache 名）
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -18,7 +22,7 @@ const STATIC_ASSETS = [
     './src/render/assets/logo.svg',
     './src/render/theme.css',
     './src/render/components.css',
-    './src/main.js',
+    `./src/main.js?v=${RELEASE_VERSION}`,
 ];
 
 self.addEventListener('install', (event) => {
@@ -76,6 +80,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.match(req).then((cached) => {
                 if (cached) return cached;
+                // cache-first miss：走网络，同时把响应存入新 cache
                 return fetch(req).then((resp) => {
                     if (resp && resp.ok && resp.type === 'basic') {
                         const clone = resp.clone();
