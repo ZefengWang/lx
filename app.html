@@ -52,13 +52,47 @@
     <script type="module" src="./src/main.js?v=3.2.1"></script>
     <script>
         // PWA：相对 scope 适配 GitHub Pages 子路径
-        // 注册 URL 带版本号：浏览器把它当作新 SW 文件，强制触发 update
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+        //
+        // ?test=1 模式：在 app.html 层面内联清 SW + CacheStorage（不依赖 main.js），
+        // 避免"清缓存的 bootstrap 被旧缓存污染、跑不到"的鸡生蛋问题。清完自动刷新一次。
+        // 非 test 模式：正常注册带版本号的新 SW（CACHE_VERSION 升级时自动清旧缓存）。
+        (function () {
+            if (!('serviceWorker' in navigator)) return;
+            var isTest = location.search.indexOf('test=1') >= 0;
+
+            if (isTest) {
+                // 内联清 SW + 缓存，不依赖 main.js/bootstrap
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.getRegistrations().then(function (regs) {
+                        var hadSW = regs.length > 0;
+                        return Promise.all(regs.map(function (r) { return r.unregister(); }))
+                            .then(function () {
+                                if (window.caches) {
+                                    return caches.keys().then(function (keys) {
+                                        return Promise.all(
+                                            keys.filter(function (k) { return k.indexOf('lx-') === 0; })
+                                                .map(function (k) { return caches.delete(k); })
+                                        );
+                                    });
+                                }
+                            })
+                            .then(function () {
+                                if (hadSW) {
+                                    // 清完缓存刷新：reload 后无 SW，所有资源走网络拿全新代码
+                                    location.reload();
+                                }
+                            });
+                    }).catch(function (e) { console.warn('[lx] test 模式清缓存失败:', e); });
+                });
+                return;
+            }
+
+            // 正常注册新 SW（版本号变化触发 update，skipWaiting+claim 自动清旧缓存）
+            window.addEventListener('load', function () {
                 navigator.serviceWorker.register('./sw.js?v=3.2.1', { scope: './' })
-                    .catch((err) => console.warn('[lx] SW 注册失败:', err));
+                    .catch(function (err) { console.warn('[lx] SW 注册失败:', err); });
             });
-        }
+        })();
     </script>
 </body>
 </html>
