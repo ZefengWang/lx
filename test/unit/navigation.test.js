@@ -52,7 +52,6 @@ describe('NavigationAPI', () => {
 
     it('current() 不引发 setState 循环（bug C 回归）', () => {
         // 监听 state 变化，current() 不应触发无意义 setState
-        const { getState, subscribe } = LX; // 注意：state 模块未直接挂载到 LX，需通过事件监听
         let navChanges = 0;
         const off = LX.on(LX.Events.NAVIGATION_CHANGED, () => {
             navChanges++;
@@ -72,5 +71,56 @@ describe('NavigationAPI', () => {
         LX.NavigationAPI.next();
         assertEqual(navCount2, 1, 'next() 应触发一次');
         off2();
+    });
+
+    it('goto 合法索引成功；越界失败', () => {
+        const r = LX.NavigationAPI.goto(1);
+        assertOk(r);
+        assertEqual(r.data.index, 1);
+        assertErr(LX.NavigationAPI.goto(-1));
+        assertErr(LX.NavigationAPI.goto(99));
+    });
+
+    it('setMode sequential/random；非法模式失败', () => {
+        assertOk(LX.NavigationAPI.setMode('random'));
+        assertEqual(LX.NavigationAPI.getMode(), 'random');
+        assertOk(LX.NavigationAPI.setMode('sequential'));
+        assertEqual(LX.NavigationAPI.getMode(), 'sequential');
+        assertErr(LX.NavigationAPI.setMode('chaos'));
+    });
+
+    it('shuffle 仅随机模式可用；getActiveList 返回当前序列', () => {
+        assertErr(LX.NavigationAPI.shuffle());
+        assertOk(LX.NavigationAPI.setMode('random'));
+        const before = LX.NavigationAPI.getActiveList();
+        assertOk(before);
+        assertEqual(before.data.length, 3);
+        assertOk(LX.NavigationAPI.shuffle());
+        const after = LX.NavigationAPI.getActiveList();
+        assertOk(after);
+        assertEqual(after.data.length, 3);
+        assertEqual(LX.NavigationAPI.current().data.index, 0, '洗牌后回到序列起点');
+    });
+
+    it('S=有题 A=random → R=合法 index；无题 OUT_OF_RANGE', async () => {
+        const r = LX.NavigationAPI.random();
+        assertOk(r);
+        assertTrue(r.data.index >= 0 && r.data.index < 3);
+        await resetStateBeforeEach();
+        assertErr(LX.NavigationAPI.random(), 'OUT_OF_RANGE');
+    });
+
+    it('S=有进度 A=setStatusFilter review → R=仅错题；listCategories 去重', () => {
+        const q2 = LX.QuestionAPI.get(2).data;
+        LX.ProgressAPI.setStatus(q2, 'review');
+        assertOk(LX.NavigationAPI.setStatusFilter('review'));
+        assertEqual(LX.NavigationAPI.getStatusFilter(), 'review');
+        assertEqual(LX.NavigationAPI.current().data.total, 1);
+        assertOk(LX.NavigationAPI.setStatusFilter('all'));
+        assertEqual(LX.NavigationAPI.current().data.total, 3);
+
+        const cats = LX.NavigationAPI.listCategories();
+        assertOk(cats);
+        assertEqual(cats.data.slice().sort(), ['A', 'B'].sort());
     });
 });

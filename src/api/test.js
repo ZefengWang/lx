@@ -257,6 +257,79 @@ export function _enableAutoConfirm() {
     _confirmedThisSession = true;
 }
 
+/**
+ * 事件总线监听器数量（检测 UI 订阅泄漏）
+ * @param {string} [event] 不传则返回全部事件监听器总数
+ * @returns {number}
+ */
+export function busListenerCount(event) {
+    return bus.listenerCount(event);
+}
+
+/** @type {Promise<object>|null} probeUi 依赖模块缓存（避免每条 SAR 重复动态 import） */
+let _probeUiMods = null;
+
+async function loadProbeUiMods() {
+    if (!_probeUiMods) {
+        _probeUiMods = Promise.all([
+            import('../../test/system/ui-state-collector.js'),
+            import('../core/state.js'),
+            import('../render/drawer.js'),
+            import('../render/toast.js'),
+            import('../render/confirm.js'),
+            import('../render/prompt.js'),
+            import('../render/download.js'),
+            import('../render/session/index.js'),
+        ]).then(([collector, state, drawer, toast, confirm, prompt, download, session]) => ({
+            collectUiState: collector.collectUiState,
+            getState: state.getState,
+            drawer,
+            toast,
+            confirm,
+            prompt,
+            download,
+            session,
+        }));
+    }
+    return _probeUiMods;
+}
+
+/**
+ * 采集当前窗（含 iframe app.html?test=1）整页 `#app` UI 状态。
+ * 在 iframe 内调用时走本窗模块图，不会读到父页 getState / drawer / toast。
+ * @returns {Promise<object>}
+ */
+export async function probeUi() {
+    const mods = await loadProbeUiMods();
+    const gs = mods.getState;
+    const root = (typeof document !== 'undefined' && document.querySelector('#app')) || document?.body;
+    return mods.collectUiState(root, {
+        LX: typeof window !== 'undefined' ? window.LX : null,
+        getWrongbookActive: () => !!gs().isWrongBookMode,
+        isDrawerOpen: () => !!mods.drawer.isDrawerOpen(),
+        getToastLast: () => {
+            const log = typeof mods.toast.__getToastLogForTest === 'function' ? mods.toast.__getToastLogForTest() : [];
+            return log.length ? log[log.length - 1].message : null;
+        },
+        getConfirmAsked: () => {
+            const log = typeof mods.confirm.__getConfirmLogForTest === 'function' ? mods.confirm.__getConfirmLogForTest() : [];
+            return log.map((e) => e.message);
+        },
+        getPromptAsked: () => {
+            const log = typeof mods.prompt.__getPromptLogForTest === 'function' ? mods.prompt.__getPromptLogForTest() : [];
+            return log.map((e) => e.message);
+        },
+        getDownloads: () => {
+            const log = typeof mods.download.__getDownloadLogForTest === 'function' ? mods.download.__getDownloadLogForTest() : [];
+            return log.map((e) => e.filename);
+        },
+        getUiSession: () => {
+            try { return mods.session.getUiSession(); } catch (_) { return null; }
+        },
+        getHash: () => (typeof location !== 'undefined' ? (location.hash || '') : ''),
+    });
+}
+
 export const TestAPI = {
     reset,
     seed,
@@ -266,6 +339,8 @@ export const TestAPI = {
     listScenarios,
     mockFile,
     mockXLSX,
+    busListenerCount,
+    probeUi,
     _clearUndoStack,
     _enableAutoConfirm,
 };

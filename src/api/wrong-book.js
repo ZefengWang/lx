@@ -53,9 +53,10 @@ export function enter() {
     if (wrongCount === 0) {
         return err(ErrorCode.NO_WRONG, '暂无错题，加油！');
     }
-    // 快照当前状态，用于退出时恢复
+    // 快照当前状态，用于退出时恢复；与搜索队列互斥
     setState({
         isWrongBookMode: true,
+        searchPlaylist: null,
         wrongBookSnapshot: {
             category: state.category,
             mode: state.mode,

@@ -11,6 +11,10 @@ describe('WrongBookAPI', () => {
         LX = getLX();
     });
 
+    it('S=未选题库 A=enter → R=STATE_ERROR', () => {
+        assertErr(LX.WrongBookAPI.enter(), 'STATE_ERROR');
+    });
+
     it('无错题时 enter 返回 NO_WRONG', () => {
         const r = LX.LibraryAPI.create('无错题库', [
             { id: 1, type: 'essay', question: 'q1', answer: '', explanation: '' },
@@ -83,5 +87,26 @@ describe('WrongBookAPI', () => {
 
         // 已自动退出
         assertFalse(LX.NavigationAPI.current().data.total === 0, '退出后 navigation 应恢复全量');
+    });
+
+    it('S=有错题 A=list → R=仅 review；exit 退出专注模式', () => {
+        const r = LX.LibraryAPI.create('错题列表库', [
+            { id: 1, type: 'single', question: 'wb-list-1', options: ['A', 'B'], answer: 'A', explanation: '' },
+            { id: 2, type: 'single', question: 'wb-list-2', options: ['A', 'B'], answer: 'A', explanation: '' },
+        ]);
+        LX.LibraryAPI.switch(r.data.id);
+        LX.QuestionAPI.answer(1, 'B');
+        LX.QuestionAPI.answer(2, 'A');
+        const list = LX.WrongBookAPI.list();
+        assertOk(list);
+        assertEqual(list.data.count, 1);
+        assertEqual(list.data.questions.length, 1);
+        assertTrue(String(list.data.questions[0].question || '').includes('wb-list-1'));
+
+        assertOk(LX.WrongBookAPI.enter());
+        assertOk(LX.WrongBookAPI.exit());
+        // 退出后可再次 enter（错题仍在）
+        assertOk(LX.WrongBookAPI.enter());
+        assertOk(LX.WrongBookAPI.exit());
     });
 });

@@ -142,6 +142,27 @@
  * @property {number} total - 当前筛选下题目总数
  */
 
+/**
+ * 题干搜索选项（QuestionAPI.search）
+ * @typedef {Object} QuestionSearchOptions
+ * @property {Array<'question'|'options'|'explanation'|'category'>} [fields] 默认 ['question']
+ * @property {string} [category]
+ * @property {'all'|'none'|'mastered'|'review'} [status]
+ * @property {number} [limit] 默认 50
+ * @property {number} [offset] 默认 0
+ * @property {string[]} [keywords] v1.2：有序 AND 关键字；非空时优先于单体 keyword
+ */
+
+/**
+ * 练习会话（DrillAPI：快速刷题 / 背诵记忆）
+ * @typedef {Object} DrillSession
+ * @property {'quick'|'memory'} mode
+ * @property {(string|number)[]} queue
+ * @property {number} progressIndex
+ * @property {number} viewIndex
+ * @property {Object<string, { userAnswer: any, correct: boolean, correctAnswer?: any, notGraded?: boolean }>} answers
+ */
+
 // ============================================================================
 // 应用全局状态（core/state.js）
 // ============================================================================
@@ -158,6 +179,7 @@
  * @property {number} lastIndex - 当前题目索引
  * @property {(string|number|null)} lastQId - 当前题目 ID
  * @property {(string|number)[]} filteredQIds - 当前筛选下题目 ID 列表
+ * @property {DrillSession | null} drillSession - 练习会话；null 表示未在会话中
  * @property {{ mnemonic: boolean; answer: boolean; remark: boolean }} uiVisibility - UI 可见性
  */
 

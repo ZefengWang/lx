@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="刷题器">
     <!-- 应用图标：紫底圆 + 白书 + 绿对勾（SVG 矢量，任意尺寸不糊） -->
     <link rel="icon" type="image/svg+xml" href="./src/render/assets/logo.svg">
-    <link rel="apple-touch-icon" href="./src/render/assets/logo.svg">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="manifest" href="./manifest.json">
     <title>刷题器</title>
 
     <!-- 第三方依赖：SheetJS / PDF.js -->
@@ -48,5 +49,14 @@
 
     <!-- 主应用入口（核心层 + API 层 + Render 层） -->
     <script type="module" src="./src/main.js"></script>
+    <script>
+        // PWA：相对 scope 适配 GitHub Pages 子路径
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .catch((err) => console.warn('[lx] SW 注册失败:', err));
+            });
+        }
+    </script>
 </body>
 </html>

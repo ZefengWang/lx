@@ -15,7 +15,8 @@ import { getLX, resetStateBeforeEach } from '../helpers.js';
  *
  * 修复：
  *   重写 multi 分支：opts.commit=true 时直接用排序后的数组提交，
- *   调 QuestionAPI.answer 判分，revealed.add 高亮，答对则 setStatus('mastered') 移出
+ *   调 QuestionAPI.answer 判分，revealed.add 高亮，答对则移出。
+ * v3.0.2：移出必须走 WrongBookAPI.markMastered（方案 B），才能清完自动 exit + CLEARED。
  */
 describe('回归：错题本多选题流程（v2.6.2 修复）', () => {
     let LX;
@@ -25,7 +26,7 @@ describe('回归：错题本多选题流程（v2.6.2 修复）', () => {
         LX = getLX();
     });
 
-    it('多选题做错 → 进错题本 → 做对 → 自动移出', () => {
+    it('S=多选做错进错题本 A=做对+markMastered → R=自动移出+CLEARED', () => {
         // 1. 创建题库，含 1 道多选题（正确答案 A,C）
         const r = LX.LibraryAPI.create('多选错题回归库', [
             { id: 1, type: 'multi', question: '多选：下列哪些是水果？', options: ['A.苹果', 'B.桌子', 'C.香蕉', 'D.椅子'], answer: 'A,C', explanation: '苹果和香蕉是水果' },
@@ -66,22 +67,21 @@ describe('回归：错题本多选题流程（v2.6.2 修复）', () => {
         // 验证状态未被自动改（仍为 review，因为错题本模式守卫）
         assertEqual(LX.ProgressAPI.getStatus(q).data, 'review', '错题本模式不应自动改状态');
 
-        // 6. UI 层显式标记掌握（模拟 wrongbook.js 的 commit 分支）
-        const setR = LX.ProgressAPI.setStatus(q, 'mastered');
-        assertOk(setR);
+        // 6. UI 层显式标记掌握（方案 B：模拟 wrongbook.js / wrongbook-flow 契约）
+        let clearedPayload = null;
+        LX.on(LX.Events.WRONGBOOK_CLEARED, (p) => { clearedPayload = p; });
+        const markR = LX.WrongBookAPI.markMastered(q);
+        assertOk(markR);
+        assertTrue(markR.data.cleared, '最后一题 markMastered 应 cleared');
+        assertTrue(clearedPayload, '应触发 WRONGBOOK_CLEARED');
 
-        // 7. 验证已从错题本移出
+        // 7. 验证已从错题本移出 + 已自动 exit（无需再手动 exit）
         assertEqual(LX.ProgressAPI.getStatus(q).data, 'mastered');
         assertEqual(LX.WrongBookAPI.count().data, 0, '错题数应归零');
-
-        // 8. 退出错题模式
-        LX.WrongBookAPI.exit();
-
-        // navigation 恢复全量
-        assertEqual(LX.NavigationAPI.current().data.total, 1);
+        assertEqual(LX.NavigationAPI.current().data.total, 1, '自动退出后恢复全量');
     });
 
-    it('多选题数组传参不爆炸（计数正常）', () => {
+    it('S=多选数组作答 A=answer → R=计数=1 不爆炸（修复后）', () => {
         // 锁住 v2.6.2 修复：确认答案时直接用数组，不嵌套 append
         const r = LX.LibraryAPI.create('多选计数库', [
             { id: 1, type: 'multi', question: '多选', options: ['A', 'B', 'C', 'D'], answer: 'A,B,C', explanation: '' },
@@ -101,7 +101,7 @@ describe('回归：错题本多选题流程（v2.6.2 修复）', () => {
         assertEqual(LX.WrongBookAPI.count().data, 1, '错题计数应为 1，不应爆炸');
     });
 
-    it('多选题顺序无关判分', () => {
+    it('S=多选乱序/逗号串 A=answer → R=判对（修复后）', () => {
         const r = LX.LibraryAPI.create('多选顺序库', [
             { id: 1, type: 'multi', question: '多选', options: ['A', 'B', 'C', 'D'], answer: 'A,C,D', explanation: '' },
         ]);
@@ -120,7 +120,7 @@ describe('回归：错题本多选题流程（v2.6.2 修复）', () => {
         assertTrue(r3.data.correct, '逗号字符串 C,A,D 应判对');
     });
 
-    it('错题本模式下全流程：multi 做错 → enter → 再做对 → 自动 cleared', () => {
+    it('S=错题本 multi A=做错→enter→做对+markMastered → R=cleared+exit', () => {
         // 端到端：只有 1 道多选错题，做对后应自动 exit + WRONGBOOK_CLEARED
         const r = LX.LibraryAPI.create('单题多选库', [
             { id: 1, type: 'multi', question: '多选', options: ['A', 'B', 'C'], answer: 'A,B', explanation: '' },

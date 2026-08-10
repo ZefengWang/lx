@@ -17,12 +17,27 @@
         </h1>
         <div class="actions">
             <button class="btn" id="runBtn" disabled>▶ 运行全部</button>
+            <button class="btn secondary" id="copyJsonBtn" disabled>复制结果 JSON</button>
             <button class="btn secondary" id="clearBtn">清空结果</button>
         </div>
     </div>
 
     <div class="test-warning">
-        ⚠️ 测试模式：运行测试会清空当前题库与进度数据。系统会自动备份，可用 <code style="background:#451a03;padding:2px 6px;border-radius:4px">LX.TestAPI.undoLast()</code> 回滚。
+        ⚠️ 本页是<strong>唯一测试控制台</strong>（core/api/ui/integration/system/regression 全在此跑）。
+        请用干净地址 <code style="background:#451a03;padding:2px 6px;border-radius:4px">/test.html</code>（不要带 <code>#/settings</code> 等业务 hash；那是 app 路由，不是筛选）。
+        运行会清空题库与进度（自动备份可用 <code style="background:#451a03;padding:2px 6px;border-radius:4px">LX.TestAPI.undoLast()</code>）。
+        单条复现：上方「用例目录」点<strong>填充</strong>/<strong>运行</strong> → 下方对照实际结果与预期。
+        若失败请点「复制结果 JSON」把 failures 贴出来。Agent 脚本 <code>tools/run-tests.py</code> 与「运行全部」同源。
+    </div>
+
+    <div class="test-summary" id="layerBar" style="flex-wrap:wrap;gap:8px;">
+        <span class="badge duration" data-layer-filter="">全部层</span>
+        <span class="badge duration" data-layer-filter="core">core</span>
+        <span class="badge duration" data-layer-filter="api">api</span>
+        <span class="badge duration" data-layer-filter="ui">ui</span>
+        <span class="badge duration" data-layer-filter="integration">integration</span>
+        <span class="badge duration" data-layer-filter="system">system</span>
+        <span class="badge duration" data-layer-filter="regression">regression</span>
     </div>
 
     <div class="test-summary" id="summary">
@@ -32,18 +47,71 @@
         <span class="badge duration">耗时 -</span>
     </div>
 
-    <div class="test-results" id="results">
-        <div style="padding:40px;text-align:center;color:#64748b;">点击"运行全部"开始测试</div>
+    <div class="case-catalog is-collapsed" id="caseCatalog">
+        <div class="case-catalog__head" id="caseCatalogToggle" role="button" tabindex="0" aria-expanded="false" title="展开/收起用例目录">
+            <span class="icon suite-twist" id="caseCatalogTwist">▸</span>
+            <h2>用例目录</h2>
+            <span class="meta" id="caseCatalogMeta">加载中…</span>
+            <input class="case-catalog__filter" id="caseFilter" type="search" placeholder="过滤套件/用例名…" aria-label="过滤用例" onclick="event.stopPropagation()">
+        </div>
+        <div class="case-catalog__body" id="caseCatalogBody">
+            <div style="padding:24px;text-align:center;color:#64748b;">等待用例注册…</div>
+        </div>
     </div>
 
-    <div class="repl">
-        <h2>REPL（在 window.LX 上下文执行）</h2>
-        <textarea id="replInput" placeholder="// 输入 JS 代码，例如：LX.LibraryAPI.list()&#10;// 或：LX.TestAPI.seed('small')&#10;// 或：LX.QuestionAPI.answer(1, 'B')"></textarea>
-        <div style="margin-top:8px;display:flex;gap:8px;">
+    <div class="app-preview is-collapsed" id="appPreviewPanel">
+        <div class="app-preview__head" id="appPreviewToggle" role="button" tabindex="0" aria-expanded="false" title="展开/收起应用预览">
+            <span class="icon suite-twist" id="appPreviewTwist">▸</span>
+            <h2>应用预览</h2>
+            <span class="meta" id="appPreviewMeta">iframe → app.html?test=1（SAR 被测对象）</span>
+        </div>
+        <div class="app-preview__body">
+            <div class="app-preview__warn">
+                同源真入口 <code>app.html?test=1</code>（挂 <code>TestAPI</code>）。与控制台<strong>共享 localStorage</strong>。
+                「运行全部」时系统 SAR <strong>就打在这个预览 iframe 上</strong>（会自动展开）；你应能看到路由/顶栏/题目切换。
+                两点采样间隙可能短暂静止。详见 <code>docs/testing/UI-STATE-SYSTEM.md</code>。
+            </div>
+            <div class="app-preview__toolbar">
+                <button type="button" class="btn secondary" id="previewReloadBtn">刷新预览</button>
+                <button type="button" class="btn secondary" id="previewOpenBtn">新窗口打开</button>
+                <button type="button" class="btn secondary" id="previewSnapBtn">快照 LX 状态</button>
+                <span class="meta" id="previewHashLabel" aria-live="polite">hash: —</span>
+            </div>
+            <iframe
+                id="appPreview"
+                class="app-preview__frame"
+                title="刷题器应用预览"
+                data-src="./app.html?test=1"
+                src="about:blank"
+            ></iframe>
+            <pre class="app-preview__snap" id="previewSnapOut">// 点「快照 LX 状态」读取 iframe.contentWindow.LX</pre>
+        </div>
+    </div>
+
+    <div class="test-results" id="results">
+        <div style="padding:40px;text-align:center;color:#64748b;">点击「运行全部」批量跑测；单条请用上方目录「填充」后在下方运行</div>
+    </div>
+    <!-- 无头跑测落盘用：tools/run-tests.py 解析此节点 -->
+    <pre id="__lx_test_results_json" hidden></pre>
+
+    <div class="repl" id="manualRunPanel">
+        <h2>单条复现 / 手动对照</h2>
+        <div class="hint">
+            在上方用例目录点「填充」：会写入运行命令与预期结果。点「▶ 运行」看实际结果，自行判断是否与预期相符。
+            也可手写 <code>return await LXTest.runCase("套件名", "用例名")</code> 或任意 <code>LX.*</code> 表达式。
+        </div>
+        <div class="field-label">运行命令</div>
+        <textarea id="replInput" placeholder="return await LXTest.runCase(&quot;套件名&quot;, &quot;用例名&quot;)&#10;// 或：return LX.LibraryAPI.list()"></textarea>
+        <div class="field-label">预期结果（可改；填充时按用例名 R= 段生成）</div>
+        <textarea id="expectedInput" placeholder='{ "status": "pass" }'></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn" id="replRunBtn">▶ 运行</button>
             <button class="btn secondary" id="replClearBtn">清空</button>
+            <button class="btn secondary" id="scrollCatalogBtn">回到用例目录</button>
         </div>
-        <div class="output" id="replOutput">// 结果将显示在这里</div>
+        <div class="field-label">实际结果</div>
+        <div class="output" id="replOutput">// 运行后显示在这里</div>
+        <div class="compare manual" id="compareBox">对照：先填充并运行一条用例</div>
     </div>
 
     <!-- 主应用入口 -->
@@ -51,10 +119,49 @@
 
     <!-- 测试入口 -->
     <script type="module">
-        import { runAll, getSuites, formatResults } from './test/runner.js';
+        import {
+            runAll, getSuites, formatResults, listCases, runCase, parseExpectedFromTestName,
+        } from './test/runner.js';
         import { waitForLX } from './test/helpers.js';
+        import { resetHarnessForFullRun } from './test/ui/dom-harness.js';
+        import { __setConfirmForTest } from './src/render/confirm.js';
+        import { __setPromptForTest } from './src/render/prompt.js';
         // 注册所有测试套件
         await import('./test/index.js');
+
+        /** 每轮跑测前钉死副作用钩子，消除跨轮次残留 */
+        function prepareFullRun() {
+            resetHarnessForFullRun();
+            __setConfirmForTest(() => true);
+            __setPromptForTest((_msg, def) => (def == null ? '' : String(def)));
+            if (typeof window !== 'undefined') {
+                window.confirm = () => true;
+                window.prompt = (msg, def) => (def == null ? '' : String(def));
+            }
+            if (window.LX && window.LX.TestAPI) {
+                window.LX.TestAPI._enableAutoConfirm();
+            }
+            // 展开应用预览：SAR 打在 #appPreview（ensureAppIframe 负责加载 ?test=1）
+            const panel = document.getElementById('appPreviewPanel');
+            if (panel) {
+                panel.classList.remove('is-collapsed');
+                const twist = document.getElementById('appPreviewTwist');
+                if (twist) twist.textContent = '▾';
+                const head = document.getElementById('appPreviewToggle');
+                if (head) head.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        /** 单条复现 API（挂到 window，供下方命令框调用） */
+        window.LXTest = {
+            runCase: async (suiteName, testName) => {
+                prepareFullRun();
+                return runCase(suiteName, testName);
+            },
+            listCases,
+            parseExpectedFromTestName,
+            prepareFullRun,
+        };
 
         const $ = (id) => document.getElementById(id);
         const runBtn = $('runBtn');
@@ -62,8 +169,115 @@
         const versionEl = $('version');
         const summaryEl = $('summary');
         const resultsEl = $('results');
+        const caseCatalogBody = $('caseCatalogBody');
+        const caseCatalogMeta = $('caseCatalogMeta');
+        const caseFilter = $('caseFilter');
+        const expectedInput = $('expectedInput');
+        const compareBox = $('compareBox');
 
         let _results = null;
+        let _layerFilter = '';
+        const copyJsonBtn = $('copyJsonBtn');
+        const layerBar = $('layerBar');
+
+        const params = new URLSearchParams(location.search);
+        const autoRun = params.get('autorun') === '1';
+        // autorun=2：同一页连跑两轮（锁「二次点击运行」残留回归）
+        const autoRunTwice = params.get('autorun') === '2';
+
+        // 业务 hash（如 #/settings）是 app.html 路由，不是测试过滤条件。
+        // 测例里的 navigate() 也会改写 hash；进入控制台时清掉，避免误导。
+        if (location.hash && location.hash !== '#' && location.hash !== '#/') {
+            history.replaceState(null, '', location.pathname + location.search);
+        }
+
+        function escapeHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /** 填充下方命令 + 预期，并滚到运行区 */
+        function fillCase(suiteName, testName) {
+            // 用 return await，保证运行区拿到 runCase 的返回值
+            const cmd = `return await LXTest.runCase(${JSON.stringify(suiteName)}, ${JSON.stringify(testName)})`;
+            const expected = parseExpectedFromTestName(testName);
+            $('replInput').value = cmd;
+            expectedInput.value = JSON.stringify(expected, null, 2);
+            $('replOutput').className = 'output';
+            $('replOutput').textContent = '// 已填充。点「▶ 运行」执行本条用例';
+            compareBox.className = 'compare manual';
+            compareBox.textContent = '对照：命令与预期已填充，请点运行后自行判断';
+            $('manualRunPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function bindFillButtons(root) {
+            root.querySelectorAll('[data-fill-suite]').forEach((btn) => {
+                btn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    fillCase(btn.getAttribute('data-fill-suite'), btn.getAttribute('data-fill-name'));
+                });
+            });
+            root.querySelectorAll('[data-run-suite]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    fillCase(btn.getAttribute('data-run-suite'), btn.getAttribute('data-run-name'));
+                    $('replRunBtn').click();
+                });
+            });
+        }
+
+        function renderCaseCatalog() {
+            const suites = getSuites();
+            const q = (caseFilter.value || '').trim().toLowerCase();
+            let caseCount = 0;
+            const html = suites.map((suite) => {
+                const tests = suite.tests.filter((t) => {
+                    if (!q) return true;
+                    return suite.name.toLowerCase().includes(q) || t.name.toLowerCase().includes(q);
+                });
+                if (!tests.length) return '';
+                caseCount += tests.length;
+                const testsHtml = tests.map((t) => {
+                    const skipped = t.skipped ? ' skip' : '';
+                    const icon = t.skipped ? '○' : '·';
+                    return `<div class="test-item${skipped}">
+                        <span class="icon">${icon}</span>
+                        <span class="name">${escapeHtml(t.name)}</span>
+                        <span class="case-actions">
+                            <button type="button" class="btn-mini" data-fill-suite="${escapeHtml(suite.name)}" data-fill-name="${escapeHtml(t.name)}">填充</button>
+                            <button type="button" class="btn-mini primary" data-run-suite="${escapeHtml(suite.name)}" data-run-name="${escapeHtml(t.name)}">运行</button>
+                        </span>
+                    </div>`;
+                }).join('');
+                const layer = suite.layer ? `<span class="count">[${suite.layer}]</span>` : '';
+                return `
+                    <div class="suite" data-layer="${suite.layer || ''}" data-suite-name="${escapeHtml(suite.name)}">
+                        <div class="suite-header">
+                            <span class="icon suite-twist">▸</span>
+                            <span>${escapeHtml(suite.name)}</span>
+                            ${layer}
+                            <span class="count">${tests.length} 条</span>
+                        </div>
+                        <div class="test-list">${testsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+            caseCatalogBody.innerHTML = html || '<div style="padding:24px;text-align:center;color:#64748b;">无匹配用例</div>';
+            caseCatalogMeta.textContent = `${caseCount} 条 / ${suites.length} 套件（默认收起，点套件展开）`;
+            caseCatalogBody.querySelectorAll('.suite-header').forEach((header) => {
+                header.addEventListener('click', () => {
+                    const list = header.nextElementSibling;
+                    const twist = header.querySelector('.suite-twist');
+                    const open = list.classList.toggle('expanded');
+                    if (twist) twist.textContent = open ? '▾' : '▸';
+                });
+            });
+            bindFillButtons(caseCatalogBody);
+            applyLayerFilter();
+        }
 
         // 等待 LX 就绪
         try {
@@ -72,20 +286,240 @@
             status.textContent = '就绪';
             status.className = 'status-indicator ready';
             runBtn.disabled = false;
+            renderCaseCatalog();
+            // autorun 延后到本脚本注册完 runBtn 监听后再触发（见文件末尾）
+            window.__LX_AUTORUN_PENDING__ = !!(autoRun || autoRunTwice);
         } catch (e) {
             status.textContent = '加载失败';
             status.className = 'status-indicator error';
             resultsEl.innerHTML = `<div style="padding:20px;color:#fca5a5;">LX 加载失败：${e.message}<br>请用 http://localhost:8080/test.html 访问（非 file://）</div>`;
+            window.__TEST_RESULTS__ = { ok: false, error: e.message };
         }
 
+        caseFilter.addEventListener('input', () => renderCaseCatalog());
+
+        function setCaseCatalogOpen(open) {
+            const panel = $('caseCatalog');
+            const twist = $('caseCatalogTwist');
+            const head = $('caseCatalogToggle');
+            panel.classList.toggle('is-collapsed', !open);
+            if (twist) twist.textContent = open ? '▾' : '▸';
+            if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        $('caseCatalogToggle').addEventListener('click', (ev) => {
+            if (ev.target.closest('.case-catalog__filter')) return;
+            setCaseCatalogOpen($('caseCatalog').classList.contains('is-collapsed'));
+        });
+        $('caseCatalogToggle').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                setCaseCatalogOpen($('caseCatalog').classList.contains('is-collapsed'));
+            }
+        });
+
+        $('scrollCatalogBtn').addEventListener('click', () => {
+            setCaseCatalogOpen(true);
+            $('caseCatalog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // —— 应用预览（iframe → app.html；展开时再加载，避免 autorun CI 双开拖慢）——
+        const previewFrame = $('appPreview');
+        const previewSnapOut = $('previewSnapOut');
+        const previewHashLabel = $('previewHashLabel');
+        let _previewHashTimer = null;
+
+        function ensurePreviewLoaded() {
+            const src = previewFrame.getAttribute('data-src') || './app.html';
+            if (!previewFrame.getAttribute('src') || previewFrame.getAttribute('src') === 'about:blank') {
+                previewFrame.setAttribute('src', src);
+            }
+        }
+
+        function reloadPreview() {
+            const src = previewFrame.getAttribute('data-src') || './app.html';
+            previewFrame.setAttribute('src', 'about:blank');
+            requestAnimationFrame(() => {
+                previewFrame.setAttribute('src', src);
+            });
+            previewSnapOut.textContent = '// 已请求刷新预览';
+        }
+
+        function getPreviewLX() {
+            try {
+                return previewFrame.contentWindow && previewFrame.contentWindow.LX;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function updatePreviewHash() {
+            try {
+                const h = previewFrame.contentWindow?.location?.hash || '—';
+                previewHashLabel.textContent = `hash: ${h || '#/'}`;
+            } catch (_) {
+                previewHashLabel.textContent = 'hash: （不可读）';
+            }
+        }
+
+        async function snapshotPreview() {
+            ensurePreviewLoaded();
+            const LX = getPreviewLX();
+            if (!LX) {
+                previewSnapOut.textContent = '// iframe 尚未就绪或 LX 未挂载；请展开预览并稍候再试';
+                return;
+            }
+            let uiSession = null;
+            try {
+                // iframe 内动态 import（window.import 不存在）
+                const mod = await previewFrame.contentWindow
+                    .Function('return import("./src/render/session/index.js")')();
+                uiSession = mod.getUiSession();
+            } catch (_) {
+                uiSession = { note: 'UiSession 不可达（可忽略）' };
+            }
+            const libList = LX.LibraryAPI?.list?.();
+            const nav = LX.NavigationAPI?.current?.();
+            const playlist = LX.NavigationAPI?.getSearchPlaylist?.();
+            const snap = {
+                version: LX.version,
+                library: libList?.ok ? {
+                    count: (libList.data || []).length,
+                    current: LX.LibraryAPI.current?.()?.data,
+                } : libList,
+                navigation: nav?.ok ? nav.data : nav,
+                searchPlaylist: playlist,
+                drillActive: !!(LX.DrillAPI && LX.DrillAPI.isActive && LX.DrillAPI.isActive()),
+                uiSession,
+                hash: previewFrame.contentWindow?.location?.hash || '',
+            };
+            previewSnapOut.textContent = JSON.stringify(snap, null, 2);
+            updatePreviewHash();
+        }
+
+        window.__LX_PREVIEW__ = {
+            reload: reloadPreview,
+            snapshot: snapshotPreview,
+            getLX: getPreviewLX,
+            frame: previewFrame,
+        };
+
+        function setAppPreviewOpen(open) {
+            const panel = $('appPreviewPanel');
+            const twist = $('appPreviewTwist');
+            const head = $('appPreviewToggle');
+            panel.classList.toggle('is-collapsed', !open);
+            if (twist) twist.textContent = open ? '▾' : '▸';
+            if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                ensurePreviewLoaded();
+                if (!_previewHashTimer) {
+                    _previewHashTimer = setInterval(updatePreviewHash, 800);
+                }
+            } else if (_previewHashTimer) {
+                clearInterval(_previewHashTimer);
+                _previewHashTimer = null;
+            }
+        }
+        $('appPreviewToggle').addEventListener('click', () => {
+            setAppPreviewOpen($('appPreviewPanel').classList.contains('is-collapsed'));
+        });
+        $('appPreviewToggle').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+                ev.preventDefault();
+                setAppPreviewOpen($('appPreviewPanel').classList.contains('is-collapsed'));
+            }
+        });
+        $('previewReloadBtn').addEventListener('click', () => {
+            ensurePreviewLoaded();
+            reloadPreview();
+        });
+        $('previewOpenBtn').addEventListener('click', () => {
+            window.open('./app.html?test=1', '_blank', 'noopener');
+        });
+        $('previewSnapBtn').addEventListener('click', () => { snapshotPreview(); });
+        previewFrame.addEventListener('load', () => updatePreviewHash());
+
         function updateSummary(r) {
-            const dur = r.endTime ? `${r.duration}ms` : '进行中...';
+            const done = !!r.endTime;
+            const dur = done ? `${r.duration}ms` : `${r.duration || 0}ms · 进行中`;
+            let layerHtml = '';
+            if (r.byLayer) {
+                layerHtml = Object.keys(r.byLayer).map((k) => {
+                    const L = r.byLayer[k];
+                    return `<span class="badge duration">${k} ${L.passed}/${L.total}</span>`;
+                }).join('');
+            }
+            const cur = r.current;
+            const doneCount = (r.passed || 0) + (r.failed || 0) + (r.skipped || 0);
+            const curHtml = (!done && cur)
+                ? `<div class="meta" style="width:100%;margin-top:6px;font-size:12px;opacity:.9;">正在跑 [${escapeHtml(cur.layer || '')}] ${escapeHtml(cur.suite || '')} · ${escapeHtml(cur.name || '')}</div>`
+                : '';
             summaryEl.innerHTML = `
-                <span class="badge pass">通过 ${r.passed}</span>
-                <span class="badge fail">失败 ${r.failed}</span>
-                <span class="badge skip">跳过 ${r.skipped}</span>
+                <span class="badge pass">通过 ${r.passed || 0}</span>
+                <span class="badge fail">失败 ${r.failed || 0}</span>
+                <span class="badge skip">跳过 ${r.skipped || 0}</span>
+                <span class="badge duration">合计 ${doneCount}/${r.total || '?'}</span>
                 <span class="badge duration">耗时 ${dur}</span>
+                ${layerHtml}
+                ${curHtml}
             `;
+            // 进行中：结果区也要动（SAR 矩阵两点采样时 iframe 应用界面几乎不动，控制台必须滚动）
+            if (!done) renderLiveProgress(r);
+        }
+
+        /** 运行中轻量刷新：已完成套件摘要 + 当前套件最近用例 */
+        function renderLiveProgress(r) {
+            if (!resultsEl) return;
+            const finished = (r.suites || []).map((suite) => {
+                const icon = suite.failed > 0 ? '✗' : '✓';
+                const iconClass = suite.failed > 0 ? 'fail' : 'pass';
+                return `<div class="suite" data-layer="${suite.layer || ''}">
+                    <div class="suite-header">
+                        <span class="icon ${iconClass}" style="width:auto;">${icon}</span>
+                        <span>${escapeHtml(suite.name)}</span>
+                        <span class="count">[${escapeHtml(suite.layer || '')}] ${suite.passed}/${suite.tests.length}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            const active = r.activeSuite;
+            let activeHtml = '';
+            if (active) {
+                const testsHtml = (active.tests || []).map((t) => {
+                    if (t.status === 'skip') {
+                        return `<div class="test-item skip"><span class="icon">○</span><span class="name">${escapeHtml(t.name)}</span></div>`;
+                    }
+                    if (t.status === 'pass') {
+                        return `<div class="test-item pass"><span class="icon">✓</span><span class="name">${escapeHtml(t.name)}</span><span class="duration">${t.duration != null ? t.duration + 'ms' : ''}</span></div>`;
+                    }
+                    const msg = (t.error && t.error.message) || 'fail';
+                    return `<div class="test-item fail"><span class="icon">✗</span><span class="name">${escapeHtml(t.name)} — ${escapeHtml(msg)}</span></div>`;
+                }).join('');
+                const doneInSuite = active.passed + active.failed + active.skipped;
+                activeHtml = `<div class="suite" data-layer="${active.layer || ''}">
+                    <div class="suite-header">
+                        <span class="icon suite-twist">▾</span>
+                        <span class="icon" style="width:auto;">⏳</span>
+                        <span>${escapeHtml(active.name)}</span>
+                        <span class="count">[${escapeHtml(active.layer || '')}] 进行中 ${doneInSuite}/${active.planned}</span>
+                    </div>
+                    <div class="test-list expanded">${testsHtml || '<div class="test-item skip"><span class="name">启动中…</span></div>'}</div>
+                </div>`;
+            }
+            resultsEl.innerHTML = `
+                <div style="padding:8px 12px;color:#94a3b8;font-size:12px;">
+                    运行中：SAR 对 iframe 应用做「动作前/后」两点采样，应用界面中间帧本来就不会刷；
+                    下方计数与用例名持续更新即表示未卡死。
+                </div>
+                ${finished}
+                ${activeHtml}
+            `;
+        }
+
+        function caseActionBtns(suiteName, testName) {
+            return `<span class="case-actions">
+                <button type="button" class="btn-mini" data-fill-suite="${escapeHtml(suiteName)}" data-fill-name="${escapeHtml(testName)}">填充</button>
+                <button type="button" class="btn-mini primary" data-run-suite="${escapeHtml(suiteName)}" data-run-name="${escapeHtml(testName)}">运行</button>
+            </span>`;
         }
 
         function renderResults(r) {
@@ -95,21 +529,25 @@
                 const icon = suite.failed > 0 ? '✗' : '✓';
                 const iconClass = suite.failed > 0 ? 'fail' : 'pass';
                 const testsHtml = suite.tests.map((t) => {
+                    const actions = caseActionBtns(suite.name, t.name);
                     if (t.status === 'skip') {
-                        return `<div class="test-item skip"><span class="icon">○</span><span class="name">${t.name}</span></div>`;
+                        return `<div class="test-item skip"><span class="icon">○</span><span class="name">${escapeHtml(t.name)}</span>${actions}</div>`;
                     }
                     if (t.status === 'pass') {
-                        return `<div class="test-item pass"><span class="icon">✓</span><span class="name">${t.name}</span><span class="duration">${t.duration}ms</span></div>`;
+                        return `<div class="test-item pass"><span class="icon">✓</span><span class="name">${escapeHtml(t.name)}</span><span class="duration">${t.duration}ms</span>${actions}</div>`;
                     }
                     const err = t.error || {};
-                    const detail = err.message ? `<div class="error-detail">Error: ${err.message}${err.expected ? `\nExpected: ${JSON.stringify(err.expected)}` : ''}${err.actual != null ? `\nActual: ${JSON.stringify(err.actual)}` : ''}${err.stack ? `\n\n${err.stack.split('\n').slice(0, 4).join('\n')}` : ''}</div>` : '';
-                    return `<div class="test-item fail"><span class="icon">✗</span><span class="name">${t.name}${detail}</span></div>`;
+                    const detail = err.message ? `<div class="error-detail">Error: ${escapeHtml(err.message)}${err.expected ? `\nExpected: ${escapeHtml(JSON.stringify(err.expected))}` : ''}${err.actual != null ? `\nActual: ${escapeHtml(JSON.stringify(err.actual))}` : ''}${err.stack ? `\n\n${escapeHtml(err.stack.split('\n').slice(0, 4).join('\n'))}` : ''}</div>` : '';
+                    return `<div class="test-item fail"><span class="icon">✗</span><span class="name">${escapeHtml(t.name)}${detail}</span>${actions}</div>`;
                 }).join('');
+                const layer = suite.layer ? `<span class="count">[${suite.layer}]</span>` : '';
                 return `
-                    <div class="suite">
-                        <div class="suite-header" data-suite="${suite.name}">
-                            <span class="icon ${iconClass}">${icon}</span>
-                            <span>${suite.name}</span>
+                    <div class="suite" data-layer="${suite.layer || ''}">
+                        <div class="suite-header" data-suite="${escapeHtml(suite.name)}">
+                            <span class="icon suite-twist ${iconClass}">▸</span>
+                            <span class="icon ${iconClass}" style="width:auto;">${icon}</span>
+                            <span>${escapeHtml(suite.name)}</span>
+                            ${layer}
                             <span class="count">${suite.passed}/${suite.tests.length} 通过</span>
                         </div>
                         <div class="test-list">${testsHtml}</div>
@@ -120,74 +558,273 @@
 
             // 折叠/展开
             resultsEl.querySelectorAll('.suite-header').forEach((header) => {
+                const twist = header.querySelector('.suite-twist') || header.querySelector('.icon');
+                if (twist && !twist.classList.contains('suite-twist')) {
+                    twist.classList.add('suite-twist');
+                }
                 header.addEventListener('click', () => {
                     const list = header.nextElementSibling;
-                    list.classList.toggle('expanded');
+                    const open = list.classList.toggle('expanded');
+                    if (twist) twist.textContent = open ? '▾' : '▸';
                 });
                 // 默认展开失败套件
                 const suite = r.suites.find((s) => s.name === header.dataset.suite);
                 if (suite && suite.failed > 0) {
                     header.nextElementSibling.classList.add('expanded');
+                    if (twist) twist.textContent = '▾';
+                } else if (twist) {
+                    twist.textContent = '▸';
                 }
+            });
+            bindFillButtons(resultsEl);
+            applyLayerFilter();
+        }
+
+        function applyLayerFilter() {
+            const roots = [resultsEl, caseCatalogBody];
+            for (const root of roots) {
+                if (!root) continue;
+                root.querySelectorAll('.suite').forEach((el) => {
+                    const layer = el.getAttribute('data-layer') || '';
+                    el.style.display = (!_layerFilter || layer === _layerFilter) ? '' : 'none';
+                });
+            }
+            if (layerBar) {
+                layerBar.querySelectorAll('[data-layer-filter]').forEach((chip) => {
+                    const active = (chip.getAttribute('data-layer-filter') || '') === _layerFilter;
+                    chip.style.outline = active ? '2px solid #a5b4fc' : 'none';
+                });
+            }
+        }
+
+        if (layerBar) {
+            layerBar.addEventListener('click', (ev) => {
+                const chip = ev.target.closest('[data-layer-filter]');
+                if (!chip) return;
+                _layerFilter = chip.getAttribute('data-layer-filter') || '';
+                applyLayerFilter();
             });
         }
 
         runBtn.addEventListener('click', async () => {
             runBtn.disabled = true;
+            copyJsonBtn.disabled = true;
             runBtn.textContent = '⏳ 运行中...';
-            // 启用自动确认（避免每个测试弹 confirm）
-            if (window.LX && window.LX.TestAPI) {
-                window.LX.TestAPI._enableAutoConfirm();
+            const times = autoRunTwice ? 2 : 1;
+            // autorun=2 只消费一次，避免手动再点时仍连跑两轮
+            if (autoRunTwice) {
+                const u = new URL(location.href);
+                u.searchParams.delete('autorun');
+                history.replaceState(null, '', u.pathname + u.search);
             }
             try {
-                const r = await runAll(updateSummary);
-                renderResults(r);
-                console.log(formatResults(r));
+                const rounds = [];
+                for (let i = 0; i < times; i++) {
+                    prepareFullRun();
+                    resultsEl.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">已开始运行，进度见上方摘要…</div>';
+                    const layerParam = params.get('layer') || _layerFilter || '';
+                    const r = await runAll(
+                        updateSummary,
+                        layerParam ? { layer: layerParam } : {}
+                    );
+                    renderResults(r);
+                    console.log(times > 1 ? `[run ${i + 1}/${times}]` : '', formatResults(r));
+                    const failures = [];
+                    for (const suite of r.suites || []) {
+                        for (const t of suite.tests || []) {
+                            if (t.status === 'fail') {
+                                failures.push({
+                                    suite: suite.name,
+                                    layer: suite.layer,
+                                    name: t.name,
+                                    message: (t.error && t.error.message) || 'fail',
+                                });
+                            }
+                        }
+                    }
+                    rounds.push({
+                        ok: r.failed === 0,
+                        passed: r.passed,
+                        failed: r.failed,
+                        skipped: r.skipped,
+                        total: r.total,
+                        duration: r.duration,
+                        byLayer: r.byLayer,
+                        failures,
+                    });
+                }
+                const last = rounds[rounds.length - 1];
+                const allOk = rounds.every((x) => x.ok);
+                const payload = {
+                    ok: allOk,
+                    passed: last.passed,
+                    failed: last.failed,
+                    skipped: last.skipped,
+                    total: last.total,
+                    duration: rounds.reduce((s, x) => s + (x.duration || 0), 0),
+                    byLayer: last.byLayer,
+                    failures: last.failures,
+                    rounds: times > 1 ? rounds : undefined,
+                    version: (window.LX && window.LX.version) || null,
+                    finishedAt: new Date().toISOString(),
+                    console: 'test.html',
+                };
+                window.__TEST_RESULTS__ = payload;
+                const jsonEl = document.getElementById('__lx_test_results_json');
+                if (jsonEl) jsonEl.textContent = JSON.stringify(payload);
+                document.documentElement.setAttribute('data-lx-test-done', payload.ok ? '1' : '0');
+                document.title = payload.ok
+                    ? `PASS ${last.passed}/${last.total}${times > 1 ? ` x${times}` : ''}`
+                    : `FAIL ${last.failed}/${last.total}${times > 1 ? ` x${times}` : ''}`;
+                copyJsonBtn.disabled = false;
+                try {
+                    await fetch('/__lx_test_report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                } catch (_) { /* file:// 或无服务器时忽略 */ }
             } catch (e) {
                 resultsEl.innerHTML = `<div style="padding:20px;color:#fca5a5;">运行错误：${e.message}<br><pre>${e.stack}</pre></div>`;
+                const payload = { ok: false, error: e.message, finishedAt: new Date().toISOString(), console: 'test.html' };
+                window.__TEST_RESULTS__ = payload;
+                const jsonEl = document.getElementById('__lx_test_results_json');
+                if (jsonEl) jsonEl.textContent = JSON.stringify(payload);
+                document.documentElement.setAttribute('data-lx-test-done', '0');
+                copyJsonBtn.disabled = false;
+                try {
+                    await fetch('/__lx_test_report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                } catch (_) { /* ignore */ }
             } finally {
                 runBtn.disabled = false;
                 runBtn.textContent = '▶ 运行全部';
             }
         });
 
+        copyJsonBtn.addEventListener('click', async () => {
+            const text = document.getElementById('__lx_test_results_json')?.textContent
+                || JSON.stringify(window.__TEST_RESULTS__ || {}, null, 2);
+            try {
+                await navigator.clipboard.writeText(text);
+                copyJsonBtn.textContent = '已复制';
+                setTimeout(() => { copyJsonBtn.textContent = '复制结果 JSON'; }, 1200);
+            } catch (_) {
+                prompt('复制以下 JSON：', text);
+            }
+        });
+
         $('clearBtn').addEventListener('click', () => {
             _results = null;
+            copyJsonBtn.disabled = true;
             resultsEl.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b;">点击"运行全部"开始测试</div>';
             updateSummary({ passed: 0, failed: 0, skipped: 0, duration: '-' });
         });
 
-        // REPL
+        // 单条复现 / REPL
         const replInput = $('replInput');
         const replOutput = $('replOutput');
+
+        function normalizeForCompare(value) {
+            if (value == null) return value;
+            if (typeof value !== 'object') return value;
+            // 对照时忽略耗时等噪声字段
+            const clone = JSON.parse(JSON.stringify(value));
+            if (clone && typeof clone === 'object') {
+                delete clone.duration;
+                if (clone.error && typeof clone.error === 'object') {
+                    delete clone.error.stack;
+                }
+            }
+            return clone;
+        }
+
+        function updateCompare(actual) {
+            const raw = (expectedInput.value || '').trim();
+            if (!raw) {
+                compareBox.className = 'compare manual';
+                compareBox.textContent = '对照：未填预期。请看实际结果自行判断，或填写预期 JSON 后再运行';
+                return;
+            }
+            let expected;
+            try {
+                expected = JSON.parse(raw);
+            } catch (_) {
+                compareBox.className = 'compare manual';
+                compareBox.textContent = '对照：预期不是合法 JSON，请人工对照实际结果与预期文案';
+                return;
+            }
+            const a = normalizeForCompare(actual);
+            const e = normalizeForCompare(expected);
+            // 宽松：若预期只有 status，只比 status；否则整对象关键字段
+            let match;
+            if (e && typeof e === 'object' && Object.keys(e).length === 1 && 'status' in e) {
+                match = a && a.status === e.status;
+            } else if (e && typeof e === 'object' && a && typeof a === 'object' && 'status' in e) {
+                match = a.status === e.status
+                    && (e.note == null || e.note === a.note)
+                    && (e.ok == null || e.ok === a.ok);
+            } else {
+                match = JSON.stringify(a) === JSON.stringify(e);
+            }
+            if (match) {
+                compareBox.className = 'compare match';
+                compareBox.textContent = '自动对照：与预期一致（仍建议人工确认业务语义）';
+            } else {
+                compareBox.className = 'compare mismatch';
+                compareBox.textContent = '自动对照：与预期不一致 — 请核对上方实际结果与预期，自行判定';
+            }
+        }
+
         $('replRunBtn').addEventListener('click', async () => {
             const code = replInput.value.trim();
             if (!code) return;
+            replOutput.className = 'output';
+            replOutput.textContent = '运行中…';
+            compareBox.className = 'compare manual';
+            compareBox.textContent = '对照：运行中…';
             try {
-                const fn = new Function('LX', `return (async () => ${code})()`);
-                const result = await fn(window.LX);
+                // 提供 LX / LXTest；支持顶层 await
+                const fn = new Function('LX', 'LXTest', `return (async () => {\n${code}\n})()`);
+                const result = await fn(window.LX, window.LXTest);
                 if (result instanceof Blob) {
                     replOutput.className = 'output';
                     replOutput.textContent = `Blob { size: ${result.size}, type: "${result.type}" }`;
+                    updateCompare({ type: 'Blob', size: result.size });
                 } else {
-                    replOutput.className = 'output';
+                    replOutput.className = result && result.ok === false ? 'output error' : 'output';
                     replOutput.textContent = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                    updateCompare(result);
                 }
             } catch (e) {
                 replOutput.className = 'output error';
                 replOutput.textContent = `Error: ${e.message}\n${e.stack || ''}`;
+                compareBox.className = 'compare mismatch';
+                compareBox.textContent = '对照：命令抛错，请看实际结果';
             }
         });
         $('replClearBtn').addEventListener('click', () => {
             replInput.value = '';
+            expectedInput.value = '';
             replOutput.className = 'output';
             replOutput.textContent = '// 结果将显示在这里';
+            compareBox.className = 'compare manual';
+            compareBox.textContent = '对照：已清空';
         });
         replInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 $('replRunBtn').click();
             }
         });
+
+        // 无头/脚本跑测：等全部监听器注册完再点「运行全部」
+        if (window.__LX_AUTORUN_PENDING__) {
+            window.__LX_AUTORUN_PENDING__ = false;
+            setTimeout(() => runBtn.click(), 0);
+        }
     </script>
 </body>
 </html>

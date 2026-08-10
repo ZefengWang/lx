@@ -11,12 +11,24 @@ import { toastSuccess, toastInfo, toastWarning } from '../toast.js';
 import { navigate } from '../router.js';
 import { bindEvents } from '../bind.js';
 import { attachSwipeGestures, attachKeyboardGuard } from '../gestures.js';
+import { markMasteredInWrongBook, onWrongBookGraded } from '../contracts/wrongbook-flow.js';
+import { getState } from '../../core/state.js';
+
+function getWrongBookActive() {
+    try {
+        return !!getState().isWrongBookMode;
+    } catch (_) {
+        return false;
+    }
+}
 
 export function createWrongBookPage() {
     let _container = null;
     let _unbind = null;
     let _detachSwipe = null;
     let _detachKeyboard = null;
+    /** 庆祝页锁定：一旦渲染 .lx-celebrate，后续 refresh / NAV / STATUS 必须 no-op，直到 onLeave */
+    let _celebrateActive = false;
     let _localState = {
         revealed: new Set(),
         selectedAnswers: new Map(),
@@ -24,6 +36,7 @@ export function createWrongBookPage() {
 
     function renderPage(container) {
         _container = container;
+        _celebrateActive = false;
 
         const LX = window.LX;
         // 进入错题本
@@ -36,10 +49,18 @@ export function createWrongBookPage() {
         // 监听退出（全部掌握会自动退出）+ 导航/状态变化刷新
         _unbind = bindEvents({
             [LX.Events.WRONGBOOK_EXITED]: (payload) => {
+                _celebrateActive = true;
                 render(_container, [renderCelebration(payload)]);
             },
-            [LX.Events.NAVIGATION_CHANGED]: () => refresh(),
-            [LX.Events.QUESTION_STATUS_CHANGED]: () => refresh(),
+            [LX.Events.NAVIGATION_CHANGED]: () => {
+                // 庆祝锁定 或 已退出错题模式 → 勿 refresh 盖掉庆祝页
+                if (_celebrateActive || !window.LX || !getWrongBookActive()) return;
+                refresh();
+            },
+            [LX.Events.QUESTION_STATUS_CHANGED]: () => {
+                if (_celebrateActive || !window.LX || !getWrongBookActive()) return;
+                refresh();
+            },
         });
 
         // 绑定手势 + 键盘守护（错题本模式：左滑下一题，上滑标记掌握）
@@ -67,7 +88,7 @@ export function createWrongBookPage() {
     }
 
     function refresh() {
-        if (!_container) return;
+        if (!_container || _celebrateActive) return;
         const LX = window.LX;
 
         const navR = LX.NavigationAPI.current();
@@ -146,15 +167,20 @@ export function createWrongBookPage() {
                 _localState.selectedAnswers.set(q.uid, next);
 
                 // Reveal + 判分（传 question 对象，见 CONTRACT-api.md §2.2）
+                // 答对收尾必须走方案 B：WrongBookAPI.markMastered（见 wrongbook-flow.js）
                 const r = LX.QuestionAPI.answer(q, next);
                 if (r.ok) {
                     _localState.revealed.add(q.uid);
                     if (r.data.correct) {
-                        toastSuccess('✓ 答对了，已从错题本移出');
-                        // 错题本模式下 QuestionAPI.answer 不会自动 setStatus（见
-                        // question.js: !getState().isWrongBookMode 分支），所以
-                        // 这里手动：答对→掌握（自动移出）
-                        LX.ProgressAPI.setStatus(q, 'mastered');
+                        const fin = onWrongBookGraded(LX, q, r);
+                        if (fin.mark && !fin.mark.ok) {
+                            toastWarning(fin.mark.error?.message || '移出错题本失败');
+                        } else {
+                            toastSuccess(fin.cleared
+                                ? '✓ 全部掌握！'
+                                : '✓ 答对了，已从错题本移出');
+                        }
+                        if (fin.cleared) return; // 庆祝页已由 EXITED 渲染
                     } else {
                         toastWarning(`✗ 正确答案：${r.data.correctAnswer}`);
                     }
@@ -187,9 +213,14 @@ export function createWrongBookPage() {
         _localState.revealed.add(q.uid);
         const r = LX.QuestionAPI.answer(q, answer);
         if (r.ok && r.data.correct) {
-            // 错题本：答对了就自动掌握并移出
-            toastSuccess('✓ 答对了，已从错题本移出');
-            LX.ProgressAPI.setStatus(q, 'mastered');
+            // 方案 B：答对 → markMastered（清完自动 exit + WRONGBOOK_CLEARED/EXITED → 庆祝页）
+            const fin = onWrongBookGraded(LX, q, r);
+            if (fin.mark && !fin.mark.ok) {
+                toastWarning(fin.mark.error?.message || '移出错题本失败');
+            } else {
+                toastSuccess(fin.cleared ? '✓ 全部掌握！' : '✓ 答对了，已从错题本移出');
+            }
+            if (fin.cleared) return; // 勿 refresh 覆盖庆祝页
         } else if (r.ok && !r.data.correct) {
             toastWarning(`✗ 正确答案：${r.data.correctAnswer}`);
         } else if (!r.ok) {
@@ -200,19 +231,24 @@ export function createWrongBookPage() {
 
     function handleMastered(q) {
         const LX = window.LX;
-        const r = LX.ProgressAPI.setStatus(q, 'mastered');
+        // 方案 B：必须 markMastered，不能只用 ProgressAPI.setStatus
+        const r = markMasteredInWrongBook(LX, q);
         if (r.ok) {
-            toastSuccess('已掌握，从错题本移出');
-            // 自动下一题
-            const navR = LX.NavigationAPI.next();
-            if (!navR.ok) {
-                // 没有下一题了，可能是全部清空 → 等 WRONGBOOK_EXITED 事件触发庆祝
+            if (r.data.cleared) {
+                toastSuccess('全部掌握！');
+                // 已自动 exit，庆祝页由 WRONGBOOK_EXITED 订阅渲染；勿 refresh 覆盖庆祝
+                return;
             }
+            toastSuccess('已掌握，从错题本移出');
+            LX.NavigationAPI.next();
+        } else {
+            toastWarning(r.error?.message || '标记失败');
         }
         refresh();
     }
 
     function onLeave() {
+        _celebrateActive = false;
         if (_unbind) { _unbind(); _unbind = null; }
         if (_detachSwipe) { _detachSwipe(); _detachSwipe = null; }
         if (_detachKeyboard) { _detachKeyboard(); _detachKeyboard = null; }

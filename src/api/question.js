@@ -76,6 +76,97 @@ export function list(filter = {}) {
     return ok({ questions: [...questions], total: questions.length });
 }
 
+const SEARCH_FIELDS = Object.freeze(['question', 'options', 'explanation', 'category']);
+
+/**
+ * 字段文本是否命中关键字（大小写不敏感 includes）
+ * @param {object} q
+ * @param {string} keywordLower
+ * @param {string[]} fields
+ */
+function questionMatchesKeyword(q, keywordLower, fields) {
+    for (const field of fields) {
+        if (field === 'question') {
+            if (String(q.question || '').toLowerCase().includes(keywordLower)) return true;
+        } else if (field === 'category') {
+            if (String(q.category || '').toLowerCase().includes(keywordLower)) return true;
+        } else if (field === 'explanation') {
+            const text = `${q.explanation || ''} ${q.mnemonic || ''}`;
+            if (text.toLowerCase().includes(keywordLower)) return true;
+        } else if (field === 'options') {
+            const opts = Array.isArray(q.options) ? q.options.join('\n') : '';
+            if (opts.toLowerCase().includes(keywordLower)) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * 解析搜索关键字列表（AND 链）
+ * - options.keywords 若为数组：以其为准（可为空 → 空结果）
+ * - 否则 keyword 为数组：同理
+ * - 否则 keyword 为单字符串
+ * @param {string|string[]} keyword
+ * @param {{ keywords?: string[] }} options
+ * @returns {string[]}
+ */
+function resolveSearchTerms(keyword, options = {}) {
+    if (Array.isArray(options.keywords) && options.keywords.length) {
+        return options.keywords.map((k) => String(k ?? '').trim()).filter(Boolean);
+    }
+    if (Array.isArray(keyword)) {
+        return keyword.map((k) => String(k ?? '').trim()).filter(Boolean);
+    }
+    const kw = String(keyword ?? '').trim();
+    return kw ? [kw] : [];
+}
+
+/**
+ * 题干/字段搜索（只读，不写存储、不发事件）
+ * v1.2：支持多关键字 AND（options.keywords 或 keyword 为 string[]）
+ * @param {string|string[]} keyword
+ * @param {{ fields?: string[]; category?: string; status?: string; limit?: number; offset?: number; keywords?: string[] }} [options]
+ * @returns {Result<{ questions: Question[]; total: number }>}
+ */
+export function search(keyword, options = {}) {
+    const terms = resolveSearchTerms(keyword, options);
+    if (terms.length === 0) return ok({ questions: [], total: 0 });
+
+    const libId = getState().currentLibId;
+    if (!libId) return ok({ questions: [], total: 0 });
+
+    const r = storage.getLibraries();
+    if (!r.ok) return r;
+    const lib = r.data[libId];
+    if (!lib) return err(ErrorCode.NOT_FOUND, '题库不存在');
+
+    let questions = lib.questions || [];
+    if (options.category && options.category !== 'all') {
+        questions = questions.filter((q) => (q.category || '未分类') === options.category);
+    }
+    if (options.status && options.status !== 'all') {
+        questions = questions.filter((q) => ProgressAPI.getStatus(q).data === options.status);
+    }
+
+    const rawFields = Array.isArray(options.fields) && options.fields.length
+        ? options.fields
+        : ['question'];
+    const fields = rawFields.filter((f) => SEARCH_FIELDS.includes(f));
+    if (fields.length === 0) {
+        return err(ErrorCode.INVALID_INPUT, 'search.fields 无有效字段');
+    }
+
+    const termsLower = terms.map((t) => t.toLowerCase());
+    const matched = questions.filter((q) =>
+        termsLower.every((t) => questionMatchesKeyword(q, t, fields))
+    );
+    const total = matched.length;
+    const limit = options.limit == null ? 50 : Math.max(0, Number(options.limit) || 0);
+    const offset = Math.max(0, Number(options.offset) || 0);
+    const sliced = matched.slice(offset, offset + limit).map((q) => ({ ...q }));
+    return ok({ questions: sliced, total });
+}
+
 /**
  * 获取单题（按 uid 或 id）
  * @param {string|number} qId
@@ -300,6 +391,7 @@ export function resetAttempt(qId) {
 
 export const QuestionAPI = {
     list,
+    search,
     get,
     add,
     update,

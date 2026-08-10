@@ -82,8 +82,16 @@ export async function bootstrap() {
         console.warn('[lx] 恢复上次题库失败：', e);
     }
 
-    // 5. 测试模式：动态挂 TestAPI
+    // 5. 测试模式：动态挂 TestAPI；并卸掉 SW，避免 cache-first 挡住新模块
     if (isTestMode()) {
+        try {
+            if (typeof navigator !== 'undefined' && navigator.serviceWorker?.getRegistrations) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map((r) => r.unregister()));
+            }
+        } catch (e) {
+            console.warn('[lx] 测试模式卸载 SW 失败：', e);
+        }
         try {
             const mod = await import('./api/test.js');
             LX.TestAPI = mod.TestAPI;

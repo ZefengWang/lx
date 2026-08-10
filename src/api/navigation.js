@@ -10,6 +10,7 @@ import { ok, err, ErrorCode } from '../core/errors.js';
 import { shuffleArray } from '../utils.js';
 import * as LibraryAPI from './library.js';
 import * as ProgressAPI from './progress.js';
+import * as DrillAPI from './drill.js';
 
 /**
  * 实时计算当前可见题目 ID 列表
@@ -19,6 +20,14 @@ import * as ProgressAPI from './progress.js';
  */
 function computeFilteredQIds() {
     const state = getState();
+    // 练习会话：固定本轮队列，禁止重算/重洗
+    if (state.drillSession && Array.isArray(state.drillSession.queue) && state.drillSession.queue.length) {
+        return state.drillSession.queue.slice();
+    }
+    // 搜索命中队列：浏览页点入后只在命中集内翻题
+    if (state.searchPlaylist && Array.isArray(state.searchPlaylist.uids) && state.searchPlaylist.uids.length) {
+        return state.searchPlaylist.uids.slice();
+    }
     if (!state.currentLibId) return [];
     const r = LibraryAPI.get(state.currentLibId);
     if (!r.ok) return [];
@@ -40,6 +49,70 @@ function computeFilteredQIds() {
         ids = shuffleArray(ids);
     }
     return ids;
+}
+
+/**
+ * @param {{ keywords?: string[], uids: (string|number)[] }} opts
+ * @returns {Result<{ total: number }>}
+ */
+export function enterSearchPlaylist(opts = {}) {
+    const uids = Array.isArray(opts.uids) ? opts.uids.filter((id) => id != null) : [];
+    if (!uids.length) {
+        return err(ErrorCode.INVALID_INPUT, '搜索队列为空');
+    }
+    const keywords = Array.isArray(opts.keywords)
+        ? opts.keywords.map((k) => String(k || '').trim()).filter(Boolean)
+        : [];
+    const scopeCategory = opts.category && opts.category !== 'all' ? String(opts.category) : null;
+    const scopeStatus = opts.status && opts.status !== 'all' ? String(opts.status) : null;
+    setState({
+        searchPlaylist: {
+            keywords,
+            uids: uids.slice(),
+            category: scopeCategory,
+            status: scopeStatus,
+        },
+        mode: 'sequential',
+    });
+    const ids = computeFilteredQIds();
+    setState({ filteredQIds: ids, lastIndex: 0, lastQId: ids[0] ?? null });
+    bus.emit(Events.NAVIGATION_CHANGED, {
+        index: 0,
+        qId: ids[0] ?? null,
+        total: ids.length,
+        source: 'search-playlist',
+    });
+    return ok({ total: ids.length });
+}
+
+/** @returns {Result<null>} */
+export function clearSearchPlaylist() {
+    const state = getState();
+    if (!state.searchPlaylist) return ok(null);
+    setState({ searchPlaylist: null });
+    const ids = computeFilteredQIds();
+    const safeIndex = Math.min(state.lastIndex, Math.max(0, ids.length - 1));
+    const qId = ids[safeIndex] ?? null;
+    setState({ filteredQIds: ids, lastIndex: safeIndex, lastQId: qId });
+    bus.emit(Events.NAVIGATION_CHANGED, {
+        index: safeIndex,
+        qId,
+        total: ids.length,
+        source: 'search-playlist-clear',
+    });
+    return ok(null);
+}
+
+/** @returns {null | { keywords: string[], uids: (string|number)[] }} */
+export function getSearchPlaylist() {
+    const p = getState().searchPlaylist;
+    if (!p || !Array.isArray(p.uids)) return null;
+    return {
+        keywords: Array.isArray(p.keywords) ? p.keywords.slice() : [],
+        uids: p.uids.slice(),
+        category: p.category || null,
+        status: p.status || null,
+    };
 }
 
 /**
@@ -84,9 +157,10 @@ export function goto(index) {
 }
 
 /**
- * 下一题（循环）
+ * 下一题（循环；练习会话中走 DrillAPI）
  */
 export function next() {
+    if (getState().drillSession) return DrillAPI.next();
     const state = getState();
     const ids = computeFilteredQIds();
     if (ids.length === 0) return err(ErrorCode.OUT_OF_RANGE, '无题目可导航');
@@ -96,9 +170,10 @@ export function next() {
 }
 
 /**
- * 上一题（循环）
+ * 上一题（循环；练习会话中走 DrillAPI）
  */
 export function prev() {
+    if (getState().drillSession) return DrillAPI.prev();
     const state = getState();
     const ids = computeFilteredQIds();
     if (ids.length === 0) return err(ErrorCode.OUT_OF_RANGE, '无题目可导航');
@@ -241,8 +316,17 @@ export function getActiveList() {
     if (!state.currentLibId) return ok([]);
     const r = LibraryAPI.get(state.currentLibId);
     if (!r.ok) return ok([]);
-    let questions = r.data.questions || [];
+    const all = r.data.questions || [];
+    const byId = new Map(all.map((q) => [String(q.uid != null ? q.uid : q.id), q]));
 
+    // 与 computeFilteredQIds 同一顺序
+    const ids = computeFilteredQIds();
+    if (state.drillSession?.queue?.length || state.searchPlaylist?.uids?.length) {
+        const ordered = ids.map((id) => byId.get(String(id))).filter(Boolean);
+        return ok(ordered);
+    }
+
+    let questions = all;
     if (state.isWrongBookMode) {
         questions = questions.filter((q) => ProgressAPI.getStatus(q).data === 'review');
     } else {
@@ -255,11 +339,9 @@ export function getActiveList() {
     }
 
     if (state.mode === 'random') {
-        // —— 顺序必须和 computeFilteredQIds 保持一致：
-        //   先用 uid 得到和 shuffleArray 同顺序的索引映射，再重排 questions
-        const ids = questions.map((q) => (q.uid != null ? q.uid : q.id));
-        const shuffledIds = shuffleArray([...ids]);
-        const idToIndex = new Map(); ids.forEach((id, i) => idToIndex.set(id, i));
+        const qids = questions.map((q) => (q.uid != null ? q.uid : q.id));
+        const shuffledIds = shuffleArray([...qids]);
+        const idToIndex = new Map(); qids.forEach((id, i) => idToIndex.set(id, i));
         const original = questions;
         questions = shuffledIds.map((sid) => original[idToIndex.get(sid)]);
     }
@@ -281,4 +363,7 @@ export const NavigationAPI = {
     getStatusFilter,
     listCategories,
     getActiveList,
+    enterSearchPlaylist,
+    clearSearchPlaylist,
+    getSearchPlaylist,
 };

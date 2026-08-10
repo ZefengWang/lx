@@ -9,6 +9,37 @@ import { h, render, $ } from './dom.js';
 import { escapeHtml } from '../utils.js';
 import { createLogo } from './logo.js';
 
+/** @type {null | ((state: { open: boolean, source?: string }) => void)} */
+let _drawerSinkForTest = null;
+/** @type {Array<{ open: boolean, source?: string }>} */
+let _drawerLogForTest = [];
+
+/**
+ * 【仅测试用】抽屉开关旁路观测
+ * @param {null | ((state: { open: boolean, source?: string }) => void)} sink
+ */
+export function __setDrawerSinkForTest(sink) {
+    _drawerSinkForTest = typeof sink === 'function' ? sink : null;
+}
+
+/** 【仅测试用】 */
+export function __getDrawerLogForTest() {
+    return _drawerLogForTest.slice();
+}
+
+/** 【仅测试用】 */
+export function __clearDrawerLogForTest() {
+    _drawerLogForTest = [];
+}
+
+function notifyDrawer(open, source) {
+    const entry = { open: !!open, source };
+    _drawerLogForTest.push(entry);
+    if (_drawerSinkForTest) {
+        try { _drawerSinkForTest(entry); } catch (_) { /* ignore */ }
+    }
+}
+
 /**
  * 渲染抽屉骨架（首次创建）
  * @returns {HTMLElement}
@@ -68,8 +99,9 @@ export function createOverlay() {
 
 /**
  * 打开抽屉
+ * @param {string} [source]
  */
-export function openDrawer() {
+export function openDrawer(source) {
     const drawer = $('.lx-drawer');
     const overlay = $('.lx-overlay');
     if (drawer) {
@@ -81,12 +113,14 @@ export function openDrawer() {
         overlay.setAttribute('aria-hidden', 'false');
     }
     document.body.style.overflow = 'hidden';
+    notifyDrawer(true, source || 'open');
 }
 
 /**
  * 关闭抽屉
+ * @param {string} [source]
  */
-export function closeDrawer() {
+export function closeDrawer(source) {
     const drawer = $('.lx-drawer');
     const overlay = $('.lx-overlay');
     if (drawer) {
@@ -98,6 +132,7 @@ export function closeDrawer() {
         overlay.setAttribute('aria-hidden', 'true');
     }
     document.body.style.overflow = '';
+    notifyDrawer(false, source || 'close');
 }
 
 /**

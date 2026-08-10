@@ -53,4 +53,24 @@ describe('StatsAPI', () => {
         const total = Object.values(t).reduce((sum, s) => sum + s.total, 0);
         assertEqual(total, 5, '各题型题目数之和应等于总数 5');
     });
+
+    it('S=无题库 A=summary/byCategory → R=空统计', async () => {
+        await resetStateBeforeEach();
+        const s = LX.StatsAPI.summary();
+        assertOk(s);
+        assertEqual(s.data.total, 0);
+        const c = LX.StatsAPI.byCategory();
+        assertOk(c);
+        assertEqual(c.data.length, 0);
+    });
+
+    it('S=有进度 A=byCategory → R=含教育学 mastered/review', () => {
+        const r = LX.StatsAPI.byCategory();
+        assertOk(r);
+        const edu = r.data.find((x) => x.category === '教育学');
+        assertTrue(!!edu);
+        assertEqual(edu.total, 2);
+        assertEqual(edu.mastered, 1);
+        assertEqual(edu.review, 1);
+    });
 });

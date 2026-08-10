@@ -135,6 +135,24 @@ type QuestionType = 'single' | 'multi' | 'judge' | 'fill' | 'essay';
 
 - `filter`: `{ category?, status?, mode? }`，所有字段可选。
 
+#### `search(keyword, options?): Result<{ questions, total }>`（v3.1.0+；v1.2 AND）
+
+- **只读**：不写 localStorage、不 emit 事件。
+- `keyword`：`string` 或 `string[]`；亦可由 `options.keywords`（非空数组）优先提供。
+- 有效关键字 `terms`：`keywords`（若非空）否则 `keyword` 数组/单串；各项 trim，去掉空串。`terms.length === 0` → `{ questions: [], total: 0 }`（不返回全库）。
+- `options`：
+  - `fields?`：`'question'|'options'|'explanation'|'category'`[]，默认 `['question']`（v1 题干）
+  - `category?` / `status?`：与 `list` 相同筛选语义
+  - `limit?`：默认 `50`（通用调用护栏）
+  - `offset?`：默认 `0`；与 `limit` 组合做分页切片。`total` 为命中总数，可大于本页 `questions.length`
+  - `keywords?`：有序 AND 关键字列表（v1.2）
+- 匹配：对选中字段做大小写不敏感 `includes`；**每一项 term 都必须命中**（AND）。
+- 浏览页（`#/browse`）：首屏 `limit=50`，触底自动增大 `offset` 续载（无「加载更多」按钮）。
+- 未选题库 → 空结果。
+- 无效 `fields` → `INVALID_INPUT`。
+- UI 跳转契约见 `src/render/contracts/catalog-search.js`：点命中进入 `NavigationAPI.searchPlaylist`（按当前 keywords **及** category/status 范围拉全量 uid）；上下翻只在该集合内；**不**清掉「只练本类」。跨页过滤标签由 `UiSession.browseSearch` 保留。
+- 浏览页 UI：显式点「搜索」/ Enter 才提交；若已「只练本类」则 `QuestionAPI.search({ category })` 只在该类内搜。见 [`docs/FEATURE-search.md`](./FEATURE-search.md)。
+
 #### `get(qId): Result<Question>`
 
 - 入参 `qId` 通常是 `NavigationAPI.current().data.qId`（即 `q.uid`）。
@@ -370,20 +388,30 @@ interface Library {
 - **错题本模式专属**：非错题本模式调用返回 `NOT_IN_WRONG_BOOK`。
 - 副作用：`ProgressAPI.setStatus(q, 'mastered')`；若 `remaining === 0` 自动 `exit()` + emit `WRONGBOOK_CLEARED`。
 
-### 5.2 重要：错题本模式下的答题流程
+### 5.2 重要：错题本模式下的答题流程（方案 B，v3.0.2+）
 
-由于 `QuestionAPI.answer` 在 `isWrongBookMode=true` 时**不自动 setStatus**，UI 必须自行处理：
+由于 `QuestionAPI.answer` 在 `isWrongBookMode=true` 时**不自动 setStatus**，UI 必须自行处理。
+
+> 🔴 **铁律（v3.0.2）**：错题本内「答对移出 / 我已掌握」**必须**调用 `WrongBookAPI.markMastered`（或 render 契约 `onWrongBookGraded` / `markMasteredInWrongBook`）。  
+> **禁止**仅调用 `ProgressAPI.setStatus(q, 'mastered')`：它只会改进度，**不会**在 `remaining===0` 时自动 `exit` + `WRONGBOOK_CLEARED`，庆祝页无法触发。
 
 ```javascript
-// 错题本页面答对后
+// 错题本页面答对后（唯一正确路径）
 const r = LX.QuestionAPI.answer(q, userAns);
 if (r.ok && r.data.correct) {
-  // 答对了，从错题本移出（两种等价方式）
-  LX.ProgressAPI.setStatus(q, 'mastered');        // 方式 A
-  // 或
-  LX.WrongBookAPI.markMastered(q);                // 方式 B（会自动检查错题数+自动 exit）
+  const mark = LX.WrongBookAPI.markMastered(q);
+  // mark.data.cleared === true 时已自动 exit，UI 订 WRONGBOOK_EXITED 渲染庆祝页
 }
+
+// 推荐：页面与测试共用契约模块，避免分叉
+// import { onWrongBookGraded } from '../contracts/wrongbook-flow.js';
+// const fin = onWrongBookGraded(LX, q, r);
 ```
+
+| 路径 | 改进度 | remaining===0 自动 exit + CLEARED | UI 是否允许 |
+|---|---|---|---|
+| `WrongBookAPI.markMastered`（方案 B） | ✅ | ✅ | **必须** |
+| `ProgressAPI.setStatus(..., 'mastered')` | ✅ | ❌ | **禁止**（错题本场景） |
 
 ### 5.3 事件 payload
 
@@ -437,9 +465,34 @@ interface CategoryStat {
 
 ---
 
-## 8. `IOAPI`
+## 8. `DrillAPI`（快速刷题 / 背诵记忆）
+
+> 设计说明见 [`docs/FEATURE-drill.md`](./FEATURE-drill.md)。会话期间 `NavigationAPI.next/prev` 委托本 API；`computeFilteredQIds` 返回本轮固定 `queue`。
 
 ### 8.1 方法签名
+
+#### `start({ mode, count?, category? }): Result<{ mode, total, qId, index }>`
+
+- `mode`：`'quick'` | `'memory'`
+- `count`：默认 `100`，不超过候选题数
+- 选题：优先 `ProgressAPI` 状态 `none`，不足再补已标记；开会话前若在错题本则 `WrongBookAPI.exit()`
+
+#### `isActive(): boolean` / `current(): Result<DrillView|null>`
+
+#### `recordAnswer(qId, payload)` / `afterAnswer({ correct })` / `advanceProgress()`
+
+- `afterAnswer`：仅 `quick` 且在进度题上返回 `delayMs`（对 0 / 错 5000）；`memory` 不推进
+
+#### `prev()` / `next()` / `exit()`
+
+- `prev`：回看已访问题；`next`：从回看回到进度，或在已答时推进进度
+- `scheduleAdvance` / `cancelScheduledAdvance`：UI 答后定时推进
+
+---
+
+## 9. `IOAPI`
+
+### 9.1 方法签名
 
 #### `parseFile(file): Result<{ questions, warnings }>`
 
@@ -468,9 +521,9 @@ interface CategoryStat {
 
 ---
 
-## 9. UI 层调用模式（最佳实践）
+## 10. UI 层调用模式（最佳实践）
 
-### 9.1 标准答题流程
+### 10.1 标准答题流程
 
 ```javascript
 // 1. 拿到当前题
@@ -504,7 +557,7 @@ function handleAnswer(q, ans, opts = {}) {
 }
 ```
 
-### 9.2 状态切换（掌握/错题/清除）
+### 10.2 状态切换（掌握/错题/清除）
 
 ```javascript
 // 标记掌握
@@ -519,7 +572,7 @@ LX.ProgressAPI.setStatus(q, 'none');
 
 **禁止传 `'pending'`** —— 这是 v2.6.1 bug 的根因。
 
-### 9.3 事件订阅模式
+### 10.3 事件订阅模式
 
 ```javascript
 const events = [
@@ -541,7 +594,7 @@ function onLeave() {
 
 ---
 
-## 10. 变更流程
+## 11. 变更流程
 
 **任何对 api 层的接口变更**（新增/删除方法、改签名、改返回 shape、改事件 payload）必须：
 

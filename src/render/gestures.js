@@ -14,6 +14,8 @@
  * @module render/gestures
  */
 
+import { appConfirm } from './confirm.js';
+
 /** 滑动阈值（与 DESIGN.md §5.2 一致） */
 const SWIPE_THRESHOLD_X = 50; // 左右滑触发阈值
 const SWIPE_THRESHOLD_Y = 80; // 上下滑触发阈值（更高，避免误触）
@@ -259,7 +261,7 @@ export function attachBackGuard(isDirty) {
  */
 export function confirmLeaveIfDirty(isDirty) {
     if (typeof isDirty === 'function' && isDirty()) {
-        return window.confirm('当前题目有未提交的答案，确定离开吗？');
+        return appConfirm('当前题目有未提交的答案，确定离开吗？');
     }
     return true;
 }

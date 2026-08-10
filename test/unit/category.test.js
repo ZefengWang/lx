@@ -45,4 +45,18 @@ describe('CategoryAPI', () => {
         assertEqual(edu.count, 3, '合并后教育学应有 3 题');
         assertTrue(!list.data.find((c) => c.name === '心理学'), '心理学应已合并消失');
     });
+
+    it('S=无题库 A=list → R=[]；rename → STATE_ERROR', async () => {
+        await resetStateBeforeEach();
+        assertOk(LX.CategoryAPI.list());
+        assertEqual(LX.CategoryAPI.list().data.length, 0);
+        assertEqual(LX.CategoryAPI.rename('甲', '乙').ok, false);
+        assertEqual(LX.CategoryAPI.rename('甲', '乙').error.code, 'STATE_ERROR');
+    });
+
+    it('S=有库 A=rename 空名/不存在/同名 → R=INVALID/NOT_FOUND/ok', () => {
+        assertEqual(LX.CategoryAPI.rename('', 'x').error.code, 'INVALID_INPUT');
+        assertEqual(LX.CategoryAPI.rename('不存在类', 'x').error.code, 'NOT_FOUND');
+        assertOk(LX.CategoryAPI.rename('教育学', '教育学'));
+    });
 });

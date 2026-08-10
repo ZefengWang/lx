@@ -16,10 +16,11 @@ import { WrongBookAPI } from './wrong-book.js';
 import { CategoryAPI } from './category.js';
 import { StatsAPI } from './stats.js';
 import { IOAPI } from './io.js';
+import { DrillAPI } from './drill.js';
 import { bus, Events } from '../core/events.js';
 
 /** 应用版本（与 version.txt 保持一致） */
-export const VERSION = '3.0.1';
+export const VERSION = '3.1.0';
 
 /**
  * 装配 window.LX
@@ -38,6 +39,7 @@ export function mountLX() {
         CategoryAPI,
         StatsAPI,
         IOAPI,
+        DrillAPI,
 
         // 事件总线快捷方法
         on: (event, handler) => bus.on(event, handler),

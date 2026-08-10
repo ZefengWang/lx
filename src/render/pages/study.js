@@ -16,34 +16,64 @@ import {
 } from '../gestures.js';
 
 /**
- * 答题页本地视图状态（仅 UI 用，不污染 LX 核心）
- * 之所以放在 render 层而不是 core/state.js，是因为这些是瞬时视觉状态
- */
-const viewState = {
-    selectedAnswers: new Map(), // uid -> 'A' | ['A','B'] | '对' | 'text'
-    revealed: new Set(),         // uid set：已交卷显示答案
-    essayExpanded: new Set(),   // uid set：简答题展开
-    essayActiveTab: new Map(),   // uid -> 'answerText' | 'explanation' | 'mnemonic'
-    // essay 判分结果（提交时由 QuestionAPI.answer 算出，复用给反馈渲染）
-    //   形如： { correct, notGraded, similarity, correctAnswer }
-    essayResults: new Map(),
-    // essay「答案」Tab 是否处于 inline 编辑：uid set
-    answerTextEditing: new Set(),
-    // 未提交的填空/简答草稿：uid -> { type, value }
-    // 用于 BACK 守护：避免误操作丢失已输入但未交卷的答案
-    pendingDrafts: new Map(),
-};
-
-/**
  * 创建答题页
  * @returns {{render: (container: HTMLElement) => void, onLeave?: () => void}}
+ *
+ * 注意：viewState 必须是**页面实例私有**，不能做模块单例。
+ * 否则 TestAPI.reset / 换库后 Progress 已空，但 revealed 仍残留 → 选项 disabled、假「回答正确」。
  */
+/** 测试可缩短快速刷题答错等待 */
+let _drillWrongDelayForTest = null;
+
+/** 【仅测试用】 */
+export function __setDrillWrongDelayForTest(ms) {
+    _drillWrongDelayForTest = ms == null ? null : Math.max(0, Number(ms) || 0);
+}
+
 export function createStudyPage() {
     let _container = null;
     let _unsubscribe = null;
     let _detachSwipe = null;
     let _detachKeyboard = null;
     let _detachBackGuard = null;
+    /** 答题页本地视图状态（仅本实例 UI 用，不污染 LX 核心） */
+    const viewState = {
+        selectedAnswers: new Map(), // uid -> 'A' | ['A','B'] | '对' | 'text'
+        revealed: new Set(),         // uid set：已交卷显示答案
+        essayExpanded: new Set(),   // uid set：简答题展开
+        essayActiveTab: new Map(),   // uid -> 'answerText' | 'explanation' | 'mnemonic'
+        essayResults: new Map(),
+        answerTextEditing: new Set(),
+        pendingDrafts: new Map(),
+    };
+
+    /**
+     * 练习会话：记录作答；快速模式答对立即 / 答错延时推进
+     * @param {object} q
+     * @param {{ correct?: boolean, correctAnswer?: any, notGraded?: boolean }} data
+     */
+    function maybeDrillAfterAnswer(q, data) {
+        const LX = window.LX;
+        if (!LX.DrillAPI || !LX.DrillAPI.isActive()) return;
+        LX.DrillAPI.recordAnswer(q.uid, {
+            userAnswer: viewState.selectedAnswers.get(q.uid),
+            correct: !!data.correct,
+            correctAnswer: data.correctAnswer,
+            notGraded: !!data.notGraded,
+        });
+        const ar = LX.DrillAPI.afterAnswer({
+            correct: !!data.correct && !data.notGraded,
+        });
+        if (!ar.ok || !ar.data.advanced) return;
+        const delayBase = ar.data.delayMs || 0;
+        const delay = delayBase > 0
+            ? (_drillWrongDelayForTest != null ? _drillWrongDelayForTest : delayBase)
+            : 0;
+        LX.DrillAPI.scheduleAdvance(delay, () => {
+            const adv = LX.DrillAPI.advanceProgress();
+            if (adv.ok && adv.data.done) toastInfo('本轮练习完成');
+        });
+    }
 
     function renderPage(container) {
         _container = container;
@@ -188,6 +218,21 @@ export function createStudyPage() {
         }
         const q = qR.data;
 
+        // 练习会话回看：恢复已记录作答与揭晓态
+        const drillR = LX.DrillAPI && LX.DrillAPI.isActive() ? LX.DrillAPI.current() : null;
+        const drill = drillR && drillR.ok ? drillR.data : null;
+        if (drill && drill.answer) {
+            viewState.selectedAnswers.set(q.uid, drill.answer.userAnswer);
+            viewState.revealed.add(q.uid);
+            if (q.type === 'essay') {
+                viewState.essayResults.set(q.uid, {
+                    correct: drill.answer.correct,
+                    notGraded: drill.answer.notGraded,
+                    correctAnswer: drill.answer.correctAnswer,
+                });
+            }
+        }
+
         // 4. 取当前状态（ProgressAPI 合法值：'none' | 'mastered' | 'review'）
         const statusR = LX.ProgressAPI.getStatus(q);
         const status = statusR.ok ? statusR.data : 'none';
@@ -221,8 +266,38 @@ export function createStudyPage() {
         //   - 单选/多选/判断/填空：直接判分
         //   - 简答：仅当题目设置了参考答案（有 answerText）时才判分；
         //     未设置参考答案的简答（notGraded=true）只提示用户自行对比，不打对错红绿
-        //   练习设置（分类筛选 / 顺序/随机 / 换一批）已移至目录页，保持答题页简洁
-        const elements = [card];
+        //   练习设置（分类筛选 / 顺序/随机 / 换一批）已移至浏览页，保持答题页简洁
+        const elements = [];
+        if (drill) {
+            const label = drill.mode === 'memory' ? '背诵记忆' : '快速刷题';
+            const idx = Math.min(drill.viewIndex, drill.total - 1) + 1;
+            elements.push(h('div', {
+                class: 'lx-text-sm lx-text-muted',
+                style: {
+                    marginBottom: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                },
+                'aria-label': '练习进度',
+            }, [
+                h('span', {}, [`${label} ${idx}/${drill.total}`]),
+                drill.viewingHistory && h('span', { class: 'lx-text-xs' }, ['回看中']),
+            ]));
+        } else {
+            const playlist = LX.NavigationAPI.getSearchPlaylist && LX.NavigationAPI.getSearchPlaylist();
+            if (playlist && playlist.uids.length) {
+                const nav = navR.ok ? navR.data : null;
+                const idx = nav ? nav.index + 1 : 1;
+                const total = playlist.uids.length;
+                elements.push(h('div', {
+                    class: 'lx-text-sm lx-text-muted',
+                    style: { marginBottom: '8px' },
+                    'aria-label': '搜索范围',
+                }, [`搜索范围 ${idx}/${total}`]));
+            }
+        }
+        elements.push(card);
         if (viewState.revealed.has(q.uid)) {
             if (q.type === 'essay') {
                 const r = viewState.essayResults.get(q.uid);
@@ -268,6 +343,7 @@ export function createStudyPage() {
                     } else {
                         toastWarning(`✗ 正确答案：${data.correctAnswer}`);
                     }
+                    maybeDrillAfterAnswer(q, data);
                 } else {
                     toastWarning(r.error?.message || '答题失败');
                 }
@@ -313,6 +389,7 @@ export function createStudyPage() {
                 } else {
                     toastWarning(`✗ 相似度 ${Math.round((r.data.similarity || 0) * 100)}%，建议对照参考答案补充`);
                 }
+                maybeDrillAfterAnswer(q, r.data);
             } else {
                 toastWarning(r.error?.message || '答题失败');
             }
@@ -321,6 +398,7 @@ export function createStudyPage() {
         }
 
         // 填空：commit === true 或非 pending → 调核心层判分（传 question 对象）
+        // 单选/判断等同理
         const r = LX.QuestionAPI.answer(q, answer);
         if (r.ok) {
             viewState.revealed.add(q.uid);
@@ -333,6 +411,7 @@ export function createStudyPage() {
             } else {
                 toastWarning(`✗ 正确答案：${data.correctAnswer}`);
             }
+            maybeDrillAfterAnswer(q, data);
         } else {
             if (q.type === 'fill') {
                 viewState.pendingDrafts.delete(q.uid);
@@ -430,11 +509,15 @@ export function createStudyPage() {
                 }
                 return;
             }
-            // 解绑手势/键盘/BACK 守护（下次进入会重新绑定）
-            // 但保留事件总线订阅，避免重复绑定的开销
+            // 解绑手势/键盘/BACK 守护 + 事件总线（下次进入会重新绑定）
+            // 注意：router 每次进入 study 都会 createStudyPage() 新建实例；
+            // 若 onLeave 不解绑，旧实例 handler 仍指向 #lx-main，造成订阅泄漏与多重刷新。
+            if (window.LX?.DrillAPI) window.LX.DrillAPI.cancelScheduledAdvance();
             if (_detachSwipe) { _detachSwipe(); _detachSwipe = null; }
             if (_detachKeyboard) { _detachKeyboard(); _detachKeyboard = null; }
             if (_detachBackGuard) { _detachBackGuard(); _detachBackGuard = null; }
+            if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+            _container = null;
         },
     };
 }

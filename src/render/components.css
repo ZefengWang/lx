@@ -1346,3 +1346,18 @@ input, textarea {
     color: var(--lx-success);
     font-weight: 700;
 }
+
+/* 帮助页：定位章节高亮闪烁（约 3 次） */
+@keyframes lx-help-flash {
+    0%, 100% {
+        box-shadow: none;
+        background: var(--lx-surface);
+    }
+    35%, 65% {
+        box-shadow: 0 0 0 3px var(--lx-primary);
+        background: var(--lx-primary-light);
+    }
+}
+.lx-help-flash {
+    animation: lx-help-flash 0.5s ease 3;
+}

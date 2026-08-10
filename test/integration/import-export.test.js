@@ -3,6 +3,7 @@ import { assertOk, assertEqual, assertTrue } from '../assert.js';
 import { getLX, resetStateBeforeEach } from '../helpers.js';
 
 /**
+ * 串联 SAR；单点 SAR 见 unit/ui/matrix。
  * 用户流程 2：导入导出往返一致性
  * 创建题库 → 导出 JSON → 删除 → 重新导入 → 题目数据一致
  */

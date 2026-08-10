@@ -83,8 +83,11 @@ interface Bus {
   once(event: string, handler: (payload: any) => void): () => void;
   emit(event: string, payload?: any): void;  // 同步广播，handler 异常不传播
   clear(): void;  // 仅测试用
+  listenerCount(event?: string): number;  // 测试用：单事件或全部监听器数量（v3.0.2+）
 }
 ```
+
+测试侧也可通过 `LX.TestAPI.busListenerCount(event?)` 读取全局 `bus` 的监听数（检测 UI 订阅泄漏）。
 
 ### 2.3 Events 枚举与 Payload 契约
 

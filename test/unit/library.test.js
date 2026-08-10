@@ -86,4 +86,47 @@ describe('LibraryAPI', () => {
         const progMap = LX.ProgressAPI._getProgressMap();
         assertTrue(!progMap[id] || Object.keys(progMap[id]).length === 0, '题库进度应已清除');
     });
+
+    it('S=有库 A=rename 成功；空名/不存在失败', () => {
+        const LX = getLX();
+        const r = LX.LibraryAPI.create('原名库', [
+            { id: 1, type: 'essay', question: 'rename题', answer: '' },
+        ]);
+        assertOk(r);
+        assertOk(LX.LibraryAPI.rename(r.data.id, '新名库'));
+        assertEqual(LX.LibraryAPI.get(r.data.id).data.name, '新名库');
+        assertErr(LX.LibraryAPI.rename(r.data.id, '  '), 'INVALID_INPUT');
+        assertErr(LX.LibraryAPI.rename('lib_nope', 'x'), 'NOT_FOUND');
+    });
+
+    it('S=有库 A=get/switch/delete 未知 id → R=NOT_FOUND', () => {
+        const LX = getLX();
+        const r = LX.LibraryAPI.create('存在库', [
+            { id: 1, type: 'essay', question: '存在题', answer: '' },
+        ]);
+        assertOk(r);
+        assertErr(LX.LibraryAPI.get('lib_missing'), 'NOT_FOUND');
+        assertErr(LX.LibraryAPI.switch('lib_missing'), 'NOT_FOUND');
+        assertErr(LX.LibraryAPI.delete('lib_missing'), 'NOT_FOUND');
+    });
+
+    it('S=相同题目 A=findMatchingLibrary → matchingLibId；currentQuestions 随 switch', () => {
+        const LX = getLX();
+        const qs = [{ id: 1, type: 'essay', question: '指纹题MATCH99', answer: '' }];
+        const c = LX.LibraryAPI.create('指纹库', qs);
+        assertOk(c);
+        const hit = LX.LibraryAPI.findMatchingLibrary(qs);
+        assertEqual(hit.matchingLibId, c.data.id);
+        assertEqual(LX.LibraryAPI.findMatchingLibrary([
+            { id: 1, type: 'essay', question: '完全不同的题', answer: '' },
+        ]).matchingLibId, null);
+
+        assertOk(LX.LibraryAPI.currentQuestions());
+        assertEqual(LX.LibraryAPI.currentQuestions().data.length, 0, '未 switch 应为空');
+        LX.LibraryAPI.switch(c.data.id);
+        const curQs = LX.LibraryAPI.currentQuestions();
+        assertOk(curQs);
+        assertEqual(curQs.data.length, 1);
+        assertTrue(curQs.data[0].question.includes('MATCH99'));
+    });
 });

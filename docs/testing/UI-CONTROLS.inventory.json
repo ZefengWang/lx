@@ -1,0 +1,3261 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "lx UI 控件全量清单 + 状态差分系统测协议",
+  "updated": "2026-08-10",
+  "scope": {
+    "include": [
+      "src/render/**（不含 v3-preview）",
+      "shell + pages + card + gestures + confirm/prompt/toast/download"
+    ],
+    "exclude": [
+      "v3-preview/**",
+      "test.html 控制台自身控件（非产品 UI）",
+      "纯展示文案节点"
+    ]
+  },
+  "routes": {
+    "home": "#/",
+    "study": "#/study",
+    "wrong": "#/wrong",
+    "stats": "#/stats",
+    "settings": "#/settings",
+    "browse": "#/browse",
+    "catalog": "#/catalog  # alias → browse",
+    "add-question": "#/add-question",
+    "help": "#/help"
+  },
+  "knownBugs": [
+    {
+      "id": "BUG-PROGRESS-TEXT-AFTER-RESET",
+      "summary": "重置学习进度后 .lx-progress-text 不更新",
+      "rootCause": "ProgressAPI.reset 只 emit PROGRESS_RESET；main-ui refreshTopbar 未订阅该事件",
+      "repro": [
+        "标记掌握若干",
+        "抽屉/设置重置进度",
+        "观察顶栏仍为旧 mastered/total"
+      ],
+      "fix": "main-ui 与 test mountShell 均订阅 PROGRESS_RESET；系统测 SYS-SHELL-RESET-PROGRESS-TOPBAR 锁回归",
+      "relatedControls": [
+        "drawer.resetProgress",
+        "settings.resetProgress",
+        "topbar.progress"
+      ],
+      "status": "fixed-in-main-ui+mountShell"
+    }
+  ],
+  "stats": {
+    "controlCount": 121,
+    "byPage": {
+      "shell": 31,
+      "home": 3,
+      "study": 22,
+      "wrong": 7,
+      "settings": 15,
+      "browse": 24,
+      "add-question": 16,
+      "help": 3
+    },
+    "byElementType": {
+      "button": 92,
+      "gesture": 9,
+      "modal": 3,
+      "feedback": 1,
+      "ephemeral": 1,
+      "input": 8,
+      "textarea": 5,
+      "group": 1,
+      "chip": 1
+    }
+  },
+  "pagesWithoutControls": {
+    "stats": {
+      "route": "#/stats",
+      "note": "纯展示；交互仅经 shell topbar.back / topbar.progress",
+      "emptyStates": [
+        "请先选择题库",
+        "统计失败"
+      ]
+    }
+  },
+  "controls": [
+    {
+      "controlId": "topbar.back",
+      "page": "shell",
+      "route": "*",
+      "label": "返回刷题",
+      "elementType": "button",
+      "selectors": {
+        "aria": "返回刷题",
+        "visibleWhen": "route∉{study,home}"
+      },
+      "action": "navigate('study')",
+      "apis": [
+        "Router"
+      ],
+      "expectedStateChanges": {
+        "hash": "#/study"
+      },
+      "paths": {
+        "happy": [
+          "非 study/home 点返回 → #/study"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "topbar.menu",
+      "page": "shell",
+      "route": "*",
+      "label": "打开菜单",
+      "elementType": "button",
+      "selectors": {
+        "aria": "打开菜单",
+        "visibleWhen": "route∈{study,home}"
+      },
+      "action": "openDrawer/closeDrawer",
+      "apis": [],
+      "expectedStateChanges": {
+        "drawer": "toggled"
+      },
+      "paths": {
+        "happy": [
+          "打开/关闭抽屉"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "topbar.libraryTitle",
+      "page": "shell",
+      "route": "*",
+      "label": "切换题库",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-topbar__title",
+        "aria": "切换题库"
+      },
+      "action": "navigate('settings')",
+      "apis": [
+        "Router"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "无库时文案=未选择题库"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "topbar.wrongBook",
+      "page": "shell",
+      "route": "*",
+      "label": "错题本",
+      "elementType": "button",
+      "selectors": {
+        "ariaPrefix": "错题本（"
+      },
+      "action": "navigate wrong | toastInfo",
+      "apis": [
+        "StatsAPI.summary",
+        "Router"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "wrongCount>0 → #/wrong"
+        ],
+        "unhappy": [
+          "wrongCount=0 → toast 当前没有错题"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "topbar.progress",
+      "page": "shell",
+      "route": "*",
+      "label": "进度文字",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-progress-text",
+        "ariaPrefix": "进度："
+      },
+      "action": "navigate('stats')",
+      "apis": [
+        "StatsAPI.summary",
+        "Router"
+      ],
+      "expectedStateChanges": {
+        "hash": "#/stats",
+        "display": "mastered/total + percent"
+      },
+      "paths": {
+        "happy": [
+          "进入 #/stats",
+          "显示 mastered/total 与 StatsAPI 一致"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": "仅 refreshTopbar 重绘时更新；须订阅 PROGRESS_RESET"
+    },
+    {
+      "controlId": "drawer.close",
+      "page": "shell",
+      "route": "*",
+      "label": "关闭菜单",
+      "elementType": "button",
+      "selectors": {
+        "aria": "关闭菜单"
+      },
+      "action": "closeDrawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.overlay",
+      "page": "shell",
+      "route": "*",
+      "label": "遮罩点击",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-overlay"
+      },
+      "action": "closeDrawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.esc",
+      "page": "shell",
+      "route": "*",
+      "label": "Escape",
+      "elementType": "gesture",
+      "selectors": {
+        "keydown": "Escape"
+      },
+      "action": "closeDrawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.libRow",
+      "page": "shell",
+      "route": "*",
+      "label": "题库行",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-drawer__item",
+        "parent": "#drawer-libraries"
+      },
+      "action": "LibraryAPI.switch + navigate study",
+      "apis": [
+        "LibraryAPI.switch",
+        "Router"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.importLibrary",
+      "page": "shell",
+      "route": "*",
+      "label": "上传新题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "navigate settings + click primary",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.createLibrary",
+      "page": "shell",
+      "route": "*",
+      "label": "新建空题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "新建空题库"
+      },
+      "action": "appPrompt → LibraryAPI.create → add-question",
+      "apis": [
+        "LibraryAPI.create",
+        "LibraryAPI.switch",
+        "appPrompt"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "prompt 有效名 → 空库 + #/add-question"
+        ],
+        "unhappy": [
+          "prompt cancel",
+          "空名 toast",
+          "create fail"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.deleteLibrary",
+      "page": "shell",
+      "route": "*",
+      "label": "删除当前题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "删除当前题库"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "libs.length=0 → disabled"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.viewStats",
+      "page": "shell",
+      "route": "*",
+      "label": "查看进度统计",
+      "elementType": "button",
+      "selectors": {
+        "text": "查看进度统计"
+      },
+      "action": "hash=#/stats",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.exportLibrary",
+      "page": "shell",
+      "route": "*",
+      "label": "导出当前题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "导出当前题库"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.exportProgress",
+      "page": "shell",
+      "route": "*",
+      "label": "备份学习进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "备份学习进度"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.importProgress",
+      "page": "shell",
+      "route": "*",
+      "label": "恢复学习进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "恢复学习进度"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.resetProgress",
+      "page": "shell",
+      "route": "*",
+      "label": "重置学习进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "重置学习进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset",
+      "apis": [
+        "ProgressAPI.reset",
+        "appConfirm"
+      ],
+      "expectedStateChanges": {
+        "progress": "cleared",
+        "toast": "进度已重置",
+        "event": "PROGRESS_RESET",
+        "lx-progress-text": "MUST refresh"
+      },
+      "paths": {
+        "happy": [
+          "confirm → reset → toast → topbar 0/N"
+        ],
+        "unhappy": [
+          "confirm cancel → 不变",
+          "reset !ok → 无 toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": "已知 bug：main-ui 未订 PROGRESS_RESET → lx-progress-text stale"
+    },
+    {
+      "controlId": "drawer.help",
+      "page": "shell",
+      "route": "*",
+      "label": "使用帮助",
+      "elementType": "button",
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "drawer.about",
+      "page": "shell",
+      "route": "*",
+      "label": "关于",
+      "elementType": "button",
+      "selectors": {
+        "text": "关于"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "shell.openDrawerEvent",
+      "page": "shell",
+      "route": "*",
+      "label": "lx:open-drawer",
+      "elementType": "gesture",
+      "selectors": {
+        "event": "lx:open-drawer"
+      },
+      "action": "openDrawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "shell.closeDrawerEvent",
+      "page": "shell",
+      "route": "*",
+      "label": "lx:close-drawer",
+      "elementType": "gesture",
+      "selectors": {
+        "event": "lx:close-drawer"
+      },
+      "action": "closeDrawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": "仅 listener/测试注入；产品侧无 dispatch（非用户可达）"
+    },
+    {
+      "controlId": "confirm.appConfirm",
+      "page": "shell",
+      "route": "*",
+      "label": "确认框",
+      "elementType": "modal",
+      "selectors": {
+        "api": "appConfirm"
+      },
+      "action": "boolean OK/Cancel",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "false 中止"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "prompt.appPrompt",
+      "page": "shell",
+      "route": "*",
+      "label": "输入框",
+      "elementType": "modal",
+      "selectors": {
+        "api": "appPrompt"
+      },
+      "action": "string|null",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "null cancel"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "toast.surface",
+      "page": "shell",
+      "route": "*",
+      "label": "Toast",
+      "elementType": "feedback",
+      "selectors": {
+        "class": "lx-toast"
+      },
+      "action": "auto-dismiss",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": "pointer-events:none，非点击控件"
+    },
+    {
+      "controlId": "download.triggerBlobDownload",
+      "page": "shell",
+      "route": "*",
+      "label": "下载",
+      "elementType": "ephemeral",
+      "selectors": {
+        "module": "download.js"
+      },
+      "action": "a.click()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.clearMark",
+      "page": "shell",
+      "route": "#/study",
+      "label": "清除标记",
+      "elementType": "button",
+      "selectors": {
+        "aria": "清除标记",
+        "visibleWhen": "route=study"
+      },
+      "action": "ProgressAPI.setStatus(q,'none')",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "清除 → status=none；progressText/wrongBadge 同步"
+        ],
+        "unhappy": [
+          "status=none → disabled",
+          "API fail toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.mastered",
+      "page": "shell",
+      "route": "#/study",
+      "label": "掌握/已掌握",
+      "elementType": "button",
+      "selectors": {
+        "aria": "掌握",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle mastered/none",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "标记掌握 → progress.mastered+1 且 progressText 同步"
+        ],
+        "unhappy": [
+          "无当前题"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.wrong",
+      "page": "shell",
+      "route": "#/study",
+      "label": "错题/错题中",
+      "elementType": "button",
+      "selectors": {
+        "aria": "错题",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle review/none",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "加入错题 → review+1 且 wrongBadge 同步"
+        ],
+        "unhappy": [
+          "无当前题"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.prev",
+      "page": "shell",
+      "route": "#/study",
+      "label": "上一题",
+      "elementType": "button",
+      "selectors": {
+        "aria": "上一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.prev()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "上一题 index-1（循环）"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": false,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.browse",
+      "page": "shell",
+      "route": "#/study",
+      "label": "浏览",
+      "elementType": "button",
+      "selectors": {
+        "aria": "浏览",
+        "visibleWhen": "route=study"
+      },
+      "action": "navigate('browse')",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "navigate #/browse"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": false,
+      "notes": null
+    },
+    {
+      "controlId": "bottombar.next",
+      "page": "shell",
+      "route": "#/study",
+      "label": "下一题",
+      "elementType": "button",
+      "selectors": {
+        "aria": "下一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.next()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "下一题 index+1（循环）"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": false,
+      "notes": null
+    },
+    {
+      "controlId": "home.openHelp",
+      "page": "home",
+      "route": "#/",
+      "label": "使用帮助",
+      "elementType": "button",
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "home.libRow",
+      "page": "home",
+      "route": "#/",
+      "label": "题库列表项",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-list__item"
+      },
+      "action": "LibraryAPI.switch → study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "switch !ok 静默",
+          "空库无行"
+        ]
+      },
+      "dynamic": true,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "home.startStudy",
+      "page": "home",
+      "route": "#/",
+      "label": "开始学习",
+      "elementType": "button",
+      "selectors": {
+        "text": "开始学习"
+      },
+      "action": "navigate study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "有当前库 → #/study"
+        ],
+        "unhappy": [
+          "无当前库时隐藏"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "study.empty.uploadCta",
+      "page": "study",
+      "route": "#/study",
+      "label": "上传题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "上传题库",
+        "when": "无 currentLib"
+      },
+      "action": "dispatch lx:open-drawer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "study.finished.gotoFirst",
+      "page": "study",
+      "route": "#/study",
+      "label": "回到第 1 题",
+      "elementType": "button",
+      "selectors": {
+        "text": "回到第 1 题"
+      },
+      "action": "NavigationAPI.goto(0)",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "study.gesture.swipe",
+      "page": "study",
+      "route": "#/study",
+      "label": "卡片滑动",
+      "elementType": "gesture",
+      "selectors": {},
+      "action": "L next / R prev / U mastered / D wrong",
+      "apis": [
+        "NavigationAPI",
+        "ProgressAPI"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "左滑下一题 / 右滑上一题 / 上滑掌握 / 下滑错题"
+        ],
+        "unhappy": [
+          "多指忽略",
+          "滑动后 350ms 抑 click"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "study.gesture.keyboard",
+      "page": "study",
+      "route": "#/study",
+      "label": "方向键",
+      "elementType": "gesture",
+      "selectors": {},
+      "action": "← prev / → next (+commit draft)",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "input/textarea 焦点时忽略"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "study.gesture.backGuard",
+      "page": "study",
+      "route": "#/study",
+      "label": "离开守卫",
+      "elementType": "gesture",
+      "selectors": {},
+      "action": "appConfirm if dirty drafts",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "脏草稿离开 → confirm 同意放行"
+        ],
+        "unhappy": [
+          "confirm 拒绝 → 留在 study",
+          "不脏 → 不弹 confirm"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": "双路径：attachBackGuard(beforeunload) + confirmLeaveIfDirty(appConfirm)；勿与仅键盘守卫混淆"
+    },
+    {
+      "controlId": "card.statusBadge",
+      "page": "study",
+      "route": "#/study",
+      "label": "状态徽章",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-status-badge",
+        "aria": "切换状态"
+      },
+      "action": "cycle none→mastered→review→none",
+      "apis": [
+        "ProgressAPI.setStatus"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "card.option",
+      "page": "study",
+      "route": "#/study",
+      "label": "选项",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-option"
+      },
+      "action": "single: answer; multi: toggle",
+      "apis": [
+        "QuestionAPI.answer"
+      ],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "单选作答正确/错误 → toast + 可能改 status"
+        ],
+        "unhappy": [
+          "revealed 后非错选项 disabled"
+        ]
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.multiConfirm",
+      "page": "study",
+      "route": "#/study",
+      "label": "确认答案(多选)",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-submit-btn",
+        "when": "multi && !revealed"
+      },
+      "action": "QuestionAPI.answer(selected)",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "未选 → disabled"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.judge.true",
+      "page": "study",
+      "route": "#/study",
+      "label": "对",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "对"
+      },
+      "action": "answer('对')",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.judge.false",
+      "page": "study",
+      "route": "#/study",
+      "label": "错",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "错"
+      },
+      "action": "answer('错')",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.fill.input",
+      "page": "study",
+      "route": "#/study",
+      "label": "填空输入",
+      "elementType": "input",
+      "selectors": {
+        "class": "lx-fill__input"
+      },
+      "action": "draft + Enter commit",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.fill.confirm",
+      "page": "study",
+      "route": "#/study",
+      "label": "填空确认",
+      "elementType": "button",
+      "selectors": {
+        "aria": "确认答案",
+        "parent": ".lx-fill__row"
+      },
+      "action": "commit fill",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "空 trim → disabled"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.textarea",
+      "page": "study",
+      "route": "#/study",
+      "label": "简答草稿",
+      "elementType": "textarea",
+      "selectors": {
+        "class": "lx-essay-textarea"
+      },
+      "action": "pending draft",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.skipToExplain",
+      "page": "study",
+      "route": "#/study",
+      "label": "直接看解析",
+      "elementType": "button",
+      "selectors": {
+        "text": "直接看解析"
+      },
+      "action": "essayExpanded=true",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.confirm",
+      "page": "study",
+      "route": "#/study",
+      "label": "简答确认",
+      "elementType": "button",
+      "selectors": {
+        "text": "确认答案"
+      },
+      "action": "QuestionAPI.answer essay",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "空 trim 不提交"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.panelToggle",
+      "page": "study",
+      "route": "#/study",
+      "label": "点按查看解析",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-essay-panel__toggle"
+      },
+      "action": "toggle panel",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.tab",
+      "page": "study",
+      "route": "#/study",
+      "label": "答案|解析|口诀",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-tab"
+      },
+      "action": "switch essayActiveTab",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.addAnswerText",
+      "page": "study",
+      "route": "#/study",
+      "label": "添加参考答案",
+      "elementType": "button",
+      "selectors": {
+        "text": "添加参考答案"
+      },
+      "action": "enter editing",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.editAnswerText",
+      "page": "study",
+      "route": "#/study",
+      "label": "编辑参考答案",
+      "elementType": "button",
+      "selectors": {
+        "text": "编辑参考答案"
+      },
+      "action": "enter editing",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.editTextarea",
+      "page": "study",
+      "route": "#/study",
+      "label": "参考答案编辑框",
+      "elementType": "textarea",
+      "selectors": {
+        "parent": ".lx-essay-edit"
+      },
+      "action": "local edit",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.cancelEdit",
+      "page": "study",
+      "route": "#/study",
+      "label": "取消编辑",
+      "elementType": "button",
+      "selectors": {
+        "text": "取消",
+        "parent": ".lx-essay-edit"
+      },
+      "action": "cancel editing",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "card.essay.saveAnswerText",
+      "page": "study",
+      "route": "#/study",
+      "label": "保存参考答案",
+      "elementType": "button",
+      "selectors": {
+        "text": "保存参考答案"
+      },
+      "action": "QuestionAPI.update",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "update fail toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.exit",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "退出",
+      "elementType": "button",
+      "selectors": {
+        "text": "退出"
+      },
+      "action": "WrongBookAPI.exit → home",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.markMastered",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "我已掌握",
+      "elementType": "button",
+      "selectors": {
+        "text": "我已掌握"
+      },
+      "action": "markMasteredInWrongBook",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "移出错题；清完 → 庆祝"
+        ],
+        "unhappy": [
+          "fail toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.next",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "下一题",
+      "elementType": "button",
+      "selectors": {
+        "text": "下一题"
+      },
+      "action": "NavigationAPI.next()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.celebration.home",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "回到首页",
+      "elementType": "button",
+      "selectors": {
+        "text": "回到首页",
+        "parent": ".lx-celebrate"
+      },
+      "action": "hash=#/",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.gesture.swipe",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "滑动",
+      "elementType": "gesture",
+      "selectors": {},
+      "action": "L/R next/prev; U mastered",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.gesture.keyboard",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "方向键",
+      "elementType": "gesture",
+      "selectors": {},
+      "action": "prev/next",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "wrong.card.reuse",
+      "page": "wrong",
+      "route": "#/wrong",
+      "label": "卡片答题控件",
+      "elementType": "group",
+      "selectors": {},
+      "action": "复用 card.js；对 → onWrongBookGraded",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": "复用 card.js；statusBadge→handleMastered；essay 参考答案编辑按钮可能渲染但未接线（unwired）"
+    },
+    {
+      "controlId": "settings.fileInput.library",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "题库文件 input",
+      "elementType": "input",
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "parse fail",
+          "0题",
+          "DUPLICATE"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "settings.fileInput.progress",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "进度文件 input",
+      "elementType": "input",
+      "selectors": {
+        "type": "file",
+        "accept": ".json"
+      },
+      "action": "IOAPI.importProgress",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "fail toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "settings.lib.switch",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "切换",
+      "elementType": "button",
+      "selectors": {
+        "text": "切换"
+      },
+      "action": "LibraryAPI.switch",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "settings.lib.delete",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "删除",
+      "elementType": "button",
+      "selectors": {
+        "text": "删除"
+      },
+      "action": "appConfirm → LibraryAPI.delete",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "confirm cancel",
+          "delete fail"
+        ]
+      },
+      "dynamic": true,
+      "affectsProgressText": true,
+      "notes": null
+    },
+    {
+      "controlId": "settings.uploadLibrary",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "上传新题库",
+      "elementType": "button",
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "fileInput.click()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.exportProgress",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "备份进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "备份进度"
+      },
+      "action": "IOAPI.exportProgress",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "export fail"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.importProgressBtn",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "恢复进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "恢复进度"
+      },
+      "action": "progressInput.click()",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.resetProgress",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "重置当前题库进度",
+      "elementType": "button",
+      "selectors": {
+        "text": "重置当前题库进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset + page refresh",
+      "apis": [
+        "ProgressAPI.reset"
+      ],
+      "expectedStateChanges": {
+        "pageCards": "local refresh",
+        "topbar.lx-progress-text": "MUST update via PROGRESS_RESET"
+      },
+      "paths": {
+        "happy": [
+          "confirm → 0 mastered/review + topbar sync"
+        ],
+        "unhappy": [
+          "confirm cancel",
+          "无当前库无此段"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": true,
+      "notes": "页内卡会 refresh；顶栏依赖事件订阅"
+    },
+    {
+      "controlId": "settings.export.json",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "JSON",
+      "elementType": "button",
+      "selectors": {
+        "text": "JSON"
+      },
+      "action": "exportLibrary json",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.export.xlsx",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "Excel",
+      "elementType": "button",
+      "selectors": {
+        "text": "Excel"
+      },
+      "action": "exportLibrary xlsx",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.export.csv",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "CSV",
+      "elementType": "button",
+      "selectors": {
+        "text": "CSV"
+      },
+      "action": "exportLibrary csv",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "常失败 toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.downloadTemplate",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "下载导入模板",
+      "elementType": "button",
+      "selectors": {
+        "text": "下载导入模板"
+      },
+      "action": "IOAPI.downloadTemplate",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.theme",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "主题色",
+      "elementType": "button",
+      "selectors": {
+        "title": "THEME.name"
+      },
+      "action": "setTheme",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": "11 个主题"
+    },
+    {
+      "controlId": "settings.mode",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "显示模式",
+      "elementType": "button",
+      "selectors": {
+        "text": "普通模式|夜间模式|护眼模式"
+      },
+      "action": "setMode",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "settings.openHelp",
+      "page": "settings",
+      "route": "#/settings",
+      "label": "查看使用帮助",
+      "elementType": "button",
+      "selectors": {
+        "text": "查看使用帮助"
+      },
+      "action": "navigate help",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.backStudy",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "返回刷题",
+      "elementType": "button",
+      "selectors": {
+        "aria": "返回刷题"
+      },
+      "action": "navigate study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.addQuestion",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "新增",
+      "elementType": "button",
+      "selectors": {
+        "aria": "新增题目"
+      },
+      "action": "navigate add-question",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.search.input",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "搜索题干",
+      "elementType": "input",
+      "selectors": {
+        "type": "search",
+        "aria": "搜索题干"
+      },
+      "action": "draft; Enter commitSearch",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "IME composition 中忽略 Enter"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.search.submit",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "搜索",
+      "elementType": "button",
+      "selectors": {
+        "aria": "执行题干搜索"
+      },
+      "action": "commitSearch AND filter",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "有效关键字 → 过滤标签 + 命中列表"
+        ],
+        "unhappy": [
+          "空 draft → toast 请输入搜索关键字"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.search.chipDismiss",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "清除过滤标签",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-chip__dismiss"
+      },
+      "action": "removeFilterAt",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.toolbar.modeToggle",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "顺序/随机",
+      "elementType": "button",
+      "selectors": {
+        "aria": "顺序模式|随机模式"
+      },
+      "action": "NavigationAPI.setMode",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.toolbar.reshuffle",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "换一批",
+      "elementType": "button",
+      "selectors": {
+        "aria": "换一批",
+        "visibleWhen": "random"
+      },
+      "action": "NavigationAPI.shuffle",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.toolbar.clearCategory",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "清除分类",
+      "elementType": "button",
+      "selectors": {
+        "aria": "清除分类",
+        "visibleWhen": "category≠all"
+      },
+      "action": "setCategory('all')",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.toolbar.collapseAll",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "全部折叠",
+      "elementType": "button",
+      "selectors": {
+        "aria": "全部折叠"
+      },
+      "action": "collapse all",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.toolbar.expandAll",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "全部展开",
+      "elementType": "button",
+      "selectors": {
+        "aria": "全部展开"
+      },
+      "action": "expand all",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.open",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "练习模式",
+      "elementType": "button",
+      "selectors": {
+        "aria": "练习模式"
+      },
+      "action": "open practice modal",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.hint",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "练习说明?",
+      "elementType": "button",
+      "selectors": {
+        "aria": "练习模式说明"
+      },
+      "action": "appConfirm → optional help",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "confirm cancel 不跳转"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.overlayClose",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "练习面板遮罩",
+      "elementType": "modal",
+      "selectors": {},
+      "action": "closePracticeSheet",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.closeX",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "关闭练习设置",
+      "elementType": "button",
+      "selectors": {
+        "aria": "关闭练习模式设置"
+      },
+      "action": "closePracticeSheet",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.mode.memory",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "背诵记忆",
+      "elementType": "button",
+      "selectors": {
+        "aria": "背诵记忆"
+      },
+      "action": "mode=memory; count disabled",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.mode.quick",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "快速刷题",
+      "elementType": "button",
+      "selectors": {
+        "aria": "快速刷题"
+      },
+      "action": "mode=quick; count enabled",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.countInput",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "本轮题量",
+      "elementType": "input",
+      "selectors": {
+        "aria": "本轮题量"
+      },
+      "action": "countDraft",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "memory 时 disabled"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.cancel",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "取消练习",
+      "elementType": "button",
+      "selectors": {
+        "aria": "取消练习模式"
+      },
+      "action": "closePracticeSheet",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practice.start",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "开始练习",
+      "elementType": "button",
+      "selectors": {
+        "aria": "开始练习"
+      },
+      "action": "DrillAPI.start → study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "题量无效 toast",
+          "start fail"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.categoryHeader",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "分类头折叠",
+      "elementType": "button",
+      "selectors": {},
+      "action": "toggle collapsed",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.practiceCategory",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "只练本类",
+      "elementType": "button",
+      "selectors": {
+        "text": "只练本类"
+      },
+      "action": "setCategory → study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": "搜索态隐藏"
+    },
+    {
+      "controlId": "browse.questionRow",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "题目行跳转",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-catalog-item"
+      },
+      "action": "goto / searchPlaylist jump → study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "点命中 → study + searchPlaylist"
+        ],
+        "unhappy": [
+          "jump fail toast"
+        ]
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.search.sentinel",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "触底续载",
+      "elementType": "gesture",
+      "selectors": {
+        "data-search-sentinel": "1"
+      },
+      "action": "loadMoreSearch",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "loading 中忽略",
+          "load fail toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "browse.empty.goHome",
+      "page": "browse",
+      "route": "#/browse",
+      "label": "去首页",
+      "elementType": "button",
+      "selectors": {
+        "text": "去首页",
+        "when": "无库"
+      },
+      "action": "navigate home",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.backBrowse",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "返回浏览",
+      "elementType": "button",
+      "selectors": {
+        "text": "返回浏览"
+      },
+      "action": "navigate browse",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "有未保存内容仍直接 navigate browse（无 confirm，与 addq.cancel 不一致）"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.type",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "题型 chip",
+      "elementType": "chip",
+      "selectors": {
+        "class": "lx-addq__type-btn"
+      },
+      "action": "set form.type",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.category",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "分类",
+      "elementType": "input",
+      "selectors": {},
+      "action": "form.category",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.question",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "题干",
+      "elementType": "textarea",
+      "selectors": {},
+      "action": "form.question",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "空保存 toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.optionCheck",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "选项正确标记",
+      "elementType": "button",
+      "selectors": {
+        "class": "lx-addq__opt-check"
+      },
+      "action": "set answer letters",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.optionText",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "选项文本",
+      "elementType": "input",
+      "selectors": {},
+      "action": "form.options[i]",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.optionRemove",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "删除选项",
+      "elementType": "button",
+      "selectors": {},
+      "action": "splice option",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "≤2 选项 → toast"
+        ]
+      },
+      "dynamic": true,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.addOption",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "添加选项",
+      "elementType": "button",
+      "selectors": {
+        "text": "添加选项"
+      },
+      "action": "push option",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "≥8 隐藏"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.judge.true",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "对",
+      "elementType": "button",
+      "selectors": {},
+      "action": "answer=对",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.judge.false",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "错",
+      "elementType": "button",
+      "selectors": {},
+      "action": "answer=错",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.fill.answer",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "填空答案",
+      "elementType": "input",
+      "selectors": {},
+      "action": "form.answer",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "空保存 toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.essay.answerText",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "简答参考答案",
+      "elementType": "textarea",
+      "selectors": {},
+      "action": "form.answerText",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "空保存 toast"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.explanation",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "解析",
+      "elementType": "textarea",
+      "selectors": {},
+      "action": "form.explanation",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.cancel",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "取消",
+      "elementType": "button",
+      "selectors": {},
+      "action": "appConfirm → browse",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": [
+          "confirm cancel 留下"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "addq.save",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "保存题目",
+      "elementType": "button",
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "各题型填齐保存成功 → toast + 题目数+1"
+        ],
+        "unhappy": [
+          "空题干",
+          "<2选项",
+          "未选答案",
+          "判断未选",
+          "填空/简答空",
+          "API fail",
+          "多选成功路径需补测"
+        ]
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": "QUESTION_ADDED 是否刷新顶栏 total 需核对"
+    },
+    {
+      "controlId": "addq.noLib.goSettings",
+      "page": "add-question",
+      "route": "#/add-question",
+      "label": "去设置",
+      "elementType": "button",
+      "selectors": {
+        "text": "去设置",
+        "when": "无库"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "help.goStudy.quickStart",
+      "page": "help",
+      "route": "#/help",
+      "label": "去刷题",
+      "elementType": "button",
+      "selectors": {
+        "text": "去刷题"
+      },
+      "action": "navigate study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "help.goSettings",
+      "page": "help",
+      "route": "#/help",
+      "label": "前往设置",
+      "elementType": "button",
+      "selectors": {
+        "text": "前往设置"
+      },
+      "action": "navigate settings",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    },
+    {
+      "controlId": "help.goStudy.footer",
+      "page": "help",
+      "route": "#/help",
+      "label": "开始刷题",
+      "elementType": "button",
+      "selectors": {
+        "text": "开始刷题"
+      },
+      "action": "navigate study",
+      "apis": [],
+      "expectedStateChanges": {},
+      "paths": {
+        "happy": [
+          "→ #/study"
+        ],
+        "unhappy": []
+      },
+      "dynamic": false,
+      "affectsProgressText": null,
+      "notes": null
+    }
+  ],
+  "uiStateSnapshotSchema": {
+    "description": "每次 action 前后采集；系统测用 expectDelta 做差分断言",
+    "fields": {
+      "meta": {
+        "t": "number ISO ms",
+        "hash": "string",
+        "route": "string",
+        "drawerOpen": "boolean",
+        "toastLast": "string|null",
+        "confirmAsked": "string[]",
+        "promptAsked": "string[]",
+        "downloads": "string[]"
+      },
+      "controls": {
+        "<controlId>": {
+          "present": "boolean",
+          "visible": "boolean",
+          "disabled": "boolean",
+          "text": "string",
+          "ariaLabel": "string",
+          "ariaPressed": "string|null",
+          "value": "string|null",
+          "selected": "boolean|null",
+          "count": "number|null"
+        }
+      },
+      "chrome": {
+        "progressText": "string",
+        "progressAria": "string",
+        "wrongBadge": "number",
+        "libraryTitle": "string",
+        "bottombarVisible": "boolean",
+        "bottombar": {
+          "clearMarkDisabled": "boolean",
+          "masteredPressed": "boolean",
+          "wrongPressed": "boolean"
+        }
+      },
+      "domain": {
+        "currentLibId": "string|null",
+        "libCount": "number",
+        "questionCount": "number",
+        "nav": {
+          "index": "number",
+          "total": "number",
+          "qId": "any",
+          "mode": "string",
+          "category": "string",
+          "statusFilter": "string"
+        },
+        "progress": {
+          "mastered": "number",
+          "review": "number",
+          "percent": "number",
+          "currentStatus": "string"
+        },
+        "drill": {
+          "active": "boolean",
+          "mode": "string|null",
+          "index": "number|null",
+          "total": "number|null"
+        },
+        "wrongbook": {
+          "active": "boolean",
+          "count": "number"
+        },
+        "searchPlaylist": {
+          "active": "boolean",
+          "size": "number",
+          "index": "number"
+        },
+        "uiSession": {
+          "browseSearch": "object",
+          "practiceSheet": "object|null"
+        }
+      }
+    },
+    "collectorApi": {
+      "name": "collectUiState(root=document)",
+      "plannedModule": "test/system/ui-state-collector.js",
+      "domainVia": "window.LX.*API + getUiSession()",
+      "controlsVia": "inventory selectors + query within #app"
+    }
+  },
+  "systemTestProtocol": {
+    "name": "UI 状态差分系统测",
+    "rules": [
+      "seed 固定场景后 collectUiState → baseline",
+      "每步：perform(controlId, args) → collectUiState → assertDelta(expectDelta)",
+      "expectDelta 只写应变化字段；未列出的字段默认 assertUnchanged",
+      "每个 control 至少 1 条 happy + 可见的 unhappy（disabled/cancel/validation）",
+      "涉及进度的操作必须断言 chrome.progressText 与 domain.progress 一致",
+      "旅程结束做 productExpectation 审查清单"
+    ],
+    "stepShape": {
+      "id": "string",
+      "controlId": "string",
+      "args": "object",
+      "precondition": "optional state predicate",
+      "expectDelta": {
+        "chrome": {},
+        "domain": {},
+        "controls": {},
+        "meta": {}
+      },
+      "expectUnchanged": [
+        "optional explicit paths"
+      ],
+      "path": "happy|unhappy"
+    }
+  },
+  "systemCases": [
+    {
+      "id": "SYS-SHELL-RESET-PROGRESS-TOPBAR",
+      "title": "重置进度后顶栏 lx-progress-text 同步为 0",
+      "seed": {
+        "questions": 5,
+        "markMastered": [
+          1,
+          2
+        ],
+        "markReview": [
+          3
+        ]
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "topbar.menu",
+          "path": "happy",
+          "expectDelta": {
+            "meta": {
+              "drawerOpen": true
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "controlId": "drawer.resetProgress",
+          "args": {
+            "confirm": true
+          },
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "progress": {
+                "mastered": 0,
+                "review": 0,
+                "percent": 0
+              }
+            },
+            "chrome": {
+              "progressText": "0/5\n0%",
+              "wrongBadge": 0
+            },
+            "meta": {
+              "toastLast": "进度已重置",
+              "drawerOpen": false
+            }
+          }
+        }
+      ],
+      "productExpectation": "重置后顶栏与 StatsAPI.summary 一致；不得残留旧 mastered/total"
+    },
+    {
+      "id": "SYS-SHELL-RESET-PROGRESS-CANCEL",
+      "title": "重置进度取消不变",
+      "seed": {
+        "markMastered": [
+          1
+        ]
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "drawer.resetProgress",
+          "args": {
+            "confirm": false
+          },
+          "path": "unhappy",
+          "expectDelta": {},
+          "expectUnchanged": [
+            "domain.progress",
+            "chrome.progressText"
+          ]
+        }
+      ],
+      "productExpectation": "取消后进度与顶栏完全不变"
+    },
+    {
+      "id": "SYS-SETTINGS-RESET-PROGRESS-TOPBAR",
+      "title": "设置页重置进度亦刷新顶栏",
+      "seed": {
+        "markMastered": [
+          1,
+          2
+        ]
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "topbar.libraryTitle",
+          "path": "happy",
+          "expectDelta": {
+            "meta": {
+              "hash": "#/settings"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "controlId": "settings.resetProgress",
+          "args": {
+            "confirm": true
+          },
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "progress": {
+                "mastered": 0,
+                "review": 0
+              }
+            },
+            "chrome": {
+              "progressTextIncludes": "0/"
+            }
+          }
+        }
+      ],
+      "productExpectation": "设置页内统计卡与顶栏同时归零"
+    },
+    {
+      "id": "SYS-STUDY-STATUS-CYCLE-TOPBAR",
+      "title": "刷题标记掌握/错题驱动顶栏",
+      "seed": {
+        "questions": 3
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "bottombar.mastered",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "progress": {
+                "mastered": 1
+              }
+            },
+            "chrome": {
+              "progressTextIncludes": "1/"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "controlId": "bottombar.wrong",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "progress": {
+                "mastered": 0,
+                "review": 1
+              }
+            },
+            "chrome": {
+              "wrongBadge": 1
+            }
+          }
+        },
+        {
+          "id": "s3",
+          "controlId": "bottombar.clearMark",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "progress": {
+                "review": 0
+              }
+            },
+            "chrome": {
+              "wrongBadge": 0
+            }
+          }
+        }
+      ],
+      "productExpectation": "底栏状态与顶栏进度/错题角标一致"
+    },
+    {
+      "id": "SYS-BROWSE-SEARCH-PLAYLIST",
+      "title": "搜索→点题→playlist→翻题不出圈",
+      "seed": {
+        "questions": 10
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "bottombar.browse",
+          "expectDelta": {
+            "meta": {
+              "hash": "#/browse"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "controlId": "browse.search.input",
+          "args": {
+            "value": "关键词"
+          }
+        },
+        {
+          "id": "s3",
+          "controlId": "browse.search.submit",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "uiSession.browseSearch.filters": [
+                "关键词"
+              ]
+            }
+          }
+        },
+        {
+          "id": "s4",
+          "controlId": "browse.questionRow",
+          "args": {
+            "index": 0
+          },
+          "path": "happy",
+          "expectDelta": {
+            "meta": {
+              "hash": "#/study"
+            },
+            "domain": {
+              "searchPlaylist": {
+                "active": true
+              }
+            }
+          }
+        },
+        {
+          "id": "s5",
+          "controlId": "bottombar.next",
+          "path": "happy"
+        }
+      ],
+      "productExpectation": "playlist 内翻题；过滤标签保留直至清除"
+    },
+    {
+      "id": "SYS-BROWSE-SEARCH-EMPTY",
+      "title": "空关键字搜索失败",
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "browse.search.submit",
+          "args": {
+            "draft": ""
+          },
+          "path": "unhappy",
+          "expectDelta": {
+            "meta": {
+              "toastLastIncludes": "关键字"
+            }
+          },
+          "expectUnchanged": [
+            "domain.uiSession.browseSearch.filters"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS-DRILL-QUICK-ADVANCE",
+      "title": "快速刷题答对自动推进",
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "browse.practice.open"
+        },
+        {
+          "id": "s2",
+          "controlId": "browse.practice.mode.quick"
+        },
+        {
+          "id": "s3",
+          "controlId": "browse.practice.countInput",
+          "args": {
+            "value": 3
+          }
+        },
+        {
+          "id": "s4",
+          "controlId": "browse.practice.start",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "drill": {
+                "active": true,
+                "mode": "quick",
+                "total": 3
+              }
+            },
+            "meta": {
+              "hash": "#/study"
+            }
+          }
+        },
+        {
+          "id": "s5",
+          "controlId": "card.option",
+          "args": {
+            "correct": true
+          },
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "drill.index": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "SYS-WRONGBOOK-CLEAR-CELEBRATE",
+      "title": "错题本清空庆祝",
+      "seed": {
+        "markReview": [
+          1
+        ]
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "controlId": "topbar.wrongBook",
+          "path": "happy",
+          "expectDelta": {
+            "meta": {
+              "hash": "#/wrong"
+            }
+          }
+        },
+        {
+          "id": "s2",
+          "controlId": "wrong.markMastered",
+          "path": "happy",
+          "expectDelta": {
+            "domain": {
+              "wrongbook": {
+                "count": 0
+              }
+            },
+            "chrome": {
+              "wrongBadge": 0
+            },
+            "controls": {
+              "wrong.celebration.home": {
+                "present": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "coverageVsExistingTests": {
+    "method": "controlId × (unit-ui buttons | system journey | gap)",
+    "legend": {
+      "covered": "已有 DOM/壳接线测例覆盖 happy 或 unhappy",
+      "partial": "仅组件 stub / 仅 API / 缺顶栏或差分断言",
+      "missing": "无对应测例"
+    },
+    "byControl": {
+      "topbar.progress": {
+        "unitUi": "partial",
+        "system": "missing",
+        "note": "有跳转 stats；无重置后 progressText 断言"
+      },
+      "drawer.resetProgress": {
+        "unitUi": "covered",
+        "system": "covered",
+        "note": "drawer.buttons + ui-state-delta 断言 lx-progress-text"
+      },
+      "settings.resetProgress": {
+        "unitUi": "partial",
+        "system": "missing",
+        "note": "同上"
+      },
+      "bottombar.*": {
+        "unitUi": "partial",
+        "system": "partial",
+        "note": "ui-state-delta 覆盖掌握/错题/清除→顶栏；prev/next/browse 仍薄"
+      },
+      "study.gesture.swipe": {
+        "unitUi": "missing",
+        "system": "missing",
+        "note": "仅 guards 单元"
+      },
+      "card.essay.saveAnswerText": {
+        "unitUi": "missing",
+        "system": "missing"
+      },
+      "addq.save multi happy": {
+        "unitUi": "missing",
+        "system": "missing"
+      },
+      "settings.lib.delete cancel": {
+        "unitUi": "missing",
+        "system": "missing"
+      },
+      "browse.*": {
+        "unitUi": "covered",
+        "system": "partial",
+        "note": "buttons+session 厚；缺状态差分协议"
+      },
+      "wrong.*": {
+        "unitUi": "covered",
+        "system": "partial"
+      },
+      "stats page": {
+        "unitUi": "partial",
+        "system": "missing",
+        "note": "仅渲染文案"
+      },
+      "help.*": {
+        "unitUi": "covered",
+        "system": "missing"
+      },
+      "home.*": {
+        "unitUi": "covered",
+        "system": "missing"
+      }
+    },
+    "priorityGaps": [
+      "P1 剩余：study swipe 手势整页差分",
+      "P1 剩余：addq 多选/判断/填空/简答各题型保存差分",
+      "P1 剩余：settings 恢复进度文件差分",
+      "P2：按 controlId 自动生成 expectDelta 骨架"
+    ]
+  },
+  "reviewChecklist": [
+    "每个 src/render/pages/*.js 的 onclick/onchange/oninput/addEventListener 是否有 controlId",
+    "shell topbar/bottombar/drawer 是否齐全",
+    "card.js 五题型全部控件",
+    "gestures swipe/keyboard/leave",
+    "动态列表用 template controlId 而非漏行",
+    "每个 control 至少规划 happy + 代码可见 unhappy",
+    "影响进度的 control 必须挂 affectsProgressText 与系统测差分"
+  ],
+  "review": {
+    "agent": "inventory-omission-review",
+    "verdict": "pass-with-edits",
+    "appliedEdits": [
+      "swipe unhappy 去掉输入框忽略误述",
+      "backGuard 双路径说明",
+      "closeDrawerEvent 标非用户可达",
+      "P0 控件补 happy",
+      "addq.backBrowse / wrong.card.reuse notes"
+    ],
+    "remainingDebt": [
+      "117→已补一批 P0 happy，其余 controls 仍需按 SAR 填满",
+      "systemCases 仅落地 P0 子集（见 test/system/ui-state-delta.test.js）"
+    ]
+  },
+  "systemImplementation": {
+    "status": "landed",
+    "suiteFiles": [
+      "test/system/ui-state-delta.test.js",
+      "test/system/ui-state-shell.test.js",
+      "test/system/ui-state-browse.test.js",
+      "test/system/ui-state-settings.test.js",
+      "test/system/ui-state-study-wrong.test.js",
+      "test/system/ui-state-addq.test.js"
+    ],
+    "collector": "test/system/ui-state-collector.js",
+    "harness": "test/system/ui-state-harness.js",
+    "doc": "docs/testing/UI-STATE-SYSTEM.md",
+    "note": "系统差分用例持续按 inventory.controls 扩展；当前覆盖壳层/浏览/设置/刷题错题/新增主路径"
+  }
+}

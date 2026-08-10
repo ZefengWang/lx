@@ -9,6 +9,30 @@ import { h } from './dom.js';
 let _container = null;
 let _currentTimer = null;
 
+/** @type {null | ((entry: { message: string, type: string }) => void)} */
+let _toastSinkForTest = null;
+/** @type {Array<{ message: string, type: string }>} */
+let _toastLogForTest = [];
+
+/**
+ * 【仅测试用】设置 toast 旁路 sink；为 null 时恢复默认 DOM 展示。
+ * 生产代码禁止调用。
+ * @param {null | ((entry: { message: string, type: string }) => void)} sink
+ */
+export function __setToastSinkForTest(sink) {
+    _toastSinkForTest = typeof sink === 'function' ? sink : null;
+}
+
+/** 【仅测试用】读取 toast 记录（调用 toast 时总会写入，无论是否有 sink） */
+export function __getToastLogForTest() {
+    return _toastLogForTest.slice();
+}
+
+/** 【仅测试用】清空 toast 记录 */
+export function __clearToastLogForTest() {
+    _toastLogForTest = [];
+}
+
 /**
  * 获取/创建 toast 容器（懒加载）
  * @returns {HTMLElement}
@@ -35,10 +59,17 @@ function ensureContainer() {
 /**
  * 显示一条 toast
  * @param {string} message
- * @param {{type?: 'default'|'success'|'warning'|'danger'|'info', duration?: number}} [opts]
+ * @param {{type?: 'default'|'success'|'warning'|'danger'|'info'|'primary', duration?: number}} [opts]
  */
 export function toast(message, opts = {}) {
     const { type = 'default', duration = 2000 } = opts;
+    const entry = { message: String(message ?? ''), type };
+    _toastLogForTest.push(entry);
+    if (_toastSinkForTest) {
+        try { _toastSinkForTest(entry); } catch (_) { /* ignore sink errors */ }
+        return;
+    }
+
     const container = ensureContainer();
 
     // 清掉前一个 toast（同时清掉定时器）

@@ -44,8 +44,17 @@ NO_CACHE_HEADERS = {
     "Expires":       "0",
     # CORS 允许本地调试时跨域（偶尔子窗口调试用）
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods":"GET, HEAD, OPTIONS",
+    "Access-Control-Allow-Methods":"GET, HEAD, OPTIONS, POST",
+    "Access-Control-Allow-Headers": "Content-Type",
 }
+
+# test.html 跑完后 POST 结果到此路径，供 tools/run-tests.py 轮询（仍以 test.html 为真源）
+TEST_REPORT_PATH = "/__lx_test_report"
+# run-tests.py 可通过环境变量 LX_TEST_RESULTS_FILE 指定落盘路径（默认 latest.json）
+TEST_RESULTS_FILE = os.environ.get(
+    "LX_TEST_RESULTS_FILE",
+    os.path.join(ROOT, "test-results", "latest.json"),
+)
 
 EXTRA_MIME = {
     # 防止某些系统 mimetypes 没注册 .mjs / .wasm / .json
@@ -84,6 +93,38 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         # 更紧凑的日志（比默认少一堆字段）
         sys.stderr.write("[dev] %s - %s\n" % (self.address_string(), fmt % args))
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != TEST_REPORT_PATH:
+            self.send_error(404, "Only %s accepted" % TEST_REPORT_PATH)
+            return
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        body = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            # 校验 JSON
+            import json
+            data = json.loads(body.decode("utf-8"))
+            os.makedirs(os.path.dirname(TEST_RESULTS_FILE), exist_ok=True)
+            with open(TEST_RESULTS_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+                f.write("\n")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+            sys.stderr.write("[dev] test report written → %s (ok=%s %s/%s)\n" % (
+                TEST_RESULTS_FILE,
+                data.get("ok"),
+                data.get("passed"),
+                data.get("total"),
+            ))
+        except Exception as e:  # noqa: BLE001
+            self.send_error(400, "invalid json: %s" % e)
 
 
 def main():

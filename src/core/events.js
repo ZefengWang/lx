@@ -101,6 +101,21 @@ export function createBus() {
         clear() {
             listeners.clear();
         },
+
+        /**
+         * 监听器数量（测试用：检测订阅泄漏）
+         * @param {string} [event] 不传则返回全部事件监听器总数
+         * @returns {number}
+         */
+        listenerCount(event) {
+            if (event != null) {
+                const set = listeners.get(event);
+                return set ? set.size : 0;
+            }
+            let n = 0;
+            for (const set of listeners.values()) n += set.size;
+            return n;
+        },
     };
 }
 

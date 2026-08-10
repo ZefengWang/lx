@@ -1,0 +1,4400 @@
+{
+  "schemaVersion": "1.0.0",
+  "title": "UI SAR 全量矩阵（系统差分目标集）",
+  "source": "docs/testing/UI-CONTROLS.inventory.json",
+  "stats": {
+    "controlCount": 121,
+    "caseCount": 293,
+    "happy": 122,
+    "unhappy": 171
+  },
+  "cases": [
+    {
+      "id": "topbar-back--happy-1-非-study-home-点返回-----study",
+      "controlId": "topbar.back",
+      "kind": "happy",
+      "title": "非 study/home 点返回 → #/study",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "返回刷题",
+        "visibleWhen": "route∉{study,home}"
+      },
+      "action": "navigate('study')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-back--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "topbar.back",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "返回刷题",
+        "visibleWhen": "route∉{study,home}"
+      },
+      "action": "navigate('study')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-menu--happy-1-打开-关闭抽屉",
+      "controlId": "topbar.menu",
+      "kind": "happy",
+      "title": "打开/关闭抽屉",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "打开菜单",
+        "visibleWhen": "route∈{study,home}"
+      },
+      "action": "openDrawer/closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-menu--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "topbar.menu",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "打开菜单",
+        "visibleWhen": "route∈{study,home}"
+      },
+      "action": "openDrawer/closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-libraryTitle--happy-1-切换题库-主成功路径",
+      "controlId": "topbar.libraryTitle",
+      "kind": "happy",
+      "title": "切换题库 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-topbar__title",
+        "aria": "切换题库"
+      },
+      "action": "navigate('settings')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-libraryTitle--unhappy-2-无库时文案-未选择题库",
+      "controlId": "topbar.libraryTitle",
+      "kind": "unhappy",
+      "title": "无库时文案=未选择题库",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-topbar__title",
+        "aria": "切换题库"
+      },
+      "action": "navigate('settings')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-wrongBook--happy-1-wrongCount-0-----wrong",
+      "controlId": "topbar.wrongBook",
+      "kind": "happy",
+      "title": "wrongCount>0 → #/wrong",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "ariaPrefix": "错题本（"
+      },
+      "action": "navigate wrong | toastInfo",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-wrongBook--unhappy-2-wrongCount-0---toast-当前没有错题",
+      "controlId": "topbar.wrongBook",
+      "kind": "unhappy",
+      "title": "wrongCount=0 → toast 当前没有错题",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "ariaPrefix": "错题本（"
+      },
+      "action": "navigate wrong | toastInfo",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-progress--happy-1-进入---stats",
+      "controlId": "topbar.progress",
+      "kind": "happy",
+      "title": "进入 #/stats",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-progress-text",
+        "ariaPrefix": "进度："
+      },
+      "action": "navigate('stats')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-progress--happy-2-显示-mastered-total-与-StatsAPI-一致",
+      "controlId": "topbar.progress",
+      "kind": "happy",
+      "title": "显示 mastered/total 与 StatsAPI 一致",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-progress-text",
+        "ariaPrefix": "进度："
+      },
+      "action": "navigate('stats')",
+      "status": "pending"
+    },
+    {
+      "id": "topbar-progress--unhappy-3-不可达-禁用-空态---无副作用",
+      "controlId": "topbar.progress",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-progress-text",
+        "ariaPrefix": "进度："
+      },
+      "action": "navigate('stats')",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-close--happy-1-关闭菜单-主成功路径",
+      "controlId": "drawer.close",
+      "kind": "happy",
+      "title": "关闭菜单 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "关闭菜单"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-close--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "drawer.close",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "关闭菜单"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-overlay--happy-1-遮罩点击-主成功路径",
+      "controlId": "drawer.overlay",
+      "kind": "happy",
+      "title": "遮罩点击 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-overlay"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-overlay--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "drawer.overlay",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-overlay"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-esc--happy-1-Escape-主成功路径",
+      "controlId": "drawer.esc",
+      "kind": "happy",
+      "title": "Escape 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "keydown": "Escape"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-esc--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "drawer.esc",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "keydown": "Escape"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-libRow--happy-1-题库行-主成功路径",
+      "controlId": "drawer.libRow",
+      "kind": "happy",
+      "title": "题库行 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-drawer__item",
+        "parent": "#drawer-libraries"
+      },
+      "action": "LibraryAPI.switch + navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-libRow--unhappy-2-空库列表---无行可点",
+      "controlId": "drawer.libRow",
+      "kind": "unhappy",
+      "title": "空库列表 → 无行可点",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-drawer__item",
+        "parent": "#drawer-libraries"
+      },
+      "action": "LibraryAPI.switch + navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-libRow--unhappy-3-API--ok---toast-或无副作用",
+      "controlId": "drawer.libRow",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-drawer__item",
+        "parent": "#drawer-libraries"
+      },
+      "action": "LibraryAPI.switch + navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-libRow--unhappy-4-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.libRow",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-drawer__item",
+        "parent": "#drawer-libraries"
+      },
+      "action": "LibraryAPI.switch + navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importLibrary--happy-1-上传新题库-主成功路径",
+      "controlId": "drawer.importLibrary",
+      "kind": "happy",
+      "title": "上传新题库 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "navigate settings + click primary",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importLibrary--unhappy-2-取消选文件---无导入",
+      "controlId": "drawer.importLibrary",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "navigate settings + click primary",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importLibrary--unhappy-3-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.importLibrary",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "navigate settings + click primary",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-createLibrary--happy-1-prompt-有效名---空库-----add-question",
+      "controlId": "drawer.createLibrary",
+      "kind": "happy",
+      "title": "prompt 有效名 → 空库 + #/add-question",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "新建空题库"
+      },
+      "action": "appPrompt → LibraryAPI.create → add-question",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-createLibrary--unhappy-2-prompt-cancel",
+      "controlId": "drawer.createLibrary",
+      "kind": "unhappy",
+      "title": "prompt cancel",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "新建空题库"
+      },
+      "action": "appPrompt → LibraryAPI.create → add-question",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-createLibrary--unhappy-3-空名-toast",
+      "controlId": "drawer.createLibrary",
+      "kind": "unhappy",
+      "title": "空名 toast",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "新建空题库"
+      },
+      "action": "appPrompt → LibraryAPI.create → add-question",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-createLibrary--unhappy-4-create-fail",
+      "controlId": "drawer.createLibrary",
+      "kind": "unhappy",
+      "title": "create fail",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "新建空题库"
+      },
+      "action": "appPrompt → LibraryAPI.create → add-question",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-deleteLibrary--happy-1-删除当前题库-主成功路径",
+      "controlId": "drawer.deleteLibrary",
+      "kind": "happy",
+      "title": "删除当前题库 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "删除当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-deleteLibrary--unhappy-2-libs-length-0---disabled",
+      "controlId": "drawer.deleteLibrary",
+      "kind": "unhappy",
+      "title": "libs.length=0 → disabled",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "删除当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-deleteLibrary--unhappy-3-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.deleteLibrary",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "删除当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-viewStats--happy-1-查看进度统计-主成功路径",
+      "controlId": "drawer.viewStats",
+      "kind": "happy",
+      "title": "查看进度统计 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "查看进度统计"
+      },
+      "action": "hash=#/stats",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-viewStats--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "drawer.viewStats",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "查看进度统计"
+      },
+      "action": "hash=#/stats",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportLibrary--happy-1-导出当前题库-主成功路径",
+      "controlId": "drawer.exportLibrary",
+      "kind": "happy",
+      "title": "导出当前题库 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "导出当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportLibrary--unhappy-2-导出-下载失败---toast-且-domain-不变",
+      "controlId": "drawer.exportLibrary",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "导出当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportLibrary--unhappy-3-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.exportLibrary",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "导出当前题库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportProgress--happy-1-备份学习进度-主成功路径",
+      "controlId": "drawer.exportProgress",
+      "kind": "happy",
+      "title": "备份学习进度 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportProgress--unhappy-2-导出-下载失败---toast-且-domain-不变",
+      "controlId": "drawer.exportProgress",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-exportProgress--unhappy-3-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.exportProgress",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importProgress--happy-1-恢复学习进度-主成功路径",
+      "controlId": "drawer.importProgress",
+      "kind": "happy",
+      "title": "恢复学习进度 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "恢复学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importProgress--unhappy-2-取消选文件---无导入",
+      "controlId": "drawer.importProgress",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "恢复学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-importProgress--unhappy-3-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.importProgress",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "恢复学习进度"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-resetProgress--happy-1-confirm---reset---toast---topbar-0-N",
+      "controlId": "drawer.resetProgress",
+      "kind": "happy",
+      "title": "confirm → reset → toast → topbar 0/N",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置学习进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-resetProgress--unhappy-2-confirm-cancel---不变",
+      "controlId": "drawer.resetProgress",
+      "kind": "unhappy",
+      "title": "confirm cancel → 不变",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置学习进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-resetProgress--unhappy-3-reset--ok---无-toast",
+      "controlId": "drawer.resetProgress",
+      "kind": "unhappy",
+      "title": "reset !ok → 无 toast",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置学习进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-help--happy-1-使用帮助-主成功路径",
+      "controlId": "drawer.help",
+      "kind": "happy",
+      "title": "使用帮助 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-help--unhappy-2-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.help",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-about--happy-1-关于-主成功路径",
+      "controlId": "drawer.about",
+      "kind": "happy",
+      "title": "关于 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "关于"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "drawer-about--unhappy-2-无库态仍可导航或按钮禁用-按实现-",
+      "controlId": "drawer.about",
+      "kind": "unhappy",
+      "title": "无库态仍可导航或按钮禁用（按实现）",
+      "page": "shell",
+      "route": "*",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "关于"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "shell-openDrawerEvent--happy-1-lx-open-drawer-主成功路径",
+      "controlId": "shell.openDrawerEvent",
+      "kind": "happy",
+      "title": "lx:open-drawer 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "event": "lx:open-drawer"
+      },
+      "action": "openDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "shell-openDrawerEvent--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "shell.openDrawerEvent",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "event": "lx:open-drawer"
+      },
+      "action": "openDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "shell-closeDrawerEvent--happy-1-lx-close-drawer-主成功路径",
+      "controlId": "shell.closeDrawerEvent",
+      "kind": "happy",
+      "title": "lx:close-drawer 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "event": "lx:close-drawer"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "shell-closeDrawerEvent--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "shell.closeDrawerEvent",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "shell",
+      "route": "*",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "event": "lx:close-drawer"
+      },
+      "action": "closeDrawer",
+      "status": "pending"
+    },
+    {
+      "id": "confirm-appConfirm--happy-1-确认框-主成功路径",
+      "controlId": "confirm.appConfirm",
+      "kind": "happy",
+      "title": "确认框 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {
+        "api": "appConfirm"
+      },
+      "action": "boolean OK/Cancel",
+      "status": "pending"
+    },
+    {
+      "id": "confirm-appConfirm--unhappy-2-false-中止",
+      "controlId": "confirm.appConfirm",
+      "kind": "unhappy",
+      "title": "false 中止",
+      "page": "shell",
+      "route": "*",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {
+        "api": "appConfirm"
+      },
+      "action": "boolean OK/Cancel",
+      "status": "pending"
+    },
+    {
+      "id": "prompt-appPrompt--happy-1-输入框-主成功路径",
+      "controlId": "prompt.appPrompt",
+      "kind": "happy",
+      "title": "输入框 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {
+        "api": "appPrompt"
+      },
+      "action": "string|null",
+      "status": "pending"
+    },
+    {
+      "id": "prompt-appPrompt--unhappy-2-null-cancel",
+      "controlId": "prompt.appPrompt",
+      "kind": "unhappy",
+      "title": "null cancel",
+      "page": "shell",
+      "route": "*",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {
+        "api": "appPrompt"
+      },
+      "action": "string|null",
+      "status": "pending"
+    },
+    {
+      "id": "toast-surface--happy-1-Toast-主成功路径",
+      "controlId": "toast.surface",
+      "kind": "happy",
+      "title": "Toast 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "feedback",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-toast"
+      },
+      "action": "auto-dismiss",
+      "status": "pending"
+    },
+    {
+      "id": "toast-surface--unhappy-2-无-toast-时-surface-不误显",
+      "controlId": "toast.surface",
+      "kind": "unhappy",
+      "title": "无 toast 时 surface 不误显",
+      "page": "shell",
+      "route": "*",
+      "elementType": "feedback",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-toast"
+      },
+      "action": "auto-dismiss",
+      "status": "pending"
+    },
+    {
+      "id": "download-triggerBlobDownload--happy-1-下载-主成功路径",
+      "controlId": "download.triggerBlobDownload",
+      "kind": "happy",
+      "title": "下载 主成功路径",
+      "page": "shell",
+      "route": "*",
+      "elementType": "ephemeral",
+      "affectsProgressText": null,
+      "selectors": {
+        "module": "download.js"
+      },
+      "action": "a.click()",
+      "status": "pending"
+    },
+    {
+      "id": "download-triggerBlobDownload--unhappy-2-导出-下载失败---toast-且-domain-不变",
+      "controlId": "download.triggerBlobDownload",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "shell",
+      "route": "*",
+      "elementType": "ephemeral",
+      "affectsProgressText": null,
+      "selectors": {
+        "module": "download.js"
+      },
+      "action": "a.click()",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-clearMark--happy-1-清除---status-none-progressText-wrongBadge",
+      "controlId": "bottombar.clearMark",
+      "kind": "happy",
+      "title": "清除 → status=none；progressText/wrongBadge 同步",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "清除标记",
+        "visibleWhen": "route=study"
+      },
+      "action": "ProgressAPI.setStatus(q,'none')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-clearMark--unhappy-2-status-none---disabled",
+      "controlId": "bottombar.clearMark",
+      "kind": "unhappy",
+      "title": "status=none → disabled",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "清除标记",
+        "visibleWhen": "route=study"
+      },
+      "action": "ProgressAPI.setStatus(q,'none')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-clearMark--unhappy-3-API-fail-toast",
+      "controlId": "bottombar.clearMark",
+      "kind": "unhappy",
+      "title": "API fail toast",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "清除标记",
+        "visibleWhen": "route=study"
+      },
+      "action": "ProgressAPI.setStatus(q,'none')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-clearMark--unhappy-4-无库-不可达态---隐藏或无副作用",
+      "controlId": "bottombar.clearMark",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "清除标记",
+        "visibleWhen": "route=study"
+      },
+      "action": "ProgressAPI.setStatus(q,'none')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-mastered--happy-1-标记掌握---progress-mastered-1-且-progressTex",
+      "controlId": "bottombar.mastered",
+      "kind": "happy",
+      "title": "标记掌握 → progress.mastered+1 且 progressText 同步",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "掌握",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle mastered/none",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-mastered--unhappy-2-无当前题",
+      "controlId": "bottombar.mastered",
+      "kind": "unhappy",
+      "title": "无当前题",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "掌握",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle mastered/none",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-wrong--happy-1-加入错题---review-1-且-wrongBadge-同步",
+      "controlId": "bottombar.wrong",
+      "kind": "happy",
+      "title": "加入错题 → review+1 且 wrongBadge 同步",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "错题",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle review/none",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-wrong--unhappy-2-无当前题",
+      "controlId": "bottombar.wrong",
+      "kind": "unhappy",
+      "title": "无当前题",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "aria": "错题",
+        "visibleWhen": "route=study"
+      },
+      "action": "toggle review/none",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-prev--happy-1-上一题-index-1-循环-",
+      "controlId": "bottombar.prev",
+      "kind": "happy",
+      "title": "上一题 index-1（循环）",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "上一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.prev()",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-prev--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "bottombar.prev",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "上一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.prev()",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-browse--happy-1-navigate---browse",
+      "controlId": "bottombar.browse",
+      "kind": "happy",
+      "title": "navigate #/browse",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "浏览",
+        "visibleWhen": "route=study"
+      },
+      "action": "navigate('browse')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-browse--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "bottombar.browse",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "浏览",
+        "visibleWhen": "route=study"
+      },
+      "action": "navigate('browse')",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-next--happy-1-下一题-index-1-循环-",
+      "controlId": "bottombar.next",
+      "kind": "happy",
+      "title": "下一题 index+1（循环）",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "下一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.next()",
+      "status": "pending"
+    },
+    {
+      "id": "bottombar-next--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "bottombar.next",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "shell",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": false,
+      "selectors": {
+        "aria": "下一题",
+        "visibleWhen": "route=study"
+      },
+      "action": "NavigationAPI.next()",
+      "status": "pending"
+    },
+    {
+      "id": "home-openHelp--happy-1-使用帮助-主成功路径",
+      "controlId": "home.openHelp",
+      "kind": "happy",
+      "title": "使用帮助 主成功路径",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "home-openHelp--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "home.openHelp",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "home-libRow--happy-1-题库列表项-主成功路径",
+      "controlId": "home.libRow",
+      "kind": "happy",
+      "title": "题库列表项 主成功路径",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-list__item"
+      },
+      "action": "LibraryAPI.switch → study",
+      "status": "pending"
+    },
+    {
+      "id": "home-libRow--unhappy-2-switch--ok-静默",
+      "controlId": "home.libRow",
+      "kind": "unhappy",
+      "title": "switch !ok 静默",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-list__item"
+      },
+      "action": "LibraryAPI.switch → study",
+      "status": "pending"
+    },
+    {
+      "id": "home-libRow--unhappy-3-空库无行",
+      "controlId": "home.libRow",
+      "kind": "unhappy",
+      "title": "空库无行",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-list__item"
+      },
+      "action": "LibraryAPI.switch → study",
+      "status": "pending"
+    },
+    {
+      "id": "home-startStudy--happy-1-有当前库-----study",
+      "controlId": "home.startStudy",
+      "kind": "happy",
+      "title": "有当前库 → #/study",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "开始学习"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "home-startStudy--unhappy-2-无当前库时隐藏",
+      "controlId": "home.startStudy",
+      "kind": "unhappy",
+      "title": "无当前库时隐藏",
+      "page": "home",
+      "route": "#/",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "开始学习"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "study-empty-uploadCta--happy-1-上传题库-主成功路径",
+      "controlId": "study.empty.uploadCta",
+      "kind": "happy",
+      "title": "上传题库 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传题库",
+        "when": "无 currentLib"
+      },
+      "action": "dispatch lx:open-drawer",
+      "status": "pending"
+    },
+    {
+      "id": "study-empty-uploadCta--unhappy-2-取消选文件---无导入",
+      "controlId": "study.empty.uploadCta",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传题库",
+        "when": "无 currentLib"
+      },
+      "action": "dispatch lx:open-drawer",
+      "status": "pending"
+    },
+    {
+      "id": "study-finished-gotoFirst--happy-1-回到第-1-题-主成功路径",
+      "controlId": "study.finished.gotoFirst",
+      "kind": "happy",
+      "title": "回到第 1 题 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "回到第 1 题"
+      },
+      "action": "NavigationAPI.goto(0)",
+      "status": "pending"
+    },
+    {
+      "id": "study-finished-gotoFirst--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "study.finished.gotoFirst",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "回到第 1 题"
+      },
+      "action": "NavigationAPI.goto(0)",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-swipe--happy-1-左滑下一题---右滑上一题---上滑掌握---下滑错题",
+      "controlId": "study.gesture.swipe",
+      "kind": "happy",
+      "title": "左滑下一题 / 右滑上一题 / 上滑掌握 / 下滑错题",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "L next / R prev / U mastered / D wrong",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-swipe--unhappy-2-多指忽略",
+      "controlId": "study.gesture.swipe",
+      "kind": "unhappy",
+      "title": "多指忽略",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "L next / R prev / U mastered / D wrong",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-swipe--unhappy-3-滑动后-350ms-抑-click",
+      "controlId": "study.gesture.swipe",
+      "kind": "unhappy",
+      "title": "滑动后 350ms 抑 click",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "L next / R prev / U mastered / D wrong",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-keyboard--happy-1-方向键-主成功路径",
+      "controlId": "study.gesture.keyboard",
+      "kind": "happy",
+      "title": "方向键 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "← prev / → next (+commit draft)",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-keyboard--unhappy-2-input-textarea-焦点时忽略",
+      "controlId": "study.gesture.keyboard",
+      "kind": "unhappy",
+      "title": "input/textarea 焦点时忽略",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "← prev / → next (+commit draft)",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-backGuard--happy-1-脏草稿离开---confirm-同意放行",
+      "controlId": "study.gesture.backGuard",
+      "kind": "happy",
+      "title": "脏草稿离开 → confirm 同意放行",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm if dirty drafts",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-backGuard--unhappy-2-confirm-拒绝---留在-study",
+      "controlId": "study.gesture.backGuard",
+      "kind": "unhappy",
+      "title": "confirm 拒绝 → 留在 study",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm if dirty drafts",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-backGuard--unhappy-3-不脏---不弹-confirm",
+      "controlId": "study.gesture.backGuard",
+      "kind": "unhappy",
+      "title": "不脏 → 不弹 confirm",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm if dirty drafts",
+      "status": "pending"
+    },
+    {
+      "id": "study-gesture-backGuard--unhappy-4-confirm-取消---状态不变",
+      "controlId": "study.gesture.backGuard",
+      "kind": "unhappy",
+      "title": "confirm 取消 → 状态不变",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm if dirty drafts",
+      "status": "pending"
+    },
+    {
+      "id": "card-statusBadge--happy-1-状态徽章-主成功路径",
+      "controlId": "card.statusBadge",
+      "kind": "happy",
+      "title": "状态徽章 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-status-badge",
+        "aria": "切换状态"
+      },
+      "action": "cycle none→mastered→review→none",
+      "status": "pending"
+    },
+    {
+      "id": "card-statusBadge--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.statusBadge",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-status-badge",
+        "aria": "切换状态"
+      },
+      "action": "cycle none→mastered→review→none",
+      "status": "pending"
+    },
+    {
+      "id": "card-statusBadge--unhappy-3-API--ok---toast-或无副作用",
+      "controlId": "card.statusBadge",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "class": "lx-status-badge",
+        "aria": "切换状态"
+      },
+      "action": "cycle none→mastered→review→none",
+      "status": "pending"
+    },
+    {
+      "id": "card-option--happy-1-单选作答正确-错误---toast---可能改-status",
+      "controlId": "card.option",
+      "kind": "happy",
+      "title": "单选作答正确/错误 → toast + 可能改 status",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-option"
+      },
+      "action": "single: answer; multi: toggle",
+      "status": "pending"
+    },
+    {
+      "id": "card-option--unhappy-2-revealed-后非错选项-disabled",
+      "controlId": "card.option",
+      "kind": "unhappy",
+      "title": "revealed 后非错选项 disabled",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-option"
+      },
+      "action": "single: answer; multi: toggle",
+      "status": "pending"
+    },
+    {
+      "id": "card-option--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.option",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-option"
+      },
+      "action": "single: answer; multi: toggle",
+      "status": "pending"
+    },
+    {
+      "id": "card-option--unhappy-4-API--ok---toast-或无副作用",
+      "controlId": "card.option",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-option"
+      },
+      "action": "single: answer; multi: toggle",
+      "status": "pending"
+    },
+    {
+      "id": "card-multiConfirm--happy-1-确认答案-多选--主成功路径",
+      "controlId": "card.multiConfirm",
+      "kind": "happy",
+      "title": "确认答案(多选) 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-submit-btn",
+        "when": "multi && !revealed"
+      },
+      "action": "QuestionAPI.answer(selected)",
+      "status": "pending"
+    },
+    {
+      "id": "card-multiConfirm--unhappy-2-未选---disabled",
+      "controlId": "card.multiConfirm",
+      "kind": "unhappy",
+      "title": "未选 → disabled",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-submit-btn",
+        "when": "multi && !revealed"
+      },
+      "action": "QuestionAPI.answer(selected)",
+      "status": "pending"
+    },
+    {
+      "id": "card-multiConfirm--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.multiConfirm",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-submit-btn",
+        "when": "multi && !revealed"
+      },
+      "action": "QuestionAPI.answer(selected)",
+      "status": "pending"
+    },
+    {
+      "id": "card-multiConfirm--unhappy-4-API--ok---toast-或无副作用",
+      "controlId": "card.multiConfirm",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-submit-btn",
+        "when": "multi && !revealed"
+      },
+      "action": "QuestionAPI.answer(selected)",
+      "status": "pending"
+    },
+    {
+      "id": "card-judge-true--happy-1-对-主成功路径",
+      "controlId": "card.judge.true",
+      "kind": "happy",
+      "title": "对 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "对"
+      },
+      "action": "answer('对')",
+      "status": "pending"
+    },
+    {
+      "id": "card-judge-true--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.judge.true",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "对"
+      },
+      "action": "answer('对')",
+      "status": "pending"
+    },
+    {
+      "id": "card-judge-false--happy-1-错-主成功路径",
+      "controlId": "card.judge.false",
+      "kind": "happy",
+      "title": "错 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "错"
+      },
+      "action": "answer('错')",
+      "status": "pending"
+    },
+    {
+      "id": "card-judge-false--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.judge.false",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-judge__btn",
+        "text": "错"
+      },
+      "action": "answer('错')",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-input--happy-1-填空输入-主成功路径",
+      "controlId": "card.fill.input",
+      "kind": "happy",
+      "title": "填空输入 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-fill__input"
+      },
+      "action": "draft + Enter commit",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-input--unhappy-2-空输入提交-确认---校验失败或不生效",
+      "controlId": "card.fill.input",
+      "kind": "unhappy",
+      "title": "空输入提交/确认 → 校验失败或不生效",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-fill__input"
+      },
+      "action": "draft + Enter commit",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-input--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.fill.input",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-fill__input"
+      },
+      "action": "draft + Enter commit",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-confirm--happy-1-填空确认-主成功路径",
+      "controlId": "card.fill.confirm",
+      "kind": "happy",
+      "title": "填空确认 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "确认答案",
+        "parent": ".lx-fill__row"
+      },
+      "action": "commit fill",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-confirm--unhappy-2-空-trim---disabled",
+      "controlId": "card.fill.confirm",
+      "kind": "unhappy",
+      "title": "空 trim → disabled",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "确认答案",
+        "parent": ".lx-fill__row"
+      },
+      "action": "commit fill",
+      "status": "pending"
+    },
+    {
+      "id": "card-fill-confirm--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.fill.confirm",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "确认答案",
+        "parent": ".lx-fill__row"
+      },
+      "action": "commit fill",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-textarea--happy-1-简答草稿-主成功路径",
+      "controlId": "card.essay.textarea",
+      "kind": "happy",
+      "title": "简答草稿 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-essay-textarea"
+      },
+      "action": "pending draft",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-textarea--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.textarea",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-essay-textarea"
+      },
+      "action": "pending draft",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-skipToExplain--happy-1-直接看解析-主成功路径",
+      "controlId": "card.essay.skipToExplain",
+      "kind": "happy",
+      "title": "直接看解析 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "直接看解析"
+      },
+      "action": "essayExpanded=true",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-skipToExplain--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.skipToExplain",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "直接看解析"
+      },
+      "action": "essayExpanded=true",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-confirm--happy-1-简答确认-主成功路径",
+      "controlId": "card.essay.confirm",
+      "kind": "happy",
+      "title": "简答确认 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "确认答案"
+      },
+      "action": "QuestionAPI.answer essay",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-confirm--unhappy-2-空-trim-不提交",
+      "controlId": "card.essay.confirm",
+      "kind": "unhappy",
+      "title": "空 trim 不提交",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "确认答案"
+      },
+      "action": "QuestionAPI.answer essay",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-confirm--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.confirm",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "确认答案"
+      },
+      "action": "QuestionAPI.answer essay",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-confirm--unhappy-4-API--ok---toast-或无副作用",
+      "controlId": "card.essay.confirm",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "确认答案"
+      },
+      "action": "QuestionAPI.answer essay",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-panelToggle--happy-1-点按查看解析-主成功路径",
+      "controlId": "card.essay.panelToggle",
+      "kind": "happy",
+      "title": "点按查看解析 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-essay-panel__toggle"
+      },
+      "action": "toggle panel",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-panelToggle--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.panelToggle",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-essay-panel__toggle"
+      },
+      "action": "toggle panel",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-tab--happy-1-答案-解析-口诀-主成功路径",
+      "controlId": "card.essay.tab",
+      "kind": "happy",
+      "title": "答案|解析|口诀 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-tab"
+      },
+      "action": "switch essayActiveTab",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-tab--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.tab",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-tab"
+      },
+      "action": "switch essayActiveTab",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-addAnswerText--happy-1-添加参考答案-主成功路径",
+      "controlId": "card.essay.addAnswerText",
+      "kind": "happy",
+      "title": "添加参考答案 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "添加参考答案"
+      },
+      "action": "enter editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-addAnswerText--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.addAnswerText",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "添加参考答案"
+      },
+      "action": "enter editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-editAnswerText--happy-1-编辑参考答案-主成功路径",
+      "controlId": "card.essay.editAnswerText",
+      "kind": "happy",
+      "title": "编辑参考答案 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "编辑参考答案"
+      },
+      "action": "enter editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-editAnswerText--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.editAnswerText",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "编辑参考答案"
+      },
+      "action": "enter editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-editTextarea--happy-1-参考答案编辑框-主成功路径",
+      "controlId": "card.essay.editTextarea",
+      "kind": "happy",
+      "title": "参考答案编辑框 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {
+        "parent": ".lx-essay-edit"
+      },
+      "action": "local edit",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-editTextarea--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.editTextarea",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {
+        "parent": ".lx-essay-edit"
+      },
+      "action": "local edit",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-cancelEdit--happy-1-取消编辑-主成功路径",
+      "controlId": "card.essay.cancelEdit",
+      "kind": "happy",
+      "title": "取消编辑 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "取消",
+        "parent": ".lx-essay-edit"
+      },
+      "action": "cancel editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-cancelEdit--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.cancelEdit",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "取消",
+        "parent": ".lx-essay-edit"
+      },
+      "action": "cancel editing",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-saveAnswerText--happy-1-保存参考答案-主成功路径",
+      "controlId": "card.essay.saveAnswerText",
+      "kind": "happy",
+      "title": "保存参考答案 主成功路径",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存参考答案"
+      },
+      "action": "QuestionAPI.update",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-saveAnswerText--unhappy-2-update-fail-toast",
+      "controlId": "card.essay.saveAnswerText",
+      "kind": "unhappy",
+      "title": "update fail toast",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存参考答案"
+      },
+      "action": "QuestionAPI.update",
+      "status": "pending"
+    },
+    {
+      "id": "card-essay-saveAnswerText--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "card.essay.saveAnswerText",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "study",
+      "route": "#/study",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存参考答案"
+      },
+      "action": "QuestionAPI.update",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-exit--happy-1-退出-主成功路径",
+      "controlId": "wrong.exit",
+      "kind": "happy",
+      "title": "退出 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "退出"
+      },
+      "action": "WrongBookAPI.exit → home",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-exit--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "wrong.exit",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "退出"
+      },
+      "action": "WrongBookAPI.exit → home",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-markMastered--happy-1-移出错题-清完---庆祝",
+      "controlId": "wrong.markMastered",
+      "kind": "happy",
+      "title": "移出错题；清完 → 庆祝",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "我已掌握"
+      },
+      "action": "markMasteredInWrongBook",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-markMastered--unhappy-2-fail-toast",
+      "controlId": "wrong.markMastered",
+      "kind": "unhappy",
+      "title": "fail toast",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "我已掌握"
+      },
+      "action": "markMasteredInWrongBook",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-next--happy-1-下一题-主成功路径",
+      "controlId": "wrong.next",
+      "kind": "happy",
+      "title": "下一题 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "下一题"
+      },
+      "action": "NavigationAPI.next()",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-next--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "wrong.next",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "下一题"
+      },
+      "action": "NavigationAPI.next()",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-celebration-home--happy-1-回到首页-主成功路径",
+      "controlId": "wrong.celebration.home",
+      "kind": "happy",
+      "title": "回到首页 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "回到首页",
+        "parent": ".lx-celebrate"
+      },
+      "action": "hash=#/",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-celebration-home--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "wrong.celebration.home",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "回到首页",
+        "parent": ".lx-celebrate"
+      },
+      "action": "hash=#/",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-gesture-swipe--happy-1-滑动-主成功路径",
+      "controlId": "wrong.gesture.swipe",
+      "kind": "happy",
+      "title": "滑动 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "gesture",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "L/R next/prev; U mastered",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-gesture-swipe--unhappy-2-多指触摸---忽略",
+      "controlId": "wrong.gesture.swipe",
+      "kind": "unhappy",
+      "title": "多指触摸 → 忽略",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "gesture",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "L/R next/prev; U mastered",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-gesture-keyboard--happy-1-方向键-主成功路径",
+      "controlId": "wrong.gesture.keyboard",
+      "kind": "happy",
+      "title": "方向键 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "prev/next",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-gesture-keyboard--unhappy-2-input-textarea-焦点时忽略方向键",
+      "controlId": "wrong.gesture.keyboard",
+      "kind": "unhappy",
+      "title": "input/textarea 焦点时忽略方向键",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "prev/next",
+      "status": "pending"
+    },
+    {
+      "id": "wrong-card-reuse--happy-1-卡片答题控件-主成功路径",
+      "controlId": "wrong.card.reuse",
+      "kind": "happy",
+      "title": "卡片答题控件 主成功路径",
+      "page": "wrong",
+      "route": "#/wrong",
+      "elementType": "group",
+      "affectsProgressText": true,
+      "selectors": {},
+      "action": "复用 card.js；对 → onWrongBookGraded",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-library--happy-1-题库文件-input-主成功路径",
+      "controlId": "settings.fileInput.library",
+      "kind": "happy",
+      "title": "题库文件 input 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-library--unhappy-2-parse-fail",
+      "controlId": "settings.fileInput.library",
+      "kind": "unhappy",
+      "title": "parse fail",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-library--unhappy-3-0题",
+      "controlId": "settings.fileInput.library",
+      "kind": "unhappy",
+      "title": "0题",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-library--unhappy-4-DUPLICATE",
+      "controlId": "settings.fileInput.library",
+      "kind": "unhappy",
+      "title": "DUPLICATE",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-library--unhappy-5-取消选文件---无导入",
+      "controlId": "settings.fileInput.library",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".xlsx,.xls,.json,.csv,.txt"
+      },
+      "action": "IOAPI.parseFile+importLibrary",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-progress--happy-1-进度文件-input-主成功路径",
+      "controlId": "settings.fileInput.progress",
+      "kind": "happy",
+      "title": "进度文件 input 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".json"
+      },
+      "action": "IOAPI.importProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-progress--unhappy-2-fail-toast",
+      "controlId": "settings.fileInput.progress",
+      "kind": "unhappy",
+      "title": "fail toast",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".json"
+      },
+      "action": "IOAPI.importProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-fileInput-progress--unhappy-3-取消选文件---无导入",
+      "controlId": "settings.fileInput.progress",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "input",
+      "affectsProgressText": true,
+      "selectors": {
+        "type": "file",
+        "accept": ".json"
+      },
+      "action": "IOAPI.importProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-lib-switch--happy-1-切换-主成功路径",
+      "controlId": "settings.lib.switch",
+      "kind": "happy",
+      "title": "切换 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "切换"
+      },
+      "action": "LibraryAPI.switch",
+      "status": "pending"
+    },
+    {
+      "id": "settings-lib-switch--unhappy-2-API--ok---toast-或无副作用",
+      "controlId": "settings.lib.switch",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "切换"
+      },
+      "action": "LibraryAPI.switch",
+      "status": "pending"
+    },
+    {
+      "id": "settings-lib-delete--happy-1-删除-主成功路径",
+      "controlId": "settings.lib.delete",
+      "kind": "happy",
+      "title": "删除 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "删除"
+      },
+      "action": "appConfirm → LibraryAPI.delete",
+      "status": "pending"
+    },
+    {
+      "id": "settings-lib-delete--unhappy-2-confirm-cancel",
+      "controlId": "settings.lib.delete",
+      "kind": "unhappy",
+      "title": "confirm cancel",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "删除"
+      },
+      "action": "appConfirm → LibraryAPI.delete",
+      "status": "pending"
+    },
+    {
+      "id": "settings-lib-delete--unhappy-3-delete-fail",
+      "controlId": "settings.lib.delete",
+      "kind": "unhappy",
+      "title": "delete fail",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "删除"
+      },
+      "action": "appConfirm → LibraryAPI.delete",
+      "status": "pending"
+    },
+    {
+      "id": "settings-uploadLibrary--happy-1-上传新题库-主成功路径",
+      "controlId": "settings.uploadLibrary",
+      "kind": "happy",
+      "title": "上传新题库 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "fileInput.click()",
+      "status": "pending"
+    },
+    {
+      "id": "settings-uploadLibrary--unhappy-2-取消选文件---无导入",
+      "controlId": "settings.uploadLibrary",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "上传新题库"
+      },
+      "action": "fileInput.click()",
+      "status": "pending"
+    },
+    {
+      "id": "settings-exportProgress--happy-1-备份进度-主成功路径",
+      "controlId": "settings.exportProgress",
+      "kind": "happy",
+      "title": "备份进度 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份进度"
+      },
+      "action": "IOAPI.exportProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-exportProgress--unhappy-2-export-fail",
+      "controlId": "settings.exportProgress",
+      "kind": "unhappy",
+      "title": "export fail",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份进度"
+      },
+      "action": "IOAPI.exportProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-exportProgress--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "settings.exportProgress",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "备份进度"
+      },
+      "action": "IOAPI.exportProgress",
+      "status": "pending"
+    },
+    {
+      "id": "settings-importProgressBtn--happy-1-恢复进度-主成功路径",
+      "controlId": "settings.importProgressBtn",
+      "kind": "happy",
+      "title": "恢复进度 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "恢复进度"
+      },
+      "action": "progressInput.click()",
+      "status": "pending"
+    },
+    {
+      "id": "settings-importProgressBtn--unhappy-2-取消选文件---无导入",
+      "controlId": "settings.importProgressBtn",
+      "kind": "unhappy",
+      "title": "取消选文件 → 无导入",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "恢复进度"
+      },
+      "action": "progressInput.click()",
+      "status": "pending"
+    },
+    {
+      "id": "settings-resetProgress--happy-1-confirm---0-mastered-review---topbar-syn",
+      "controlId": "settings.resetProgress",
+      "kind": "happy",
+      "title": "confirm → 0 mastered/review + topbar sync",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置当前题库进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset + page refresh",
+      "status": "pending"
+    },
+    {
+      "id": "settings-resetProgress--unhappy-2-confirm-cancel",
+      "controlId": "settings.resetProgress",
+      "kind": "unhappy",
+      "title": "confirm cancel",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置当前题库进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset + page refresh",
+      "status": "pending"
+    },
+    {
+      "id": "settings-resetProgress--unhappy-3-无当前库无此段",
+      "controlId": "settings.resetProgress",
+      "kind": "unhappy",
+      "title": "无当前库无此段",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置当前题库进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset + page refresh",
+      "status": "pending"
+    },
+    {
+      "id": "settings-resetProgress--unhappy-4-API--ok---toast-或无副作用",
+      "controlId": "settings.resetProgress",
+      "kind": "unhappy",
+      "title": "API !ok → toast 或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": true,
+      "selectors": {
+        "text": "重置当前题库进度"
+      },
+      "action": "appConfirm → ProgressAPI.reset + page refresh",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-json--happy-1-JSON-主成功路径",
+      "controlId": "settings.export.json",
+      "kind": "happy",
+      "title": "JSON 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "JSON"
+      },
+      "action": "exportLibrary json",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-json--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "settings.export.json",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "JSON"
+      },
+      "action": "exportLibrary json",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-json--unhappy-3-导出-下载失败---toast-且-domain-不变",
+      "controlId": "settings.export.json",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "JSON"
+      },
+      "action": "exportLibrary json",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-xlsx--happy-1-Excel-主成功路径",
+      "controlId": "settings.export.xlsx",
+      "kind": "happy",
+      "title": "Excel 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "Excel"
+      },
+      "action": "exportLibrary xlsx",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-xlsx--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "settings.export.xlsx",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "Excel"
+      },
+      "action": "exportLibrary xlsx",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-xlsx--unhappy-3-导出-下载失败---toast-且-domain-不变",
+      "controlId": "settings.export.xlsx",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "Excel"
+      },
+      "action": "exportLibrary xlsx",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-csv--happy-1-CSV-主成功路径",
+      "controlId": "settings.export.csv",
+      "kind": "happy",
+      "title": "CSV 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "CSV"
+      },
+      "action": "exportLibrary csv",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-csv--unhappy-2-常失败-toast",
+      "controlId": "settings.export.csv",
+      "kind": "unhappy",
+      "title": "常失败 toast",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "CSV"
+      },
+      "action": "exportLibrary csv",
+      "status": "pending"
+    },
+    {
+      "id": "settings-export-csv--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "settings.export.csv",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "CSV"
+      },
+      "action": "exportLibrary csv",
+      "status": "pending"
+    },
+    {
+      "id": "settings-downloadTemplate--happy-1-下载导入模板-主成功路径",
+      "controlId": "settings.downloadTemplate",
+      "kind": "happy",
+      "title": "下载导入模板 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "下载导入模板"
+      },
+      "action": "IOAPI.downloadTemplate",
+      "status": "pending"
+    },
+    {
+      "id": "settings-downloadTemplate--unhappy-2-导出-下载失败---toast-且-domain-不变",
+      "controlId": "settings.downloadTemplate",
+      "kind": "unhappy",
+      "title": "导出/下载失败 → toast 且 domain 不变",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "下载导入模板"
+      },
+      "action": "IOAPI.downloadTemplate",
+      "status": "pending"
+    },
+    {
+      "id": "settings-theme--happy-1-主题色-主成功路径",
+      "controlId": "settings.theme",
+      "kind": "happy",
+      "title": "主题色 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "title": "THEME.name"
+      },
+      "action": "setTheme",
+      "status": "pending"
+    },
+    {
+      "id": "settings-theme--unhappy-2-重复切换同一值---无异常副作用",
+      "controlId": "settings.theme",
+      "kind": "unhappy",
+      "title": "重复切换同一值 → 无异常副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "title": "THEME.name"
+      },
+      "action": "setTheme",
+      "status": "pending"
+    },
+    {
+      "id": "settings-mode--happy-1-显示模式-主成功路径",
+      "controlId": "settings.mode",
+      "kind": "happy",
+      "title": "显示模式 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "普通模式|夜间模式|护眼模式"
+      },
+      "action": "setMode",
+      "status": "pending"
+    },
+    {
+      "id": "settings-mode--unhappy-2-重复切换同一值---无异常副作用",
+      "controlId": "settings.mode",
+      "kind": "unhappy",
+      "title": "重复切换同一值 → 无异常副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "普通模式|夜间模式|护眼模式"
+      },
+      "action": "setMode",
+      "status": "pending"
+    },
+    {
+      "id": "settings-openHelp--happy-1-查看使用帮助-主成功路径",
+      "controlId": "settings.openHelp",
+      "kind": "happy",
+      "title": "查看使用帮助 主成功路径",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "查看使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "settings-openHelp--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "settings.openHelp",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "settings",
+      "route": "#/settings",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "查看使用帮助"
+      },
+      "action": "navigate help",
+      "status": "pending"
+    },
+    {
+      "id": "browse-backStudy--happy-1-返回刷题-主成功路径",
+      "controlId": "browse.backStudy",
+      "kind": "happy",
+      "title": "返回刷题 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "返回刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-backStudy--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "browse.backStudy",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "返回刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-addQuestion--happy-1-新增-主成功路径",
+      "controlId": "browse.addQuestion",
+      "kind": "happy",
+      "title": "新增 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "新增题目"
+      },
+      "action": "navigate add-question",
+      "status": "pending"
+    },
+    {
+      "id": "browse-addQuestion--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "browse.addQuestion",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "新增题目"
+      },
+      "action": "navigate add-question",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-input--happy-1-搜索题干-主成功路径",
+      "controlId": "browse.search.input",
+      "kind": "happy",
+      "title": "搜索题干 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "type": "search",
+        "aria": "搜索题干"
+      },
+      "action": "draft; Enter commitSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-input--unhappy-2-IME-composition-中忽略-Enter",
+      "controlId": "browse.search.input",
+      "kind": "unhappy",
+      "title": "IME composition 中忽略 Enter",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "type": "search",
+        "aria": "搜索题干"
+      },
+      "action": "draft; Enter commitSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-input--unhappy-3-空输入提交-确认---校验失败或不生效",
+      "controlId": "browse.search.input",
+      "kind": "unhappy",
+      "title": "空输入提交/确认 → 校验失败或不生效",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "type": "search",
+        "aria": "搜索题干"
+      },
+      "action": "draft; Enter commitSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-submit--happy-1-有效关键字---过滤标签---命中列表",
+      "controlId": "browse.search.submit",
+      "kind": "happy",
+      "title": "有效关键字 → 过滤标签 + 命中列表",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "执行题干搜索"
+      },
+      "action": "commitSearch AND filter",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-submit--unhappy-2-空-draft---toast-请输入搜索关键字",
+      "controlId": "browse.search.submit",
+      "kind": "unhappy",
+      "title": "空 draft → toast 请输入搜索关键字",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "执行题干搜索"
+      },
+      "action": "commitSearch AND filter",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-chipDismiss--happy-1-清除过滤标签-主成功路径",
+      "controlId": "browse.search.chipDismiss",
+      "kind": "happy",
+      "title": "清除过滤标签 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-chip__dismiss"
+      },
+      "action": "removeFilterAt",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-chipDismiss--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.search.chipDismiss",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-chip__dismiss"
+      },
+      "action": "removeFilterAt",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-modeToggle--happy-1-顺序-随机-主成功路径",
+      "controlId": "browse.toolbar.modeToggle",
+      "kind": "happy",
+      "title": "顺序/随机 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "顺序模式|随机模式"
+      },
+      "action": "NavigationAPI.setMode",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-modeToggle--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.toolbar.modeToggle",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "顺序模式|随机模式"
+      },
+      "action": "NavigationAPI.setMode",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-reshuffle--happy-1-换一批-主成功路径",
+      "controlId": "browse.toolbar.reshuffle",
+      "kind": "happy",
+      "title": "换一批 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "换一批",
+        "visibleWhen": "random"
+      },
+      "action": "NavigationAPI.shuffle",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-reshuffle--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.toolbar.reshuffle",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "换一批",
+        "visibleWhen": "random"
+      },
+      "action": "NavigationAPI.shuffle",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-clearCategory--happy-1-清除分类-主成功路径",
+      "controlId": "browse.toolbar.clearCategory",
+      "kind": "happy",
+      "title": "清除分类 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "清除分类",
+        "visibleWhen": "category≠all"
+      },
+      "action": "setCategory('all')",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-clearCategory--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.toolbar.clearCategory",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "清除分类",
+        "visibleWhen": "category≠all"
+      },
+      "action": "setCategory('all')",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-collapseAll--happy-1-全部折叠-主成功路径",
+      "controlId": "browse.toolbar.collapseAll",
+      "kind": "happy",
+      "title": "全部折叠 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "全部折叠"
+      },
+      "action": "collapse all",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-collapseAll--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.toolbar.collapseAll",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "全部折叠"
+      },
+      "action": "collapse all",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-expandAll--happy-1-全部展开-主成功路径",
+      "controlId": "browse.toolbar.expandAll",
+      "kind": "happy",
+      "title": "全部展开 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "全部展开"
+      },
+      "action": "expand all",
+      "status": "pending"
+    },
+    {
+      "id": "browse-toolbar-expandAll--unhappy-2-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.toolbar.expandAll",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "全部展开"
+      },
+      "action": "expand all",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-open--happy-1-练习模式-主成功路径",
+      "controlId": "browse.practice.open",
+      "kind": "happy",
+      "title": "练习模式 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "练习模式"
+      },
+      "action": "open practice modal",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-open--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.open",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "练习模式"
+      },
+      "action": "open practice modal",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-hint--happy-1-练习说明--主成功路径",
+      "controlId": "browse.practice.hint",
+      "kind": "happy",
+      "title": "练习说明? 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "练习模式说明"
+      },
+      "action": "appConfirm → optional help",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-hint--unhappy-2-confirm-cancel-不跳转",
+      "controlId": "browse.practice.hint",
+      "kind": "unhappy",
+      "title": "confirm cancel 不跳转",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "练习模式说明"
+      },
+      "action": "appConfirm → optional help",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-hint--unhappy-3-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.hint",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "练习模式说明"
+      },
+      "action": "appConfirm → optional help",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-overlayClose--happy-1-练习面板遮罩-主成功路径",
+      "controlId": "browse.practice.overlayClose",
+      "kind": "happy",
+      "title": "练习面板遮罩 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-overlayClose--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.overlayClose",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "modal",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-closeX--happy-1-关闭练习设置-主成功路径",
+      "controlId": "browse.practice.closeX",
+      "kind": "happy",
+      "title": "关闭练习设置 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "关闭练习模式设置"
+      },
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-closeX--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.closeX",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "关闭练习模式设置"
+      },
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-mode-memory--happy-1-背诵记忆-主成功路径",
+      "controlId": "browse.practice.mode.memory",
+      "kind": "happy",
+      "title": "背诵记忆 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "背诵记忆"
+      },
+      "action": "mode=memory; count disabled",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-mode-memory--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.mode.memory",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "背诵记忆"
+      },
+      "action": "mode=memory; count disabled",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-mode-quick--happy-1-快速刷题-主成功路径",
+      "controlId": "browse.practice.mode.quick",
+      "kind": "happy",
+      "title": "快速刷题 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "快速刷题"
+      },
+      "action": "mode=quick; count enabled",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-mode-quick--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.mode.quick",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "快速刷题"
+      },
+      "action": "mode=quick; count enabled",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-countInput--happy-1-本轮题量-主成功路径",
+      "controlId": "browse.practice.countInput",
+      "kind": "happy",
+      "title": "本轮题量 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "本轮题量"
+      },
+      "action": "countDraft",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-countInput--unhappy-2-memory-时-disabled",
+      "controlId": "browse.practice.countInput",
+      "kind": "unhappy",
+      "title": "memory 时 disabled",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "本轮题量"
+      },
+      "action": "countDraft",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-countInput--unhappy-3-空输入提交-确认---校验失败或不生效",
+      "controlId": "browse.practice.countInput",
+      "kind": "unhappy",
+      "title": "空输入提交/确认 → 校验失败或不生效",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "本轮题量"
+      },
+      "action": "countDraft",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-countInput--unhappy-4-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.countInput",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "本轮题量"
+      },
+      "action": "countDraft",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-cancel--happy-1-取消练习-主成功路径",
+      "controlId": "browse.practice.cancel",
+      "kind": "happy",
+      "title": "取消练习 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "取消练习模式"
+      },
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-cancel--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.cancel",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "取消练习模式"
+      },
+      "action": "closePracticeSheet",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-start--happy-1-开始练习-主成功路径",
+      "controlId": "browse.practice.start",
+      "kind": "happy",
+      "title": "开始练习 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "开始练习"
+      },
+      "action": "DrillAPI.start → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-start--unhappy-2-题量无效-toast",
+      "controlId": "browse.practice.start",
+      "kind": "unhappy",
+      "title": "题量无效 toast",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "开始练习"
+      },
+      "action": "DrillAPI.start → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-start--unhappy-3-start-fail",
+      "controlId": "browse.practice.start",
+      "kind": "unhappy",
+      "title": "start fail",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "开始练习"
+      },
+      "action": "DrillAPI.start → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practice-start--unhappy-4-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practice.start",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "aria": "开始练习"
+      },
+      "action": "DrillAPI.start → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-categoryHeader--happy-1-分类头折叠-主成功路径",
+      "controlId": "browse.categoryHeader",
+      "kind": "happy",
+      "title": "分类头折叠 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "toggle collapsed",
+      "status": "pending"
+    },
+    {
+      "id": "browse-categoryHeader--unhappy-2-空列表或目标不可用---无副作用",
+      "controlId": "browse.categoryHeader",
+      "kind": "unhappy",
+      "title": "空列表或目标不可用 → 无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "toggle collapsed",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practiceCategory--happy-1-只练本类-主成功路径",
+      "controlId": "browse.practiceCategory",
+      "kind": "happy",
+      "title": "只练本类 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "只练本类"
+      },
+      "action": "setCategory → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-practiceCategory--unhappy-2-无库-不可达态---隐藏或无副作用",
+      "controlId": "browse.practiceCategory",
+      "kind": "unhappy",
+      "title": "无库/不可达态 → 隐藏或无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "只练本类"
+      },
+      "action": "setCategory → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-questionRow--happy-1-点命中---study---searchPlaylist",
+      "controlId": "browse.questionRow",
+      "kind": "happy",
+      "title": "点命中 → study + searchPlaylist",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-catalog-item"
+      },
+      "action": "goto / searchPlaylist jump → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-questionRow--unhappy-2-jump-fail-toast",
+      "controlId": "browse.questionRow",
+      "kind": "unhappy",
+      "title": "jump fail toast",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-catalog-item"
+      },
+      "action": "goto / searchPlaylist jump → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-questionRow--unhappy-3-无库-空目录---控件隐藏或点击无副作用",
+      "controlId": "browse.questionRow",
+      "kind": "unhappy",
+      "title": "无库/空目录 → 控件隐藏或点击无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-catalog-item"
+      },
+      "action": "goto / searchPlaylist jump → study",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-sentinel--happy-1-触底续载-主成功路径",
+      "controlId": "browse.search.sentinel",
+      "kind": "happy",
+      "title": "触底续载 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "data-search-sentinel": "1"
+      },
+      "action": "loadMoreSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-sentinel--unhappy-2-loading-中忽略",
+      "controlId": "browse.search.sentinel",
+      "kind": "unhappy",
+      "title": "loading 中忽略",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "data-search-sentinel": "1"
+      },
+      "action": "loadMoreSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-search-sentinel--unhappy-3-load-fail-toast",
+      "controlId": "browse.search.sentinel",
+      "kind": "unhappy",
+      "title": "load fail toast",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "gesture",
+      "affectsProgressText": null,
+      "selectors": {
+        "data-search-sentinel": "1"
+      },
+      "action": "loadMoreSearch",
+      "status": "pending"
+    },
+    {
+      "id": "browse-empty-goHome--happy-1-去首页-主成功路径",
+      "controlId": "browse.empty.goHome",
+      "kind": "happy",
+      "title": "去首页 主成功路径",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去首页",
+        "when": "无库"
+      },
+      "action": "navigate home",
+      "status": "pending"
+    },
+    {
+      "id": "browse-empty-goHome--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "browse.empty.goHome",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "browse",
+      "route": "#/browse",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去首页",
+        "when": "无库"
+      },
+      "action": "navigate home",
+      "status": "pending"
+    },
+    {
+      "id": "addq-backBrowse--happy-1-返回浏览-主成功路径",
+      "controlId": "addq.backBrowse",
+      "kind": "happy",
+      "title": "返回浏览 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "返回浏览"
+      },
+      "action": "navigate browse",
+      "status": "pending"
+    },
+    {
+      "id": "addq-backBrowse--unhappy-2-有未保存内容仍直接-navigate-browse-无-confirm-与-ad",
+      "controlId": "addq.backBrowse",
+      "kind": "unhappy",
+      "title": "有未保存内容仍直接 navigate browse（无 confirm，与 addq.cancel 不一致）",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "返回浏览"
+      },
+      "action": "navigate browse",
+      "status": "pending"
+    },
+    {
+      "id": "addq-type--happy-1-题型-chip-主成功路径",
+      "controlId": "addq.type",
+      "kind": "happy",
+      "title": "题型 chip 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "chip",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-addq__type-btn"
+      },
+      "action": "set form.type",
+      "status": "pending"
+    },
+    {
+      "id": "addq-type--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.type",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "chip",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-addq__type-btn"
+      },
+      "action": "set form.type",
+      "status": "pending"
+    },
+    {
+      "id": "addq-category--happy-1-分类-主成功路径",
+      "controlId": "addq.category",
+      "kind": "happy",
+      "title": "分类 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.category",
+      "status": "pending"
+    },
+    {
+      "id": "addq-category--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.category",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.category",
+      "status": "pending"
+    },
+    {
+      "id": "addq-question--happy-1-题干-主成功路径",
+      "controlId": "addq.question",
+      "kind": "happy",
+      "title": "题干 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.question",
+      "status": "pending"
+    },
+    {
+      "id": "addq-question--unhappy-2-空保存-toast",
+      "controlId": "addq.question",
+      "kind": "unhappy",
+      "title": "空保存 toast",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.question",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionCheck--happy-1-选项正确标记-主成功路径",
+      "controlId": "addq.optionCheck",
+      "kind": "happy",
+      "title": "选项正确标记 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-addq__opt-check"
+      },
+      "action": "set answer letters",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionCheck--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.optionCheck",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "class": "lx-addq__opt-check"
+      },
+      "action": "set answer letters",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionText--happy-1-选项文本-主成功路径",
+      "controlId": "addq.optionText",
+      "kind": "happy",
+      "title": "选项文本 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.options[i]",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionText--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.optionText",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.options[i]",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionRemove--happy-1-删除选项-主成功路径",
+      "controlId": "addq.optionRemove",
+      "kind": "happy",
+      "title": "删除选项 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "splice option",
+      "status": "pending"
+    },
+    {
+      "id": "addq-optionRemove--unhappy-2--2-选项---toast",
+      "controlId": "addq.optionRemove",
+      "kind": "unhappy",
+      "title": "≤2 选项 → toast",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "splice option",
+      "status": "pending"
+    },
+    {
+      "id": "addq-addOption--happy-1-添加选项-主成功路径",
+      "controlId": "addq.addOption",
+      "kind": "happy",
+      "title": "添加选项 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "添加选项"
+      },
+      "action": "push option",
+      "status": "pending"
+    },
+    {
+      "id": "addq-addOption--unhappy-2--8-隐藏",
+      "controlId": "addq.addOption",
+      "kind": "unhappy",
+      "title": "≥8 隐藏",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "添加选项"
+      },
+      "action": "push option",
+      "status": "pending"
+    },
+    {
+      "id": "addq-judge-true--happy-1-对-主成功路径",
+      "controlId": "addq.judge.true",
+      "kind": "happy",
+      "title": "对 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "answer=对",
+      "status": "pending"
+    },
+    {
+      "id": "addq-judge-true--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.judge.true",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "answer=对",
+      "status": "pending"
+    },
+    {
+      "id": "addq-judge-false--happy-1-错-主成功路径",
+      "controlId": "addq.judge.false",
+      "kind": "happy",
+      "title": "错 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "answer=错",
+      "status": "pending"
+    },
+    {
+      "id": "addq-judge-false--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.judge.false",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "answer=错",
+      "status": "pending"
+    },
+    {
+      "id": "addq-fill-answer--happy-1-填空答案-主成功路径",
+      "controlId": "addq.fill.answer",
+      "kind": "happy",
+      "title": "填空答案 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.answer",
+      "status": "pending"
+    },
+    {
+      "id": "addq-fill-answer--unhappy-2-空保存-toast",
+      "controlId": "addq.fill.answer",
+      "kind": "unhappy",
+      "title": "空保存 toast",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "input",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.answer",
+      "status": "pending"
+    },
+    {
+      "id": "addq-essay-answerText--happy-1-简答参考答案-主成功路径",
+      "controlId": "addq.essay.answerText",
+      "kind": "happy",
+      "title": "简答参考答案 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.answerText",
+      "status": "pending"
+    },
+    {
+      "id": "addq-essay-answerText--unhappy-2-空保存-toast",
+      "controlId": "addq.essay.answerText",
+      "kind": "unhappy",
+      "title": "空保存 toast",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.answerText",
+      "status": "pending"
+    },
+    {
+      "id": "addq-explanation--happy-1-解析-主成功路径",
+      "controlId": "addq.explanation",
+      "kind": "happy",
+      "title": "解析 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.explanation",
+      "status": "pending"
+    },
+    {
+      "id": "addq-explanation--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.explanation",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "textarea",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "form.explanation",
+      "status": "pending"
+    },
+    {
+      "id": "addq-cancel--happy-1-取消-主成功路径",
+      "controlId": "addq.cancel",
+      "kind": "happy",
+      "title": "取消 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm → browse",
+      "status": "pending"
+    },
+    {
+      "id": "addq-cancel--unhappy-2-confirm-cancel-留下",
+      "controlId": "addq.cancel",
+      "kind": "unhappy",
+      "title": "confirm cancel 留下",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {},
+      "action": "appConfirm → browse",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--happy-1-各题型填齐保存成功---toast---题目数-1",
+      "controlId": "addq.save",
+      "kind": "happy",
+      "title": "各题型填齐保存成功 → toast + 题目数+1",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-2-空题干",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "空题干",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-3--2选项",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "<2选项",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-4-未选答案",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "未选答案",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-5-判断未选",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "判断未选",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-6-填空-简答空",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "填空/简答空",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-7-API-fail",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "API fail",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-save--unhappy-8-多选成功路径需补测",
+      "controlId": "addq.save",
+      "kind": "unhappy",
+      "title": "多选成功路径需补测",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "保存题目"
+      },
+      "action": "QuestionAPI.add",
+      "status": "pending"
+    },
+    {
+      "id": "addq-noLib-goSettings--happy-1-去设置-主成功路径",
+      "controlId": "addq.noLib.goSettings",
+      "kind": "happy",
+      "title": "去设置 主成功路径",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去设置",
+        "when": "无库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "addq-noLib-goSettings--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "addq.noLib.goSettings",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "add-question",
+      "route": "#/add-question",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去设置",
+        "when": "无库"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "help-goStudy-quickStart--happy-1-去刷题-主成功路径",
+      "controlId": "help.goStudy.quickStart",
+      "kind": "happy",
+      "title": "去刷题 主成功路径",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "help-goStudy-quickStart--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "help.goStudy.quickStart",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "去刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "help-goSettings--happy-1-前往设置-主成功路径",
+      "controlId": "help.goSettings",
+      "kind": "happy",
+      "title": "前往设置 主成功路径",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "前往设置"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "help-goSettings--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "help.goSettings",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "前往设置"
+      },
+      "action": "navigate settings",
+      "status": "pending"
+    },
+    {
+      "id": "help-goStudy-footer--happy-1-----study",
+      "controlId": "help.goStudy.footer",
+      "kind": "happy",
+      "title": "→ #/study",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "开始刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    },
+    {
+      "id": "help-goStudy-footer--unhappy-2-不可达-禁用-空态---无副作用",
+      "controlId": "help.goStudy.footer",
+      "kind": "unhappy",
+      "title": "不可达/禁用/空态 → 无副作用",
+      "page": "help",
+      "route": "#/help",
+      "elementType": "button",
+      "affectsProgressText": null,
+      "selectors": {
+        "text": "开始刷题"
+      },
+      "action": "navigate study",
+      "status": "pending"
+    }
+  ],
+  "coverageRule": "每个 controlId 至少 1 happy；inventory/类型常识列出的 unhappy 全进矩阵；系统测 runner 必须对 executable 条做状态差分断言",
+  "deferredPolicy": "实在无法在 jsdom/无头环境稳定复现的路径（如多指触摸、IME composition）列入 perform.js DEFERRED；matrix.test 仅对这些 id 使用 it.skip，数量应 ≤15"
+}

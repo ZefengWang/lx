@@ -16,11 +16,13 @@ import { createStudyPage } from './pages/study.js';
 import { createWrongBookPage } from './pages/wrongbook.js';
 import { createStatsPage } from './pages/stats.js';
 import { createSettingsPage } from './pages/settings.js';
-import { createCatalogPage } from './pages/catalog.js';
+import { createBrowsePage } from './pages/browse.js';
 import { createAddQuestionPage } from './pages/add-question.js';
 import { createHelpPage } from './pages/help.js';
 import { applyInitial as applyInitialTheme } from './theme.js';
 import { toastInfo, toastPrimary, toastSuccess, toastWarning } from './toast.js';
+import { appConfirm } from './confirm.js';
+import { appPrompt } from './prompt.js';
 
 /**
  * UI 主初始化
@@ -50,7 +52,9 @@ export function initUI(LX) {
     register('wrong',    '#/wrong',       () => createWrongBookPage());
     register('stats',    '#/stats',       () => createStatsPage());
     register('settings', '#/settings',    () => createSettingsPage());
-    register('catalog',  '#/catalog',     () => createCatalogPage());
+    register('browse',   '#/browse',      () => createBrowsePage());
+    // 兼容旧 hash / 旧测试名
+    register('catalog',  '#/catalog',     () => createBrowsePage());
     register('add-question', '#/add-question', () => createAddQuestionPage());
     register('help',     '#/help',        () => createHelpPage());
 
@@ -69,6 +73,7 @@ export function initUI(LX) {
         LX.Events.QUESTION_STATUS_CHANGED,
         LX.Events.NAVIGATION_CHANGED,
         LX.Events.PROGRESS_UPDATED,
+        LX.Events.PROGRESS_RESET,
         LX.Events.WRONGBOOK_ENTERED,
         LX.Events.WRONGBOOK_EXITED,
     ].forEach((evt) => {
@@ -212,9 +217,8 @@ function refreshBottombar(routeName) {
             },
             onPrev: () => LX.NavigationAPI.prev(),
             onCatalog: () => {
-                // BUG-007 修复：目录按钮应该跳到题目目录页（catalog），
-                // 而不是 settings 页（用户在那里会迷路）
-                navigate('catalog');
+                // 浏览页：题目列表 / 搜索 / 练习入口
+                navigate('browse');
             },
             onNext: () => LX.NavigationAPI.next(),
         }),
@@ -253,7 +257,7 @@ function refreshDrawer() {
         onCreateLibrary: () => {
             // 在左侧菜单直接新建空题库：prompt 输入名 → 创建 → 切换 → 跳去添加题目
             closeDrawer();
-            const name = window.prompt('请输入新题库名称：', '我的题库');
+            const name = appPrompt('请输入新题库名称：', '我的题库');
             if (name == null) return; // 用户取消
             const trimmed = String(name).trim();
             if (!trimmed) {
@@ -286,7 +290,7 @@ function refreshDrawer() {
             navigate('settings');
         },
         onResetProgress: () => {
-            if (!confirm('确定要重置当前题库的所有学习进度吗？此操作不可撤销。')) return;
+            if (!appConfirm('确定要重置当前题库的所有学习进度吗？此操作不可撤销。')) return;
             const r = LX.ProgressAPI.reset();
             if (r.ok) {
                 toastInfo('进度已重置');

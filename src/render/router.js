@@ -20,6 +20,21 @@ let _container = null;
 let _onNavigate = null; // 顶栏高亮等回调
 
 /**
+ * 仅测试钩子：navigate 被调用时回调（生产环境保持 null，零行为变化）
+ * @type {null | ((name: string, params: Record<string,string>) => void)}
+ */
+let _testNavigateHook = null;
+
+/**
+ * 【仅测试用】设置/清除 navigate 钩子。
+ * 生产代码禁止调用。hook 为 null 时恢复默认（不拦截、不改语义）。
+ * @param {null | ((name: string, params?: Record<string,string>) => void)} hook
+ */
+export function __setNavigateHookForTest(hook) {
+    _testNavigateHook = typeof hook === 'function' ? hook : null;
+}
+
+/**
  * 注册路由
  * @param {string} name 路由名（home/study/wrong/...）
  * @param {string} pattern hash 模式（如 '#/study' 或 '#/study/:libId'）
@@ -72,6 +87,15 @@ function resolve(hash) {
  * @param {Record<string,string>} [params={}]
  */
 export function navigate(name, params = {}) {
+    // 测试钩子：先于路由表查找，保证「意图」可观测（即使未 register 也能断言）
+    if (_testNavigateHook) {
+        try {
+            _testNavigateHook(name, params || {});
+        } catch (e) {
+            console.error('[lx:router] test navigate hook error:', e);
+        }
+    }
+
     const route = routes.get(name);
     if (!route) {
         console.warn('[lx:router] 未知路由：', name);

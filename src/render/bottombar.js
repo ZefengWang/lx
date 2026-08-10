@@ -30,7 +30,8 @@ export function renderBottombar(ctx = {}) {
             class: `lx-button--bar${opts.modifier ? ` lx-button--${opts.modifier}` : ''}`,
             type: 'button',
             onclick: onClick,
-            disabled: opts.disabled ? '' : undefined,
+            // 必须传布尔 true：h() 对 DOM 属性会走 el.disabled=val，空串 '' 是 falsy 会导致禁用失效
+            disabled: opts.disabled ? true : undefined,
             'aria-label': label,
             style: opts.style || undefined,
         }, [
@@ -82,7 +83,7 @@ export function renderBottombar(ctx = {}) {
         ]),
         h('div', { class: 'lx-bottombar__row' }, [
             barBtn('◀', '上一题', ctx.onPrev, { disabled: !ctx.canPrev }),
-            barBtn('📋', '目录', ctx.onCatalog),
+            barBtn('📋', '浏览', ctx.onCatalog),
             barBtn('▶', '下一题', ctx.onNext, { disabled: !ctx.canNext }),
         ]),
     ]);

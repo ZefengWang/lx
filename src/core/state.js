@@ -23,6 +23,15 @@ export const initialState = Object.freeze({
     /** @type {(string|number)[]} */
     filteredQIds: [],           // 当前筛选后的题目 ID 顺序列表
 
+    /** @type {null | object} 练习会话（快速刷题/背诵）；详见 DrillAPI */
+    drillSession: null,
+
+    /**
+     * 搜索命中刷题队列（浏览页点进结果后，prev/next 只在此集合内）
+     * @type {null | { keywords: string[], uids: (string|number)[], category?: string|null, status?: string|null }}
+     */
+    searchPlaylist: null,
+
     uiVisibility: Object.freeze({
         mnemonic: false,
         answer: false,
@@ -39,6 +48,8 @@ function unfreezeClone(obj) {
         ...obj,
         wrongBookSnapshot: null,
         filteredQIds: [],
+        drillSession: null,
+        searchPlaylist: null,
         uiVisibility: { ...obj.uiVisibility },
     };
 }

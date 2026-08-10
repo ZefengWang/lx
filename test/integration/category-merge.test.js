@@ -3,6 +3,7 @@ import { assertOk, assertEqual, assertTrue } from '../assert.js';
 import { getLX, resetStateBeforeEach } from '../helpers.js';
 
 /**
+ * 串联 SAR；单点 SAR 见 unit/ui/matrix。
  * 用户流程 6：分类合并
  * 题目分散 2 分类 → rename 合并 → 验证题目数累加
  */

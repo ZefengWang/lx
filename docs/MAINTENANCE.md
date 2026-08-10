@@ -49,9 +49,12 @@ lx/
 │   │   ├── stats.js        # 掌握率/分类统计
 │   │   ├── io.js           # 导入 / 导出（Excel/JSON/CSV）
 │   │   └── test.js         # 测试用 TestAPI（仅 ?test=1 时挂载）
-│   └── render/             # UI 层（零业务逻辑）
+│   └── render/             # UI 层（零业务逻辑；内含 session 子层）
 │       ├── main-ui.js      # 顶层渲染 + 路由
 │       ├── router.js       # Hash 路由：#/home /study /wrong /stats ...
+│       ├── session/        # 【UI 会话子层】跨路由界面上下文（见 §2.1.1）
+│       │   ├── index.js    # 出口：getBrowseSearch / setPracticeSheet …
+│       │   └── ui-session.js
 │       ├── card.js         # 题目卡片渲染（5 种题型 + 确认答案按钮）
 │       ├── bind.js         # bindEvents / bindRefresh 事件订阅工具
 │       ├── bottombar.js / topbar.js / drawer.js / logo.js
@@ -61,7 +64,7 @@ lx/
 │       ├── dom.js
 │       └── pages/          # 各页面（见 §2.4）
 │           ├── home.js / study.js / wrongbook.js
-│           ├── catalog.js / stats.js / settings.js
+│           ├── browse.js（兼兼容 catalog.js）/ stats.js / settings.js
 │           ├── add-question.js / help.js
 ├── test/                   # 52 项单元/集成/回归测试
 │   ├── index.js            # 测试入口（test.html 加载）
@@ -108,10 +111,15 @@ lx/
 │  render/ (UI 层)                             │  只能 import：api/  + 同层 render/
 │                                              │  能直接用：window.LX.*（业务 API）
 │  卡片、页面、toast、主题、路由、手势、事件订阅 │  绝对不能 import：core/
+│  ┌─────────────────────────────────────────┐ │
+│  │ session/  UI 会话子层（见 §2.1.1）        │ │  pages/shell → session
+│  │ 跨路由 UI 上下文：搜索草稿、面板开闭…     │ │  不写刷题队列 / 不碰 core
+│  └─────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────┤
 │  api/ (业务层)                               │  只能 import：core/ + 同层 api/
 │                                              │  产出物：window.LX.LibraryAPI / QuestionAPI ...
 │  题库 CRUD、判分、错题本流程、导入导出、统计   │  绝对不能 import：render/（不得碰 DOM）
+│  searchPlaylist 等导航领域态亦在此             │
 ├─────────────────────────────────────────────┤
 │  core/ (基础层)                              │  只能 import：同层 core/
 │                                              │  严禁使用：document / window / localStorage 之外的 BOM
@@ -119,7 +127,17 @@ lx/
 └─────────────────────────────────────────────┘
 ```
 
-> 🧪 **快速自查某模块是否越界**：看 `import` 语句。任何 `core/xxx.js` 里出现 `import '../api/'` 或 `'../render/'` 都是违规；任何 `render/pages/xxx.js` 里出现 `import '../core/'` 都是违规。
+#### 2.1.1 `render/session`（UiSession）——为什么不是第四大层？
+
+- **不是**与 core/api/render 并列的第四层：它没有独立于 UI 的领域语义，也不该被 api 调用。
+- **是** render 内部的稳定子层：把「跨页还要记住」的状态从 `pages/*` 闭包里抽出来，避免换路由丢上下文。
+- **边界**：
+  - ✅ `pages/`、`main-ui`、shell 可 `import '../session'`
+  - ✅ session **只**持 UI 草稿（如 `browseSearch.filters`、练习面板开闭）
+  - ❌ session 不 `import` core；不改 `filteredQIds` / `searchPlaylist`（队列属 api Navigation）
+  - ❌ api/core **禁止** import `render/session`
+
+> 🧪 **快速自查某模块是否越界**：看 `import` 语句。任何 `core/xxx.js` 里出现 `import '../api/'` 或 `'../render/'` 都是违规；任何 `render/pages/xxx.js` 里出现 `import '../core/'` 都是违规；任何 `api/*.js` 里出现 `render/session` 也是违规。
 
 ### 2.2 各层新增功能的标准流程
 
@@ -171,7 +189,7 @@ const unbind = bindEvents({
 | `#/home` | `pages/home.js` | 首页：题库列表、开始学习、错题入口 | 无 |
 | `#/study` | `pages/study.js` | 核心刷题页：逐题作答、状态切换、重置 | `viewState.selectedAnswers/revealed/essayActiveTab` |
 | `#/wrong` | `pages/wrongbook.js` | 错题专注模式：只展示 review 题 + 答对自动移出 | `_localState.selectedAnswers/revealed` |
-| `#/catalog` | `pages/catalog.js` | 目录页：分类、状态筛选、快速跳转 | 无（全局状态驱动） |
+| `#/browse`（兼容 `#/catalog`） | `pages/browse.js` | 浏览页：搜索续载、练习入口、点进结果进 searchPlaylist | UiSession.browseSearch + Navigation.searchPlaylist |
 | `#/stats` | `pages/stats.js` | 统计页：掌握率/分类型/分类概览 | 无 |
 | `#/settings` | `pages/settings.js` | 设置页：主题、模式、导入导出、数据管理 | 无 |
 | `#/add` | `pages/add-question.js` | 单题新增/编辑页 | 临时表单状态 |
@@ -268,17 +286,31 @@ LX.TestAPI.undoLast();                                  // 撤销最后一次 AP
 
 ### 4.1 运行方式
 
-浏览器打开 **test.html** → 点「▶ 运行全部」。目标：**52/52 必须全通过**，任何 1 项失败不得部署。
+浏览器打开 **test.html** → 点「▶ 运行全部」。目标：**全部通过**（条目数随版本增长），任何 1 项失败不得部署。  
+完整说明见 [`TESTING.md`](./TESTING.md)。
+
+### 4.1.1 强制规则（v3.0.2+）
+
+1. **新增功能** → 必须加 **unit 单测**，并加入 **system**（或 integration）旅程。  
+2. **新增/变更接口** → 同步 `types.js` + `CONTRACT-*.md` + 设计文档（MAINTENANCE 或 `FEATURE-*.md`）。  
+3. **UI 关键行为** → 抽到 `src/render/contracts/*`，用 `test/ui/` 锁住；禁止只靠 API 测假装 UI 已测。  
+4. **设计即测（红线，v3.1+）** → 功能设计阶段必须规划可观测点与测例；副作用（navigate/toast/confirm/drawer/IO）默认预留 `__…ForTest` 钩子。详见 [`TESTING.md` §2.1](./TESTING.md)。  
+   - 不允许「先做功能、用到才发现不可测」。  
+   - UI 每个新按钮/控件同 PR 补 DOM 测；core/api 每个新导出同 PR 补单测。  
+   - 覆盖债与工作量见 [`COVERAGE-PLAN.md`](./COVERAGE-PLAN.md)。  
+5. **SAR 单测形态（红线，v3.1+）** → 每个功能点按「不同初始状态 S × 可接受 action A → 预期 response R」写测例；禁止只测单一 happy path。详见 [`TESTING.md` §2.2](./TESTING.md)。  
+6. **页面 UI 瞬时状态必须实例私有** → 如 `study` 的 `viewState` 不得做成模块单例；否则 reset/换库后会出现「进度已空但卡片仍 revealed」的假态（SAR 多初始态测会立刻打出）。
 
 ### 4.2 测试目录结构
 
 ```
 test/
-├── unit/          单模块 API：按模块单独覆盖（library/question/progress …）
-├── integration/   跨模块流程：学习流、错题循环、导入导出、进度备份、多题库切换、分类合并
-└── regression/    Bug 回归锁：
-    ├── bugs.test.js              BUG-001 ~ BUG-011 共 13 条历史回归
-    └── multi-wrongbook.test.js   多选错题本 4 条（v2.6.2 + v3.0.1）
+├── unit/core/     核心层：errors/events/state/validators …
+├── unit/          API 域：library/question/progress …
+├── ui/            UI 契约与生命周期（可挂临时 DOM）
+├── integration/   跨 API 模块流程
+├── system/        端到端业务旅程
+└── regression/    Bug 回归锁（bugs / multi-wrongbook）
 ```
 
 ### 4.3 写新测试的约定（`test/helpers.js`）
@@ -399,7 +431,10 @@ git push
 | BUG-010 | 数字开头分类标题（"2027安徽xxx"）被误判数据行 | 表头识别只用文本/空白判断 | `core/parsers/excel.js` 表头/数据行分类器 | `bugs.test.js` BUG-010 |
 | BUG-011 | 数据行含"口诀/解析/答案"等关键词被误识别重复表头 | 关键词匹配太宽 | `core/parsers/excel.js` 关键字黑名单收敛 | `bugs.test.js` BUG-011 |
 | — *(v2.6.2)* | 错题本多选确认答案后无反馈+计数爆炸(初版) | `wrongbook.js` multi 分支未调 QuestionAPI.answer | `src/render/pages/wrongbook.js` handleAnswer multi 分支 | `multi-wrongbook.test.js` 4 条 |
-| **BUG-013** **(v3.0.1)** | **错题本多选确认答案计数再次累加（本次）** | **wrongbook.js onAnswer 回调只接 2 参，漏传 opts（含 commit:true）导致 opts.commit 永远 undefined，走 toggle 分支把数组当单项 append** | **`wrongbook.js:106`**：`(qq, ans) => ...` 改为 `(qq, ans, opts={}) => handleAnswer(qq, ans, opts)` | 见 §7.2：建议补充一个 render 层参数透传测试（下文） |
+| **BUG-013** **(v3.0.1)** | **错题本多选确认答案计数再次累加** | **wrongbook.js onAnswer 回调只接 2 参，漏传 opts.commit** | **`wrongbook.js`** 三参透传 | `multi-wrongbook.test.js` |
+| **BUG-014** | Navigation getter 当 Result 用 | `getCategory()` 非 Result，写成 `r.ok ? r.data : 'all'` 永远 fallback | 调用方直接取字符串 | CONTRACT-api §4 |
+| **BUG-015** **(v3.0.2)** | study 进出页事件订阅泄漏 | router 每次 `createStudyPage()`，onLeave 故意不解绑 | `study.js` onLeave 解绑 + `_container=null` | `test/ui/study-lifecycle.test.js` |
+| **BUG-016** **(v3.0.2)** | 错题本清完不庆祝 | UI 仅 `setStatus`，无自动 exit/CLEARED | 方案 B：`markMastered` + `wrongbook-flow` 契约 | `test/ui/wrongbook-flow.test.js` + `system/wrongbook-celebration` |
 
 ### 7.2 针对 BUG-013 的防御建议（下次避免）
 
@@ -430,12 +465,14 @@ onAnswer: (qq, ans) => handleAnswer(qq, ans),
 2. `src/render/router.js`：在路由表加 `'/myfeature': import('./pages/myfeature.js')`。
 3. `topbar.js` / `bottombar.js` / `home.js`：加跳转按钮（`navigate('myfeature')`）。
 4. 记得页面卸载时 `unbind()` 事件订阅（用 `bindEvents` 工具）。
+5. **同步更新 `pages/help.js`**：用户如何进入、怎么用、注意点（与 README 红线第 5 条一致）。
 
 ### 8.2 新增 API 域（业务能力）
 1. `src/api/mydomain.js`：函数全部返回 `Result<T>`，调用 `ok()` / `err()`（见 errors.js）。
 2. `src/api/index.js` 的 `mountLX()`：加一行 `MyDomainAPI,` 并 import。
 3. `docs/CONTRACT-api.md`：新增 §N 详细写每个函数签名。
 4. `test/unit/mydomain.test.js`：补单元测试（至少覆盖成功 + 3 类典型错误）。
+5. 若能力对用户可见：同 PR 更新 `pages/help.js` 对应章节。
 
 ### 8.3 新增主题色
 1. `style.css` 的 `:root[data-theme="xxx"]` 区块，**必须同时定义**：

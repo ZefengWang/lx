@@ -17,6 +17,7 @@
 import { h, render } from '../dom.js';
 import { navigate } from '../router.js';
 import { toastSuccess, toastWarning, toastInfo } from '../toast.js';
+import { appConfirm } from '../confirm.js';
 
 const TYPE_LABELS = {
     single: '单选题',
@@ -65,8 +66,8 @@ export function createAddQuestionPage() {
             h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' } }, [
                 h('button', {
                     class: 'lx-button lx-button--secondary',
-                    onclick: () => navigate('catalog'),
-                }, ['← 返回目录']),
+                    onclick: () => navigate('browse'),
+                }, ['← 返回浏览']),
                 h('div', { style: { flex: 1 } }, [
                     h('div', { class: 'lx-font-semibold' }, ['➕ 新增题目']),
                     h('div', { class: 'lx-text-xs lx-text-muted' }, [`当前题库：${libName}`]),
@@ -138,7 +139,7 @@ export function createAddQuestionPage() {
                 h('button', {
                     class: 'lx-button lx-button--secondary lx-button--block',
                     onclick: () => {
-                        if (confirm('确定放弃当前内容并返回吗？')) navigate('catalog');
+                        if (appConfirm('确定放弃当前内容并返回吗？')) navigate('browse');
                     },
                 }, ['取消']),
                 h('button', {
@@ -148,7 +149,7 @@ export function createAddQuestionPage() {
             ]),
             // 继续添加提示
             h('div', { class: 'lx-text-xs lx-text-muted', style: { marginTop: '8px', textAlign: 'center' } }, [
-                '保存后可继续添加下一题，或点「返回目录」结束',
+                '保存后可继续添加下一题，或点「返回浏览」结束',
             ]),
         ]));
 

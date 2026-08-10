@@ -3,6 +3,7 @@ import { assertOk, assertEqual, assertTrue, assertFalse } from '../assert.js';
 import { getLX, resetStateBeforeEach } from '../helpers.js';
 
 /**
+ * 串联 SAR；单点 SAR 见 unit/ui/matrix。
  * 用户流程 3：错题循环
  * 答错入错题 → 进入专注模式 → 全部掌握 → 自动退出 + 庆祝事件
  */

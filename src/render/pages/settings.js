@@ -6,6 +6,8 @@
 import { h, render } from '../dom.js';
 import { navigate } from '../router.js';
 import { toastSuccess, toastWarning, toastInfo, toastPrimary } from '../toast.js';
+import { appConfirm } from '../confirm.js';
+import { triggerBlobDownload } from '../download.js';
 import { THEMES, MODES, getTheme, getMode, setTheme, setMode, swatchStyle } from '../theme.js';
 
 /**
@@ -284,7 +286,7 @@ export function createSettingsPage() {
     }
 
     function handleDeleteLibrary(lib) {
-        if (!confirm(`确定删除题库「${lib.name}」吗？此操作不可撤销，进度也会被清除。`)) return;
+        if (!appConfirm(`确定删除题库「${lib.name}」吗？此操作不可撤销，进度也会被清除。`)) return;
         const LX = window.LX;
         const r = LX.LibraryAPI.delete(lib.id);
         if (r.ok) {
@@ -305,13 +307,7 @@ export function createSettingsPage() {
         const currentId = LX.LibraryAPI.current().data;
         const r = LX.IOAPI.exportLibrary(currentId, format);
         if (r.ok) {
-            const blob = r.data.blob;
-            const url = URL.createObjectURL(blob);
-            const a = h('a', { href: url, download: `library.${format}` });
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            triggerBlobDownload(r.data.blob, r.data.filename || `library.${format}`);
             toastSuccess(`已导出 ${format.toUpperCase()}`);
         } else {
             toastWarning(`导出失败：${r.error?.message}`);
@@ -322,13 +318,10 @@ export function createSettingsPage() {
         const LX = window.LX;
         const r = LX.IOAPI.exportProgress();
         if (r.ok) {
-            const blob = r.data.blob;
-            const url = URL.createObjectURL(blob);
-            const a = h('a', { href: url, download: `progress-backup-${Date.now()}.json` });
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // ProgressAPI.export / IOAPI.exportProgress 返回 JSON 字符串（非 {blob}）
+            const text = typeof r.data === 'string' ? r.data : JSON.stringify(r.data ?? {});
+            const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+            triggerBlobDownload(blob, `progress-backup-${Date.now()}.json`);
             toastSuccess('进度已备份');
         } else {
             toastWarning(`备份失败：${r.error?.message}`);
@@ -353,7 +346,7 @@ export function createSettingsPage() {
     }
 
     function handleResetProgress() {
-        if (!confirm('确定要重置当前题库的所有学习进度吗？此操作不可撤销。')) return;
+        if (!appConfirm('确定要重置当前题库的所有学习进度吗？此操作不可撤销。')) return;
         const LX = window.LX;
         const r = LX.ProgressAPI.reset();
         if (r.ok) {
@@ -368,13 +361,7 @@ export function createSettingsPage() {
         const LX = window.LX;
         const r = LX.IOAPI.downloadTemplate();
         if (r.ok) {
-            const blob = r.data.blob;
-            const url = URL.createObjectURL(blob);
-            const a = h('a', { href: url, download: 'lx-template.xlsx' });
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            triggerBlobDownload(r.data.blob, 'lx-template.xlsx');
             toastSuccess('模板已下载');
         } else {
             toastWarning(`下载失败：${r.error?.message}`);

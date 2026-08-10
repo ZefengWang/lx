@@ -67,4 +67,23 @@ describe('ProgressAPI', () => {
         const s = LX.ProgressAPI.stats(libId, questions).data;
         assertEqual(s.mastered + s.review, 1, 'q1 最终只有一个状态');
     });
+
+    it('export / import 往返保留状态；非法 JSON 失败', () => {
+        const q2 = LX.QuestionAPI.get(2).data;
+        LX.ProgressAPI.setStatus(q1, 'mastered', { libId, questions: [q1, q2] });
+        const exported = LX.ProgressAPI.export();
+        assertOk(exported);
+        assertTrue(typeof exported.data === 'string');
+
+        LX.ProgressAPI.reset(libId);
+        assertEqual(LX.ProgressAPI.getStatus(q1).data, 'none');
+
+        assertOk(LX.ProgressAPI.import(exported.data));
+        assertEqual(LX.ProgressAPI.getStatus(q1).data, 'mastered');
+
+        const bad = LX.ProgressAPI.import('{not-json');
+        assertTrue(!bad.ok);
+        const badShape = LX.ProgressAPI.import('[]');
+        assertTrue(!badShape.ok);
+    });
 });

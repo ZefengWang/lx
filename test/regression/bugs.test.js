@@ -35,7 +35,7 @@ describe('Bug 回归', () => {
         LX = getLX();
     });
 
-    it('BUG-001: exportLibrary xlsx 列对齐', async () => {
+    it('BUG-001: S=xlsx 导出 A=读表 → R=序号列对齐（修复后）', async () => {
         const r = LX.LibraryAPI.create('bug1', [
             { id: 5, type: 'single', category: '甲', question: '题5', options: ['A', 'B'], answer: 'A', explanation: '解5' },
         ]);
@@ -55,7 +55,7 @@ describe('Bug 回归', () => {
         assertEqual(rows[1][1], 'single');
     });
 
-    it('BUG-002: 含中文逗号选项不截断', () => {
+    it('BUG-002: S=选项含中文逗号 A=parseOptions → R=不截断（修复后）', () => {
         // 修复前：分隔符含中文逗号「，」会误伤选项
         // 修复后：分隔符为 /\n|;|；/，不含中文逗号
         const opts = parseOptions('A.内容，含中文逗号\nB.另一项\nC.第三项');
@@ -67,7 +67,7 @@ describe('Bug 回归', () => {
         assertEqual(opts2.length, 3);
     });
 
-    it('BUG-003: QuotaExceeded 不抛出，返回 STORAGE_FULL', () => {
+    it('BUG-003: S=QuotaExceeded A=create → R=STORAGE_FULL 不抛（修复后）', () => {
         // stub localStorage.setItem 抛 QuotaExceededError
         const original = localStorage.setItem;
         let called = false;
@@ -89,7 +89,7 @@ describe('Bug 回归', () => {
         }
     });
 
-    it('BUG-004: 100 次 setStatus 性能（缓存命中）', () => {
+    it('BUG-004: S=100 次 setStatus A=计时 → R=<500ms 缓存命中（修复后）', () => {
         const r = LX.LibraryAPI.create('bug4', [
             { id: 1, type: 'essay', question: 'q1', answer: '', explanation: '' },
         ]);
@@ -109,7 +109,7 @@ describe('Bug 回归', () => {
 
     // BUG-005: 键盘事件守护 —— input/textarea 内按方向键不切题
     // 原 skip 因 UI 层未就绪；Render 层 gestures.js 完成后补回归
-    it('BUG-005: input/textarea 内按方向键不切题（键盘守护）', () => {
+    it('BUG-005: S=焦点在 input A=方向键 → R=不切题（修复后）', () => {
         // 1. 纯函数：isEditableTarget 识别可编辑元素
         const input = document.createElement('input');
         assertTrue(isEditableTarget(input), '<input> 应识别为可编辑');
@@ -173,7 +173,7 @@ describe('Bug 回归', () => {
         );
     });
 
-    it('BUG-005b: attachKeyboardGuard 只在非编辑态触发切题', () => {
+    it('BUG-005b: S=非编辑态 A=方向键 → R=切题；编辑态忽略（修复后）', () => {
         let prevCount = 0;
         let nextCount = 0;
         const detach = attachKeyboardGuard({
@@ -218,7 +218,7 @@ describe('Bug 回归', () => {
         detach();
     });
 
-    it('BUG-005c: attachSwipeGestures 滑动阈值与方向', () => {
+    it('BUG-005c: S=触摸滑动 A=超阈值 → R=按方向切题（修复后）', () => {
         const el = document.createElement('div');
         document.body.appendChild(el);
 
@@ -274,7 +274,7 @@ describe('Bug 回归', () => {
         document.body.removeChild(el);
     });
 
-    it('BUG-006: 同题库二次导入 DUPLICATE + 序号保留', () => {
+    it('BUG-006: S=同内容二次导入 A=create → R=DUPLICATE 且序号保留（修复后）', () => {
         const qs = [
             { id: 5, type: 'single', question: '题5', options: ['A', 'B'], answer: 'A', explanation: '' },
             { id: 6, type: 'single', question: '题6', options: ['A', 'B'], answer: 'A', explanation: '' },
@@ -310,7 +310,7 @@ describe('Bug 回归', () => {
         return wb;
     }
 
-    it('BUG-007: 选项分列为独立列（选项A/选项B/选项C/选项D）应合并为 options 数组', () => {
+    it('BUG-007: S=选项分列 Excel A=解析 → R=合并为 options（修复后）', () => {
         // 修复前：只取第一列选项，BCD 丢失 → 判定为 essay
         // 修复后：检测到「选项A」正则模式，按标签字母顺序收集所有选项列
         const wb = buildWorkbook({
@@ -332,7 +332,7 @@ describe('Bug 回归', () => {
         assertEqual(qs[1].answer, 'B,D', '多选字母排序规范化为 B,D');
     });
 
-    it('BUG-008: 无独立题型列时，答案格式推断 single/multi/judge', () => {
+    it('BUG-008: S=无题型列 A=解析 → R=按答案推断题型（修复后）', () => {
         // 修复前：全当 essay，无法自动判分
         const wb = buildWorkbook({
             Sheet1: [
@@ -356,7 +356,7 @@ describe('Bug 回归', () => {
         assertEqual(qs[3].answer, '错', 'judge F 规范化为 错');
     });
 
-    it('BUG-009: 分类优先从"题目类别/类别"列提取，否则 Sheet 名兜底', () => {
+    it('BUG-009: S=有类别列/仅 Sheet 名 A=解析 → R=分类正确（修复后）', () => {
         // 修复前：分类永远是"未分类"
         const wb = buildWorkbook({
             '网络安全': [
@@ -385,7 +385,7 @@ describe('Bug 回归', () => {
         assertEqual(r2.data.questions[0].category, '第1章 教育学', '无类别列时取 Sheet 名');
     });
 
-    it('BUG-010: 数字开头的分类标题（如"2027安徽xxx"）不被误判为数据行', () => {
+    it('BUG-010: S=数字开头分类标题 A=解析 → R=不误判为数据行（修复后）', () => {
         // 修复前：parseInt("2027安徽xxx",10) === 2027 有限 → isPotentialDataRow=true
         //        → 被当数据行处理，但空题 → 分类丢失
         // 修复后：要求整列严格匹配 ^-?\d+$ 才认为是数据行
@@ -416,7 +416,7 @@ describe('Bug 回归', () => {
         assertEqual(qs[4].category.includes('心理学'), true, 'Q5 属心理学');
     });
 
-    it('BUG-011: 数据行单元格含"口诀/解析/答案"等关键词，不误判为重复表头被丢弃', () => {
+    it('BUG-011: S=数据行含关键词 A=解析 → R=不误判重复表头（修复后）', () => {
         // 背书计划表每一行的第 3 列就是「口诀」，单元格通常以"口诀1/口诀2"命名
         // isHeaderLike 使用 includes('口诀') 匹配，修复前即便 id=1/2/... 纯数字，
         // 也会因为「口诀1」单元格含关键词 → isHeaderLike=true → continue，整表被清 0

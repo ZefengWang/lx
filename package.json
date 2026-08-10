@@ -1,0 +1,13 @@
+{
+  "name": "lx",
+  "private": true,
+  "description": "纯静态刷题网页；运行时零 npm。本文件仅承载开发/CI 工具。",
+  "scripts": {
+    "test:console": "python3 tools/run-tests.py",
+    "test:e2e": "playwright test",
+    "test:ci": "python3 tools/run-tests.py && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
