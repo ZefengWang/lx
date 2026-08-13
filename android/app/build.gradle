@@ -2,6 +2,13 @@ plugins {
     id 'com.android.application'
 }
 
+// androidx 库传递依赖旧 kotlin-stdlib-jdk7/jdk8（1.6.x），而新版 kotlin-stdlib(1.8+)
+// 已合并其类，会导致 Duplicate class；统一排除旧分片，保留新 stdlib
+configurations.all {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
 // 版本号与仓库根 version.txt 保持同步（web 发版后 CI 构建 APK 自动跟随）
 // 注意：file() 相对本模块目录（android/app/），仓库根需上两级
 def versionFile = file('../../version.txt')
