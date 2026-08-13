@@ -104,6 +104,15 @@
     --lx-safe-bottom: env(safe-area-inset-bottom, 0px);
     --lx-safe-left:   env(safe-area-inset-left, 0px);
     --lx-safe-right:  env(safe-area-inset-right, 0px);
+
+    /* 1.14 滚动条（跟随主题色，替换默认白条）
+       普通/护眼：thumb 取各主题 --lx-primary-soft（柔和不突兀），hover 用 --lx-primary；
+       夜间：--lx-primary-soft 被覆写为半透明白紫，深色表面自动可见。 */
+    --lx-scrollbar-size:        6px;
+    --lx-scrollbar-thumb:       var(--lx-primary-soft);
+    --lx-scrollbar-thumb-hover: var(--lx-primary);
+    --lx-scrollbar-track:       transparent;
+    --lx-scrollbar-radius:      9999px;
 }
 
 /* 主题/模式设计说明（v2.6 重构）：
@@ -526,6 +535,10 @@ img, svg, video {
     --lx-warning-soft:  rgba(253, 186, 116, 0.3);
     --lx-danger-light:  rgba(220, 38, 38, 0.2);
     --lx-info-light:    rgba(2, 132, 199, 0.2);
+
+    /* 夜间滚动条：primary-soft 固定紫灰偏暗，单独提亮保证深色表面可见 */
+    --lx-scrollbar-thumb:       rgba(199, 210, 254, 0.55);
+    --lx-scrollbar-thumb-hover: rgba(199, 210, 254, 0.8);
 
     --lx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --lx-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);

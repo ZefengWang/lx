@@ -1361,3 +1361,43 @@ input, textarea {
 .lx-help-flash {
     animation: lx-help-flash 0.5s ease 3;
 }
+
+/* ============================================================
+ * 通用滚动条（跟随主题色，替换默认白条）
+ * 作用于所有 lx 滚动容器（主内容 / 抽屉 / 模态框 / 分类下拉）；
+ * thumb 用 --lx-scrollbar-thumb（= 各主题 --lx-primary-soft），
+ * hover 加深为主题主色，track 透明，风格与项目统一、不突兀。
+ * ============================================================ */
+.lx-main,
+.lx-drawer__body,
+.lx-modal__body,
+.lx-toolbar__dropdown {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: var(--lx-scrollbar-thumb) var(--lx-scrollbar-track);
+}
+.lx-main::-webkit-scrollbar,
+.lx-drawer__body::-webkit-scrollbar,
+.lx-modal__body::-webkit-scrollbar,
+.lx-toolbar__dropdown::-webkit-scrollbar {
+    width: var(--lx-scrollbar-size);
+    height: var(--lx-scrollbar-size);
+}
+.lx-main::-webkit-scrollbar-track,
+.lx-drawer__body::-webkit-scrollbar-track,
+.lx-modal__body::-webkit-scrollbar-track,
+.lx-toolbar__dropdown::-webkit-scrollbar-track {
+    background: var(--lx-scrollbar-track);
+}
+.lx-main::-webkit-scrollbar-thumb,
+.lx-drawer__body::-webkit-scrollbar-thumb,
+.lx-modal__body::-webkit-scrollbar-thumb,
+.lx-toolbar__dropdown::-webkit-scrollbar-thumb {
+    background: var(--lx-scrollbar-thumb);
+    border-radius: var(--lx-scrollbar-radius);
+}
+.lx-main::-webkit-scrollbar-thumb:hover,
+.lx-drawer__body::-webkit-scrollbar-thumb:hover,
+.lx-modal__body::-webkit-scrollbar-thumb:hover,
+.lx-toolbar__dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--lx-scrollbar-thumb-hover);
+}
