@@ -24,3 +24,11 @@ coverage/
 
 # 真实样张文件（含可能的版权数据，不入库；本地保留供手动测试）
 test/fixtures/real/
+
+# Android 壳（CI 用 github actions 构建 APK）
+# assets/ 由 android/sync-assets.sh 在 CI 构建前生成，不入库
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/

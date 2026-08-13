@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+// 版本号与仓库根 version.txt 保持同步（web 发版后 CI 构建 APK 自动跟随）
+def appVersion = file('../version.txt').exists()
+        ? file('../version.txt').text.trim()
+        : '0.0.0'
+// versionCode：由版本号派生（3.2.3 → 3203），保证递增
+def codeMajor = (appVersion =~ /^(\d+)/)[0][1] as int
+def codeParts = (appVersion =~ /^(\d+)\.(\d+)(?:\.(\d+))?/)[0]
+def versionCodeValue = codeMajor * 10000 + (codeParts[2] as int) * 100 + (codeParts.size() > 3 && codeParts[3] ? codeParts[3] as int : 0)
+
+android {
+    namespace 'com.zfwang.lx'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.zfwang.lx"
+        minSdk 24
+        targetSdk 34
+        versionCode versionCodeValue
+        versionName appVersion
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // 用 Android 自动生成的 debug keystore 签名，保证 release APK 可直接安装；
+            // 如需正式签名（上架/稳定升级），配置 keystore 后改用正式签名即可。
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

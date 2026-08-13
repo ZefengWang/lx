@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 应用主题：无 ActionBar 的浅色主题，状态栏用项目默认紫 -->
+    <style name="Theme.LX" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#4f46e5</item>
+        <item name="android:navigationBarColor">#ffffff</item>
+        <item name="android:windowBackground">#ecedff</item>
+    </style>
+</resources>
