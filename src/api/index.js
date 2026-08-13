@@ -21,7 +21,7 @@ import { DefaultLibraryAPI } from './default-library.js';
 import { bus, Events } from '../core/events.js';
 
 /** 应用版本（与 version.txt 保持一致） */
-export const VERSION = '3.2.3';
+export const VERSION = '3.2.4';
 
 /**
  * 装配 window.LX

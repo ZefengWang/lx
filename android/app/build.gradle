@@ -13,7 +13,7 @@ configurations.all {
 // 注意：file() 相对本模块目录（android/app/），仓库根需上两级
 def versionFile = file('../../version.txt')
 def appVersion = versionFile.exists() ? versionFile.text.trim() : '0.0.1'
-// versionCode：由版本号派生（3.2.3 → 30203），保证为正整数且递增
+// versionCode：由版本号派生（3.2.4 → 30204），保证为正整数且递增
 def codeMajor = (appVersion =~ /^(\d+)/)[0][1] as int
 def codeParts = (appVersion =~ /^(\d+)\.(\d+)(?:\.(\d+))?/)[0]
 def versionCodeValue = codeMajor * 10000 + (codeParts[2] as int) * 100 + (codeParts.size() > 3 && codeParts[3] ? codeParts[3] as int : 0)
@@ -52,6 +52,5 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.webkit:webkit:1.11.0'
 }

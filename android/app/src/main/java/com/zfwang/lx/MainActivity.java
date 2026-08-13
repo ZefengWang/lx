@@ -1,5 +1,6 @@
 package com.zfwang.lx;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,7 +8,6 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 
@@ -16,8 +16,12 @@ import androidx.webkit.WebViewClientCompat;
  * （app.html + src/）通过 WebViewAssetLoader 以
  * https://appassets.androidplatform.net 加载，
  * 保证 JS / localStorage 均可用，本地资源离线可跑。
+ *
+ * 注意：必须继承原生 android.app.Activity（非 AppCompatActivity），
+ * 与主题 android:Theme.Material.* 兼容；AppCompatActivity 会强制要求
+ * Theme.AppCompat，否则打开即 IllegalStateException 闪退。
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private WebView webView;
 
