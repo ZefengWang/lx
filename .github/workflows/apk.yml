@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    tags:
+      - 'v*'
     paths:
       - 'src/**'
       - 'app.html'
@@ -77,3 +79,25 @@ jobs:
           files: |
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/apk/release/*.apk
+          body: |
+            ## 刷题器 v${{ steps.version.outputs.v }}
+
+            一个纯静态的刷题 / 错题本应用（Web + Android 双端），离线可用、无需注册。
+
+            ### 主要功能
+            - 📚 **题库管理**：创建、导入（xlsx / json / pdf / 文本）、导出、多题库一键切换
+            - 🧠 **多题型**：单选 / 多选 / 判断 / 填空 / 简答，自动判分（简答仅在填写答案后判分）
+            - ❌ **错题本**：答错自动收录，错题专注模式，标记「我已掌握」实时移出并更新计数
+            - 📊 **学习统计**：掌握率、学习进度、错题分布一目了然
+            - 🔍 **题库浏览**：题干搜索（AND 过滤链）、分类筛选、滚动加载
+            - 🎯 **练习模式**：快速练习（答对自动切题）与背诵记忆两种
+            - 🎨 **主题系统**：12 色主题 × 3 种显示模式（普通 / 夜间 / 护眼）
+            - 📱 **移动优先**：单手操作、底部操作区、左右滑切题、上下滑标记掌握 / 错题
+            - 💾 **数据安全**：本地存储，进度可备份 / 恢复，不联网也完整可用
+            - 🌐 **离线可用**：PWA + Service Worker，Android APK 内置全部资源
+
+            ### 本版安装包
+            - `app-release.apk`：推荐安装
+            - `app-debug.apk`：调试用
+
+            > 注：当前 APK 使用调试签名，可直接安装；手机安装时请允许「安装未知应用」。
